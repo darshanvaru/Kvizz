@@ -131,6 +131,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       case QuestionType.single:
         isCorrect = selectedRadio == question.correctAnswer;
         pointsAwarded = isCorrect ? 1 : 0;
+
         print("-------------------");
         print("Question: ${question.question}");
         print("Answer: ${question.options[question.correctAnswer]}");
@@ -139,12 +140,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         print("Time Taken: $timeTaken seconds");
         print("-------------------");
         break;
+
       case QuestionType.multiple:
         Set<int> correct = Set<int>.from(question.correctAnswer);
         pointsAwarded = selectedIndexes.where((i) => correct.contains(i)).length;
         isCorrect = Set<int>.from(selectedIndexes).containsAll(correct) && selectedIndexes.length == correct.length;
         break;
-      case QuestionType.open:
+
+        case QuestionType.open:
         final answer = answerController.text.trim();
         isCorrect = answer.isNotEmpty &&
             (question.correctAnswer as List)
@@ -152,6 +155,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 .contains(answer.toLowerCase());
         pointsAwarded = isCorrect ? 1 : 0;
         break;
+
       case QuestionType.reorder:
         List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
         isCorrect = const ListEquality().equals(userOrder, List<String>.from(question.correctAnswer));
