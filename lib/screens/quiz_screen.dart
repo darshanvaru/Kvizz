@@ -47,13 +47,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     ),
     Question(
       question: "Arrange the steps in priority.",
-      options: ["Plan", "Design", "Code", "Test"],
+      options: ["Plan", "Code", "Design", "Test"],
       type: QuestionType.reorder,
       correctAnswer: ["Plan", "Design", "Code", "Test"],
     ),
   ];
 
-  int currentIndex = 1;
+  int currentIndex = 3;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
@@ -228,6 +228,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     }
 
     final question = questions[currentIndex];
+    debugPrint("--------------------");
+    print("Question: ${question.question}");
+    print("Options: ${question.options.length}");
+    print("Options: ${question.options.join(', ')}");
+    print("Answer: ${question.correctAnswer.join(', ')}");
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBFF),
@@ -553,11 +558,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
                   /// QuestionType Reorder Listview option builder
                   if (question.type == QuestionType.reorder)
-                    ReorderableListView(
+                    ReorderableListView.builder(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
+                      itemCount: question.options.length,
+                      buildDefaultDragHandles: false,
                       onReorder: answered || timeUp
-                          ? (_, __) {}
+                          ? (_, __) {} // still required, but won't be triggered
                           : (oldIndex, newIndex) {
                         setState(() {
                           if (newIndex > oldIndex) newIndex -= 1;
@@ -565,15 +572,30 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           reorderedOptions.insert(newIndex, item);
                         });
                       },
-                      children: [
-                        for (final entry in reorderedOptions)
-                          ListTile(
-                            key: ValueKey(entry.key),
-                            title: Text(entry.value),
+                      itemBuilder: (context, index) {
+                        final entry = reorderedOptions[index];
+
+                        // // When timeUp or answered, show non-draggable tiles
+                        // if (timeUp || answered) {
+                        //   return ListTile(
+                        //     key: ValueKey(entry.key),
+                        //     tileColor: Colors.grey.shade100,
+                        //     title: Text(entry.value),
+                        //     trailing: Icon(Icons.lock_outline, color: Colors.grey),
+                        //   );
+                        // }
+
+                        // Otherwise, show draggable tile
+                        return ReorderableDragStartListener(
+                          key: ValueKey(entry.key),
+                          index: index,
+                          child: ListTile(
                             tileColor: Colors.grey.shade100,
-                            trailing: Icon(Icons.drag_handle),
+                            title: Text(entry.value),
+                            trailing: timeUp ? Text("${question.correctAnswer.indexOf(entry.value) + 1}") : Icon(Icons.drag_handle),
                           ),
-                      ],
+                        );
+                      },
                     ),
 
                   //Correct or Incorrect
