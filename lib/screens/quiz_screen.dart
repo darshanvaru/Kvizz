@@ -43,7 +43,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       question: "Describe your experience with AI.",
       options: [],
       type: QuestionType.open,
-      correctAnswer: "open-ended",
+      correctAnswer: ["good", "excellent", "Fabulous"],
     ),
     Question(
       question: "Arrange the steps in priority.",
@@ -53,7 +53,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     ),
   ];
 
-  int currentIndex = 0;
+  int currentIndex = 2;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
@@ -136,7 +136,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         print("Answer: ${question.options[question.correctAnswer]}");
         print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
         print("Is Correct? $isCorrect");
-        print("Time Taken: ${timeTaken} seconds");
+        print("Time Taken: $timeTaken seconds");
         print("-------------------");
         break;
       case QuestionType.multiple:
@@ -145,7 +145,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         isCorrect = Set<int>.from(selectedIndexes).containsAll(correct) && selectedIndexes.length == correct.length;
         break;
       case QuestionType.open:
-        isCorrect = answerController.text.trim().isNotEmpty;
+        final answer = answerController.text.trim();
+        isCorrect = answer.isNotEmpty &&
+            (question.correctAnswer as List)
+                .map((e) => e.toString().toLowerCase())
+                .contains(answer.toLowerCase());
         pointsAwarded = isCorrect ? 1 : 0;
         break;
       case QuestionType.reorder:
@@ -246,34 +250,40 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               ),
 
               // Timer
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(onPressed: _prepareQuestion, child: Text("Reset")),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        SizedBox(
-                          width: 36,
-                          height: 36,
-                          child: CircularProgressIndicator(
-                            value: timeLeft / 10,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xff53BDEB)),
-                            strokeWidth: 4,
-                          ),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: CircularProgressIndicator(
+                                value: timeLeft / 10,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xff53BDEB)),
+                                strokeWidth: 4,
+                              ),
+                            ),
+                            Text(
+                              "$timeLeft",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF53BDEB),
+                              ),
+                            )
+                          ],
                         ),
-                        Text(
-                          "$timeLeft",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF53BDEB),
-                          ),
-                        )
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
 
               // Question Card
@@ -288,7 +298,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withOpacity(0.07),
+                        color: Colors.blueAccent.withValues(alpha: 0.07),
                         blurRadius: 24,
                         offset: Offset(0, 12),
                       ),
@@ -313,7 +323,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       ),
                       SizedBox(height: question.type != QuestionType.open ? 24 : 8),
 
-                      //QuestionType Single Option builder
+                      ///QuestionType Single Option builder
                       if (question.type == QuestionType.single)
                         ...List.generate(question.options.length, (index) {
                           final isSelected = selectedRadio == index;
@@ -332,7 +342,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               leadingIcon = const Icon(Icons.check_circle, color: Colors.teal);
                               optionTextColor = Colors.teal;
                             } else if (isIncorrect) {
-                              tileColor = Theme.of(context).primaryColor.withOpacity(0.1);
+                              tileColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
                               borderColor = Colors.redAccent;
                               leadingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
                               optionTextColor = Colors.redAccent;
@@ -378,17 +388,35 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           );
                         }),
 
+                      /// QuestionType Multiple option builder
                       if (question.type == QuestionType.multiple)
                         ...List.generate(question.options.length, (index) {
                           final isSelected = selectedIndexes.contains(index);
-                          final isCorrect = answered && (question.correctAnswer as Set).contains(index);
-                          final isIncorrect = answered && isSelected && !isCorrect;
+                          final isCorrect = (answered || timeUp) &&
+                              (question.correctAnswer as Set).contains(index);
+                          final isIncorrect = (answered || timeUp) &&
+                              isSelected &&
+                              !(question.correctAnswer as Set).contains(index);
 
-                          Color? tileColor;
-                          if (isCorrect) {
-                            tileColor = const Color(0xFFD6F4E7);
-                          } else if (isIncorrect) {
-                            tileColor = const Color(0xFFFBE4DF);
+                          // Colors and styles
+                          Color? tileColor = Colors.white;
+                          Color borderColor = Colors.grey.shade300;
+                          Color optionTextColor = Colors.black87;
+
+                          if (answered || timeUp) {
+                            if (isCorrect) {
+                              tileColor = const Color(0xFFD6F4E7); // light green
+                              borderColor = Colors.teal;
+                              optionTextColor = Colors.teal;
+                            } else if (isIncorrect) {
+                              tileColor = const Color(0xFFFBE4DF); // light red
+                              borderColor = Colors.redAccent;
+                              optionTextColor = Colors.redAccent;
+                            }
+                          } else if (!timeUp && isSelected) {
+                            tileColor = Colors.grey.shade200;
+                            borderColor = const Color(0xFF57A2C3); // blue
+                            optionTextColor = Colors.black87;
                           }
 
                           return Container(
@@ -396,13 +424,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               color: tileColor,
                               border: Border.all(
-                                color: isCorrect
-                                    ? Colors.teal
-                                    : isIncorrect
-                                    ? Colors.redAccent
-                                    : isSelected
-                                    ? Color(0xFF53BDEB)
-                                    : Colors.grey.shade200,
+                                color: borderColor,
                                 width: isSelected || isCorrect || isIncorrect ? 2 : 1,
                               ),
                               borderRadius: BorderRadius.circular(12),
@@ -410,7 +432,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             child: ListTile(
                               leading: Checkbox(
                                 value: isSelected,
-                                onChanged: answered || timeUp
+                                onChanged: (answered || timeUp)
                                     ? null
                                     : (val) {
                                   setState(() {
@@ -426,29 +448,61 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 question.options[index],
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  color: (isCorrect)
-                                      ? Colors.teal
-                                      : isIncorrect
-                                      ? Colors.redAccent
-                                      : Colors.black87,
+                                  color: optionTextColor,
                                 ),
                               ),
                             ),
                           );
                         }),
 
+                      /// QuestionType Open Ended TextField builder
                       if (question.type == QuestionType.open)
-                        TextField(
-                          controller: answerController,
-                          enabled: !answered && !timeUp,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: "Type your answer...",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
+                              controller: answerController,
+                              enabled: !answered && !timeUp, // disable if answered or time's up
+                              maxLines: 3,
+                              decoration: InputDecoration(
+                                hintText: "Type your answer...",
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Submit Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF53BDEB),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  minimumSize: const Size(0, 48),
+                                ),
+                                onPressed: (answered || timeUp)
+                                    ? null
+                                    : () {
+                                  setState(() {
+                                    answered = true;
+
+                                    // Save time taken
+                                    timeTaken = DateTime.now()
+                                        .difference(questionStartTime!)
+                                        .inMilliseconds;
+                                  });
+                                },
+                                child: const Text("Submit"),
+                              ),
+                            ),
+                          ],
                         ),
+
 
                       if (question.type == QuestionType.reorder)
                         ReorderableListView(
@@ -474,7 +528,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           ],
                         ),
 
-                      if (answered && lastAnswerCorrect != null)
+                      //Correct or Incorrect
+                      if (answered && lastAnswerCorrect != null && timeUp)
                         Padding(
                           padding: const EdgeInsets.only(top: 14),
                           child: Row(
@@ -509,44 +564,44 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 ),
               ),
               // Next Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF53BDEB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(0, 48),
-                  ),
-                  onPressed: ((currentIndex < questions.length - 1) && !answered)? submitAnswer : null,
-                  child:Text(((currentIndex < questions.length - 1) && !answered)? "Submit" : "Finish") ,
-
-                  // onPressed: (!answered && !timeUp &&
-                  //     (
-                  //         (question.type == QuestionType.single && selectedRadio != null) ||
-                  //             (question.type == QuestionType.multiple && selectedIndexes.isNotEmpty) ||
-                  //             (question.type == QuestionType.open && answerController.text.trim().isNotEmpty) ||
-                  //             (question.type == QuestionType.reorder && reorderedOptions.isNotEmpty))
-                  // )
-                  //     ? () {
-                  //   if (!answered && !timeUp) {
-                  //     submitAnswer();
-                  //   } else if (answered || timeUp) {
-                  //     nextQuestion();
-                  //   }
-                  // }
-                  //     : nextQuestion,
-                  // child: Text(
-                  //   (!answered && !timeUp) ? "Submit" : (currentIndex < questions.length - 1 ? "Next" : "Finish"),
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.w700,
-                  //     fontSize: 20,
-                  //   ),
-                  // ),
-                ),
-              ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: ElevatedButton(
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: const Color(0xFF53BDEB),
+              //       foregroundColor: Colors.white,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(12),
+              //       ),
+              //       minimumSize: const Size(0, 48),
+              //     ),
+              //     onPressed: ((currentIndex < questions.length - 1) && !answered)? submitAnswer : null,
+              //     child:Text(((currentIndex < questions.length - 1) && !answered)? "Submit" : "Finish") ,
+              //
+              //     // onPressed: (!answered && !timeUp &&
+              //     //     (
+              //     //         (question.type == QuestionType.single && selectedRadio != null) ||
+              //     //             (question.type == QuestionType.multiple && selectedIndexes.isNotEmpty) ||
+              //     //             (question.type == QuestionType.open && answerController.text.trim().isNotEmpty) ||
+              //     //             (question.type == QuestionType.reorder && reorderedOptions.isNotEmpty))
+              //     // )
+              //     //     ? () {
+              //     //   if (!answered && !timeUp) {
+              //     //     submitAnswer();
+              //     //   } else if (answered || timeUp) {
+              //     //     nextQuestion();
+              //     //   }
+              //     // }
+              //     //     : nextQuestion,
+              //     // child: Text(
+              //     //   (!answered && !timeUp) ? "Submit" : (currentIndex < questions.length - 1 ? "Next" : "Finish"),
+              //     //   style: const TextStyle(
+              //     //     fontWeight: FontWeight.w700,
+              //     //     fontSize: 20,
+              //     //   ),
+              //     // ),
+              //   ),
+              // ),
               SizedBox(height: 16),
             ],
           ),

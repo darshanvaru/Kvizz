@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/screens/auth_screen.dart';
+// import 'package:kvizz/screens/auth_screen.dart';
 import 'package:kvizz/screens/quiz_screen.dart';
 
 void main() {
@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
       cardTheme: CardThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: Colors.white,
-        shadowColor: Colors.grey.withOpacity(0.1),
+        shadowColor: Colors.grey..withValues(alpha: 0.1),
         elevation: 4,
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
