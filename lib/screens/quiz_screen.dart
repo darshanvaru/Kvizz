@@ -53,7 +53,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     ),
   ];
 
-  int currentIndex = 2;
+  int currentIndex = 1;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
@@ -310,7 +310,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blueAccent.withOpacity(0.07),
+                    color: Colors.blueAccent.withValues(alpha: 0.07),
                     blurRadius: 24,
                     offset: Offset(0, 12),
                   ),
@@ -363,7 +363,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           leadingIcon = const Icon(Icons.check_circle, color: Colors.teal);
                           optionTextColor = Colors.teal;
                         } else if (isIncorrect) {
-                          tileColor = Theme.of(context).primaryColor.withOpacity(0.1);
+                          tileColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
                           borderColor = Colors.redAccent;
                           leadingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
                           optionTextColor = Colors.redAccent;
@@ -375,7 +375,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         optionTextColor = Colors.black87;
                       }
 
-                      //Inner Option container
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
@@ -410,70 +409,99 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
                   /// QuestionType Multiple option builder
                   if (question.type == QuestionType.multiple)
-                    ...List.generate(question.options.length, (index) {
-                      final isSelected = selectedIndexes.contains(index);
-                      final isCorrect = (answered || timeUp) &&
-                          (question.correctAnswer as Set).contains(index);
-                      final isIncorrect = (answered || timeUp) &&
-                          isSelected &&
-                          !(question.correctAnswer as Set).contains(index);
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Options
+                        ...List.generate(question.options.length, (index) {
+                          final isSelected = selectedIndexes.contains(index);
+                          final isCorrect = (answered || timeUp) && (question.correctAnswer as Set).contains(index);
+                          final isIncorrect = (answered || timeUp) && isSelected && !(question.correctAnswer as Set).contains(index);
 
-                      // Colors and styles
-                      Color? tileColor = Colors.white;
-                      Color borderColor = Colors.grey.shade300;
-                      Color optionTextColor = Colors.black87;
+                          // Colors and styles
+                          Color? tileColor = Colors.white;
+                          Color borderColor = Colors.grey.shade300;
+                          Color optionTextColor = Colors.black87;
 
-                      if (answered || timeUp) {
-                        if (isCorrect) {
-                          tileColor = const Color(0xFFD6F4E7); // light green
-                          borderColor = Colors.teal;
-                          optionTextColor = Colors.teal;
-                        } else if (isIncorrect) {
-                          tileColor = const Color(0xFFFBE4DF); // light red
-                          borderColor = Colors.redAccent;
-                          optionTextColor = Colors.redAccent;
-                        }
-                      } else if (!timeUp && isSelected) {
-                        tileColor = Colors.grey.shade200;
-                        borderColor = const Color(0xFF57A2C3); // blue
-                        optionTextColor = Colors.black87;
-                      }
+                          if (answered && timeUp) {
+                            if (isCorrect) {
+                              tileColor = const Color(0xFFD6F4E7); // green
+                              borderColor = Colors.teal;
+                              optionTextColor = Colors.teal;
+                            } else if (isIncorrect) {
+                              tileColor = const Color(0xFFFBE4DF); // red
+                              borderColor = Colors.redAccent;
+                              optionTextColor = Colors.redAccent;
+                            }
+                          } else if (!timeUp && isSelected) {
+                            tileColor = Colors.grey.shade200;
+                            borderColor = const Color(0xFF57A2C3); // blue
+                            optionTextColor = Colors.black87;
+                          }
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: tileColor,
-                          border: Border.all(
-                            color: borderColor,
-                            width: isSelected || isCorrect || isIncorrect ? 2 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          leading: Checkbox(
-                            value: isSelected,
-                            onChanged: (answered || timeUp)
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: tileColor,
+                              border: Border.all(
+                                color: borderColor,
+                                width: isSelected || isCorrect || isIncorrect ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: isSelected,
+                                onChanged: (answered || timeUp)
+                                    ? null
+                                    : (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      selectedIndexes.add(index);
+                                    } else {
+                                      selectedIndexes.remove(index);
+                                    }
+                                  });
+                                },
+                              ),
+                              title: Text(
+                                question.options[index],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: optionTextColor,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 10),
+
+                        // Submit Button
+                        if (!answered && !timeUp)
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF53BDEB),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: selectedIndexes.isEmpty
                                 ? null
-                                : (val) {
+                                : () {
                               setState(() {
-                                if (val == true) {
-                                  selectedIndexes.add(index);
-                                } else {
-                                  selectedIndexes.remove(index);
-                                }
+                                answered = true;
+                                // userAnswer = selectedIndexes.toSet(); // Store user's selected options
+                                // Optionally record timeTaken if needed
+                                timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
                               });
                             },
+                            child: const Text("Submit"),
                           ),
-                          title: Text(
-                            question.options[index],
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: optionTextColor,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
+                      ],
+                    ),
 
                   /// QuestionType Open Ended TextField builder
                   if (question.type == QuestionType.open)
@@ -523,6 +551,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       ],
                     ),
 
+                  /// QuestionType Reorder Listview option builder
                   if (question.type == QuestionType.reorder)
                     ReorderableListView(
                       shrinkWrap: true,
