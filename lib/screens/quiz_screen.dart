@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 
-enum QuestionType { single, multiple, open, reorder }
+enum QuestionType { single, multiple, open, reorder, trueFalse }
 
 class Question {
   final String question;
@@ -170,6 +170,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
         isCorrect = const ListEquality().equals(userOrder, List<String>.from(question.correctAnswer));
         pointsAwarded = isCorrect ? 1 : 0;
+        break;
+
+      case QuestionType.trueFalse:
+        throw UnimplementedError();
         break;
     }
 
