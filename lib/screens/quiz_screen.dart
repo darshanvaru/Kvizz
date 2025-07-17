@@ -301,7 +301,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               ],
             ),
 
-            // Question Card
+            /// Question Card
             Container(
               margin: const EdgeInsets.only(top: 16, bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
@@ -319,11 +319,21 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  //Question Number and total questions
-                  Text(
-                    "${currentIndex + 1}/${questions.length}",
-                    style: const TextStyle(color: Colors.black54, fontSize: 16),
-                    textAlign: TextAlign.right,
+                  //Question Number/Total questions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(question.type == QuestionType.single? "Multiple Choice Question" :
+                      question.type == QuestionType.open ? "Open Ended Question" :
+                      question.type == QuestionType.reorder ? "Reorder Question" : "Single Choice Question",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      Text(
+                        "${currentIndex + 1}/${questions.length}",
+                        style: const TextStyle(color: Colors.black54, fontSize: 16),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 
@@ -571,7 +581,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            SizedBox(height: 16),
           ],
         ),
       ),
