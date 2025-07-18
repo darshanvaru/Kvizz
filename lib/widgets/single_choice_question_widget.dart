@@ -92,7 +92,7 @@ class _SingleChoiceQuestionWidgetState
         ),
         SizedBox(height: 16),
         Text(
-          'Options',
+          'Options (Select single correct)',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         ...List.generate(_optionControllers.length, (index) {
