@@ -18,8 +18,107 @@ class ReorderableQuestionWidget extends StatefulWidget {
 
 class _ReorderableQuestionWidgetState
     extends State<ReorderableQuestionWidget> {
+  late TextEditingController _questionController;
+  List<String> options = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _questionController =
+        TextEditingController(text: widget.question.question);
+    options = List<String>.from(widget.question.options);
+  }
+
+  void _addOption() {
+    setState(() {
+      options.add('');
+    });
+  }
+
+  void _removeOption(int index) {
+    setState(() {
+      options.removeAt(index);
+    });
+  }
+
+  void _updateCorrectAnswer() {
+    // Save the current reordered options as correct order
+    widget.question.options = List.from(options);
+    widget.question.correctAnswer = options.join('|||'); // You can use comma too
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _questionController,
+              decoration: const InputDecoration(
+                labelText: 'Question',
+              ),
+              onChanged: (value) {
+                widget.question.question = value;
+              },
+            ),
+            const SizedBox(height: 10),
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: options.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = options.removeAt(oldIndex);
+                  options.insert(newIndex, item);
+                });
+                _updateCorrectAnswer();
+              },
+              itemBuilder: (context, index) {
+                return ListTile(
+                  key: ValueKey('$index-${options[index]}'),
+                  leading: const Icon(Icons.drag_handle),
+                  title: TextFormField(
+                    initialValue: options[index],
+                    decoration:
+                    InputDecoration(labelText: 'Option ${index + 1}'),
+                    onChanged: (value) {
+                      options[index] = value;
+                      _updateCorrectAnswer();
+                    },
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _removeOption(index),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _addOption,
+              icon: const Icon(Icons.add),
+              label: const Text("Add Option"),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: widget.onDelete,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
