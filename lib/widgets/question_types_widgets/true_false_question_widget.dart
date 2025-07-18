@@ -32,7 +32,7 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
   void _setCorrectAnswer(String value) {
     setState(() {
       _correctAnswer = value;
-      widget.question.correctAnswer = [value];
+      widget.question.correctAnswer = value;
     });
   }
 
@@ -72,6 +72,7 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
                 value: value,
                 groupValue: _correctAnswer,
                 onChanged: (val) {
+                  print("Correct Answer: $val");
                   if (val != null) _setCorrectAnswer(val);
                 },
               ),

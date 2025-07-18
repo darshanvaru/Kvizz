@@ -95,8 +95,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     switch (question.type) {
       case QuestionType.single:
-        print("SelectedRadio: $selectedRadio");
-        print("CorrectAnsewer: ${question.correctAnswer}");
         isCorrect = selectedRadio == question.correctAnswer.first;
         pointsAwarded = isCorrect ? 1 : 0;
 
@@ -106,7 +104,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         print("Answer: ${question.options[question.correctAnswer.first]}");
         print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
         print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken seconds");
+        print("Time Taken: $timeTaken Milliseconds");
         print("-------------------");
 
         Future.delayed(const Duration(seconds: 5), () {
@@ -119,8 +117,17 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         Set<int> correct = Set<int>.from(question.correctAnswer);
         isCorrect =
             Set<int>.from(selectedIndexes).containsAll(correct) &&
-            selectedIndexes.length == correct.length;
+                selectedIndexes.length == correct.length;
         pointsAwarded = isCorrect ? 1 : 0;
+
+        print("-------------------");
+        print("Question Type: ${question.type}");
+        print("Question: ${question.question}");
+        print("Correct Answers: ${correct.map((i) => question.options[i]).join(', ')}");
+        print("Selected Answers: ${selectedIndexes.map((i) => question.options[i]).join(', ')}");
+        print("Is Correct? $isCorrect");
+        print("Time Taken: $timeTaken Milliseconds");
+        print("-------------------");
 
         Future.delayed(const Duration(seconds: 5), () {
           currentIndex++;
@@ -130,20 +137,24 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
       case QuestionType.open:
         final answer = answerController.text.trim();
-        isCorrect =
-            answer.isNotEmpty &&
-            (question.correctAnswer as List)
-                .map((e) => e.toString().toLowerCase())
-                .contains(answer.toLowerCase());
+        bool isStringInList(String input, List<String> options) {
+          return options.any(
+                (element) => element.trim().toLowerCase() == input.trim().toLowerCase(),
+          );
+        }
+
+        isCorrect = answer.isNotEmpty &&
+            isStringInList(answer, question.correctAnswer.split(','));
+
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Answer: ${question.correctAnswer.join(', ')}");
+        print("Correct Answers: ${question.correctAnswer}");
         print("Answer Submitted: $answer");
         print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken seconds");
+        print("Time Taken: $timeTaken Milliseconds");
         print("-------------------");
 
         Future.delayed(const Duration(seconds: 5), () {
@@ -154,11 +165,19 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
       case QuestionType.reorder:
         List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
-        isCorrect = const ListEquality().equals(
-          userOrder,
-          List<String>.from(question.correctAnswer),
-        );
+        List<String> correctOrder = List<String>.from(question.correctAnswer);
+
+        isCorrect = const ListEquality().equals(userOrder, correctOrder);
         pointsAwarded = isCorrect ? 1 : 0;
+
+        print("-------------------");
+        print("Question Type: ${question.type}");
+        print("Question: ${question.question}");
+        print("Correct Order: ${correctOrder.join(' → ')}");
+        print("User Order: ${userOrder.join(' → ')}");
+        print("Is Correct? $isCorrect");
+        print("Time Taken: $timeTaken Milliseconds");
+        print("-------------------");
 
         Future.delayed(const Duration(seconds: 5), () {
           currentIndex++;
@@ -167,7 +186,30 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         break;
 
       case QuestionType.trueFalse:
-        throw UnimplementedError();
+        print("SelectedRadio: $selectedRadio");
+        print("CorrectAnswer (String): ${question.correctAnswer}");
+
+        // Convert the string "true"/"false" to index: 1 for true, 0 for false
+        int correctIndex = question.correctAnswer.trim().toLowerCase() == "true" ? 1 : 0;
+
+        isCorrect = selectedRadio == correctIndex;
+        pointsAwarded = isCorrect ? 1 : 0;
+
+        print("-------------------");
+        print("Question Type: ${question.type}");
+        print("Question: ${question.question}");
+        print("Correct Answer: ${correctIndex == 1 ? 'True' : 'False'}");
+        print("Answer Submitted: ${selectedRadio == 1 ? 'True' : selectedRadio == 0 ? 'False' : 'None'}");
+        print("Is Correct? $isCorrect");
+        print("Time Taken: $timeTaken seconds");
+        print("-------------------");
+
+        Future.delayed(const Duration(seconds: 5), () {
+          currentIndex++;
+          _prepareQuestion();
+        });
+        break;
+
     }
 
     setState(() {
@@ -635,10 +677,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               itemCount: question.options.length,
                               buildDefaultDragHandles: false,
                               onReorder: answered || timeUp
-                                  ? (
-                                      _,
-                                      __,
-                                    ) {} // still required, but won't be triggered
+                                  ? (_,__,) {} // still required, but won't be triggered
                                   : (oldIndex, newIndex) {
                                       setState(() {
                                         if (newIndex > oldIndex) newIndex -= 1;
@@ -693,6 +732,82 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 child: const Text("Submit"),
                               ),
                             ),
+                          ],
+                        ),
+
+                      /// QuestionType True/False Option builder
+                      if (question.type == QuestionType.trueFalse)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ...List.generate(2, (index) {
+                              final correctAnswerIndex = question.correctAnswer.toString().toLowerCase() == 'true' ? 1 : 0;
+                              final isSelected = selectedRadio == index;
+                              final isCorrect = answered && index == correctAnswerIndex;
+                              final isIncorrect = answered && isSelected && !isCorrect;
+
+                              String label = index == 0 ? "False" : "True";
+
+                              Color? tileColor = Colors.white;
+                              Color borderColor = Colors.grey.shade300;
+                              Icon leadingIcon = Icon(
+                                Icons.circle_outlined,
+                                color: Colors.grey,
+                              );
+                              Color optionTextColor = Colors.black54;
+
+                              if (timeUp) {
+                                if (isCorrect) {
+                                  tileColor = const Color(0xFFD6F4E7);
+                                  borderColor = Colors.teal;
+                                  leadingIcon = const Icon(Icons.check_circle, color: Colors.teal);
+                                  optionTextColor = Colors.teal;
+                                } else if (isIncorrect) {
+                                  tileColor = Theme.of(context).primaryColor.withOpacity(0.1);
+                                  borderColor = Colors.redAccent;
+                                  leadingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
+                                  optionTextColor = Colors.redAccent;
+                                }
+                              } else if (!timeUp && isSelected) {
+                                tileColor = Colors.grey.shade200;
+                                borderColor = const Color(0xFF57A2C3);
+                                leadingIcon = const Icon(Icons.circle, color: Color(0xFF53BDEB));
+                                optionTextColor = Colors.black87;
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: tileColor,
+                                  border: Border.all(
+                                    color: borderColor,
+                                    width: isSelected || isCorrect || isIncorrect ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  leading: leadingIcon,
+                                  title: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: optionTextColor,
+                                    ),
+                                  ),
+                                  onTap: answered
+                                      ? null
+                                      : () {
+                                    setState(() {
+                                      selectedRadio = index;
+                                      answered = true;
+                                      timeTaken = DateTime.now()
+                                          .difference(questionStartTime!)
+                                          .inMilliseconds;
+                                    });
+                                  },
+                                ),
+                              );
+                            }),
                           ],
                         ),
 

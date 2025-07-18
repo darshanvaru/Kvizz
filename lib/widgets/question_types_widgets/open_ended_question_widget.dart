@@ -67,7 +67,7 @@ class _OpenEndedQuestionWidgetState extends State<OpenEndedQuestionWidget> {
             hintText: "Comma-separated answers",
           ),
           onChanged: (value) {
-            widget.question.correctAnswer = value;
+            widget.question.correctAnswer = value; //string value
           },
         ),
         const SizedBox(height: 10),

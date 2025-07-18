@@ -44,7 +44,7 @@ class _ReorderableQuestionWidgetState
   void _updateCorrectAnswer() {
     // Save the current reordered options as correct order
     widget.question.options = List.from(options);
-    widget.question.correctAnswer = options.join('|||'); // You can use comma too
+    widget.question.correctAnswer = options; // You can use comma too
   }
 
   @override

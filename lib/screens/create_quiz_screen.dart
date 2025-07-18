@@ -48,6 +48,8 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
 
       // Specific validation based on question type
       switch (q.type) {
+
+        ///Single choice question
         case QuestionType.single:
           if (q.options.length < 2) {
             _showError(
@@ -63,7 +65,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
               return;
             }
           }
-          print("Answer in create quiz for single question type: ${q.correctAnswer} and options: ${q.options}");
           if (!q.options.contains(q.options[q.correctAnswer.first])) {
             _showError(
               'Single choice question "${q.question}" must have a correct answer selected.',
@@ -79,7 +80,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
             );
             return;
           }
-
           for (var option in q.options) {
             if (option.trim().isEmpty) {
               _showError(
@@ -88,8 +88,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
               return;
             }
           }
-
-          // for checking is user selected correct answer
           if (q.correctAnswer.isEmpty) {
             _showError(
               'Multiple choice question "${q.question}" must have at least one correct option selected.',
@@ -99,13 +97,17 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           break;
 
         case QuestionType.open:
-          if (q.correctAnswer.trim().isEmpty) {
+          print("Correct answer type: ${q.correctAnswer.runtimeType}");
+          print("Correct answer list: ${q.correctAnswer}");
+          // q.correctAnswer.every((answer) => print({answer.trim()}));?
+          if (q.correctAnswer.isEmpty || q.correctAnswer.trim().isEmpty) {
             _showError(
               'Open-ended question "${q.question}" must have a correct answer.',
             );
             return;
           }
           break;
+
 
         case QuestionType.reorder:
           if (q.options.length < 3) {
@@ -114,26 +116,32 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
             );
             return;
           }
-          List<String> correctOrder = q.correctAnswer
-              .split(',')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toList();
-          if (correctOrder.length != q.options.length) {
-            _showError(
-              'Reorder question "${q.question}" must have correct order matching all options.',
-            );
-            return;
-          }
-          if (!Set.from(q.options).containsAll(correctOrder)) {
-            _showError(
-              'Correct order does not match options in question "${q.question}".',
-            );
-            return;
-          }
+          // List<String> correctOrder = q.correctAnswer
+          //     .split(',')
+          //     .map((e) => e.trim())
+          //     .where((e) => e.isNotEmpty)
+          //     .toList();
+          //
+          // if (correctOrder.length != q.options.length) {
+          //   _showError(
+          //     'Reorder question "${q.question}" must have correct order matching all options.',
+          //   );
+          //   return;
+          // }
+          // if (!Set.from(q.options).containsAll(correctOrder)) {
+          //   _showError(
+          //     'Correct order does not match options in question "${q.question}".',
+          //   );
+          //   return;
+          // }
+          print("Reorder question log");
+          print("Reorder question options: ${q.options}");
+          print("Reorder question correct answer: ${q.correctAnswer}");
+          print("Reorder question correct answer index: ${q.correctAnswer.runtimeType}");
           break;
 
         case QuestionType.trueFalse:
+          print("Correct answer type: ${q.correctAnswer.runtimeType}");
           if (!(q.correctAnswer == 'True' || q.correctAnswer == 'False')) {
             _showError(
               'True/False question "${q.question}" must have a correct answer selected.',
