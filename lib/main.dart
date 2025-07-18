@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/screens/create_quiz_screen.dart';
 // import 'package:kvizz/screens/auth_screen.dart';
 import 'package:kvizz/screens/quiz_screen.dart';
 
@@ -76,9 +77,9 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Kwiz',
+      title: 'Kwizz',
       theme: quizAppTheme,
-      home: QuizScreen()
+      home: QuizCreationScreen()
     );
   }
 }

@@ -1,22 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 
-enum QuestionType { single, multiple, open, reorder, trueFalse }
-
-class Question {
-  final String question;
-  final List<String> options;
-  final QuestionType type;
-  final dynamic correctAnswer;
-
-  Question({
-    required this.question,
-    required this.options,
-    required this.type,
-    required this.correctAnswer,
-  });
-}
+import '../providers/dummy_data.dart' as dummy;
+import '../models/Question.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -26,32 +14,7 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
-  final List<Question> questions = [
-    Question(
-      question: "What is the capital of France?",
-      options: ["Paris", "London", "Berlin", "Rome"],
-      type: QuestionType.single,
-      correctAnswer: 0,
-    ),
-    Question(
-      question: "Select the programming languages.",
-      options: ["Python", "Flutter", "C++", "HTML"],
-      type: QuestionType.multiple,
-      correctAnswer: {0, 2},
-    ),
-    Question(
-      question: "Describe your experience with AI.",
-      options: [],
-      type: QuestionType.open,
-      correctAnswer: ["good", "excellent", "Fabulous"],
-    ),
-    Question(
-      question: "Arrange the steps in priority.",
-      options: ["Plan", "Code", "Design", "Test"],
-      type: QuestionType.reorder,
-      correctAnswer: ["Plan", "Design", "Code", "Test"],
-    ),
-  ];
+  final List<QuestionModel> questions = dummy.questions;
 
   int currentIndex = 0;
   int score = 0;
@@ -77,6 +40,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     _prepareQuestion();
   }
 
+  /// Resets all the flags, controller and variables
   void _prepareQuestion() {
     setState(() {
       answered = false;
@@ -103,7 +67,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     }
   }
 
-  //Starts 10 sec timer and also set flag for times up and answered if 30 sec is completed
+  /// Starts 10 sec timer and also set flag for times up and answered if 30 sec is completed
   void _startTimer() {
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timeLeft > 0) {
@@ -122,6 +86,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     });
   }
 
+  /// Check the question type and performs calculations accordingly
   void submitAnswer() {
     final question = questions[currentIndex];
     bool isCorrect = false;
@@ -213,6 +178,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     });
   }
 
+  /// Increments the index and calls PrepareQuestion()
   void nextQuestion() {
     setState(() {
       currentIndex++;
@@ -231,6 +197,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
+    ///Result screen
     if (currentIndex >= questions.length) {
       return Scaffold(
         appBar: AppBar(title: const Text("Quiz Completed")),
@@ -274,7 +242,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Progress Bar
+
+                /// Progress Bar
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: Stack(
@@ -300,7 +269,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                   ),
                 ),
 
-                // Timer
+                /// Timer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
