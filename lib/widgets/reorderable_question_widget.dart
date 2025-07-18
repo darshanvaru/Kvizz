@@ -55,70 +55,84 @@ class _ReorderableQuestionWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _questionController,
-              decoration: const InputDecoration(
-                labelText: 'Question',
-              ),
-              onChanged: (value) {
-                widget.question.question = value;
-              },
-            ),
-            const SizedBox(height: 10),
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: options.length,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = options.removeAt(oldIndex);
-                  options.insert(newIndex, item);
-                });
-                _updateCorrectAnswer();
-              },
-              itemBuilder: (context, index) {
-                return ListTile(
-                  key: ValueKey('$index-${options[index]}'),
-                  leading: const Icon(Icons.drag_handle),
-                  title: TextFormField(
-                    initialValue: options[index],
-                    decoration:
-                    InputDecoration(labelText: 'Option ${index + 1}'),
-                    onChanged: (value) {
-                      options[index] = value;
-                      _updateCorrectAnswer();
-                    },
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _removeOption(index),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: _addOption,
-              icon: const Icon(Icons.add),
-              label: const Text("Add Option"),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: widget.onDelete,
-              ),
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Reorderable Choice Question",
+            style: Theme.of(context).textTheme.bodyLarge),
+        SizedBox(height: 8),
+        TextField(
+          controller: _questionController,
+          decoration: InputDecoration(
+            labelText: 'Question',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            widget.question.question = value;
+          },
         ),
-      ),
+        const SizedBox(height: 10),
+        Text(
+          'Options (Arrange the options in the desired order)',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 10),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: options.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) newIndex -= 1;
+              final item = options.removeAt(oldIndex);
+              options.insert(newIndex, item);
+            });
+            _updateCorrectAnswer();
+          },
+          itemBuilder: (context, index) {
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              key: ValueKey('$index-${options[index]}'),
+              child: ListTile(
+                leading: const Icon(Icons.drag_handle),
+                title: TextFormField(
+                  initialValue: options[index],
+                  decoration:
+                  InputDecoration(labelText: 'Option ${index + 1}'),
+                  onChanged: (value) {
+                    options[index] = value;
+                    _updateCorrectAnswer();
+                  },
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _removeOption(index),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: _addOption,
+          icon: const Icon(Icons.add),
+          label: const Text("Add Option"),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: widget.onDelete,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -5,6 +5,7 @@ import '../widgets/multiple_choice_question_widget.dart';
 import '../widgets/open_ended_question_widget.dart';
 import '../widgets/reorderable_question_widget.dart';
 import '../widgets/single_choice_question_widget.dart';
+import '../widgets/true_false_question_widget.dart';
 
 class QuizCreationScreen extends StatefulWidget {
   @override
@@ -51,11 +52,10 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           onDelete: () => _removeQuestion(question.id),
         );
       case QuestionType.trueFalse:
-        return Placeholder();
-      // return TrueFalseQuestionWidget(
-      //   question: question,
-      //   onDelete: () => _removeQuestion(question.id),
-      // );
+      return TrueFalseQuestionWidget(
+        question: question,
+        onDelete: () => _removeQuestion(question.id),
+      );
       case QuestionType.reorder:
         return ReorderableQuestionWidget(
           question: question,
