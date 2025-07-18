@@ -128,7 +128,7 @@ class _ReorderableQuestionWidgetState
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(
-            icon: const Icon(Icons.delete),
+            icon: Icon(Icons.delete_forever, color: Colors.red),
             onPressed: widget.onDelete,
           ),
         ),

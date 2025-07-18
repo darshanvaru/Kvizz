@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/Question.dart';
-import '../widgets/multiple_choice_question_widget.dart';
-import '../widgets/open_ended_question_widget.dart';
-import '../widgets/reorderable_question_widget.dart';
-import '../widgets/single_choice_question_widget.dart';
-import '../widgets/true_false_question_widget.dart';
+import '../widgets/question_types_widgets/multiple_choice_question_widget.dart';
+import '../widgets/question_types_widgets/open_ended_question_widget.dart';
+import '../widgets/question_types_widgets/reorderable_question_widget.dart';
+import '../widgets/question_types_widgets/single_choice_question_widget.dart';
+import '../widgets/question_types_widgets/true_false_question_widget.dart';
 
 class QuizCreationScreen extends StatefulWidget {
   @override
