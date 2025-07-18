@@ -79,6 +79,9 @@ class _SingleChoiceQuestionWidgetState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text("Single Choice Question",
+            style: Theme.of(context).textTheme.bodyLarge),
+        SizedBox(height: 8),
         TextField(
           controller: _questionController,
           onChanged: (_) => _updateModel(),
