@@ -5,13 +5,7 @@ class QuestionModel {
   QuestionType type;
   String question;
   List<String> options;
-  dynamic correctAnswer;
-  /*
-    Empty for open ended,
-    single item for single and vica versa for multiple,
-    correct order list for reorder,
-    2 for true anf false
-  */
+  List<String> correctAnswer;
 
   QuestionModel({
     required this.id,

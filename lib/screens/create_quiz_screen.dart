@@ -10,12 +10,22 @@ import '../widgets/question_types_widgets/single_choice_question_widget.dart';
 import '../widgets/question_types_widgets/true_false_question_widget.dart';
 
 class QuizCreationScreen extends StatefulWidget {
+  final List<QuestionModel>? questions;
+
+  QuizCreationScreen({Key? key, this.questions}) : super(key: key);
+
   @override
   _QuizCreationScreenState createState() => _QuizCreationScreenState();
 }
 
 class _QuizCreationScreenState extends State<QuizCreationScreen> {
-  List<QuestionModel> questions = [];
+  late List<QuestionModel> questions;
+
+  @override
+  void initState() {
+    super.initState();
+    questions = widget.questions ?? [];
+  }
 
   void _addQuestion(QuestionType type) {
     final newQuestion = QuestionModel(
@@ -65,7 +75,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
               return;
             }
           }
-          if (!q.options.contains(q.options[q.correctAnswer.first])) {
+          if (!q.options.contains(q.correctAnswer.first)) {
             _showError(
               'Single choice question "${q.question}" must have a correct answer selected.',
             );
@@ -100,7 +110,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           print("Correct answer type: ${q.correctAnswer.runtimeType}");
           print("Correct answer list: ${q.correctAnswer}");
           // q.correctAnswer.every((answer) => print({answer.trim()}));?
-          if (q.correctAnswer.isEmpty || q.correctAnswer.trim().isEmpty) {
+          if (q.correctAnswer.isEmpty) {
             _showError(
               'Open-ended question "${q.question}" must have a correct answer.',
             );
@@ -116,24 +126,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
             );
             return;
           }
-          // List<String> correctOrder = q.correctAnswer
-          //     .split(',')
-          //     .map((e) => e.trim())
-          //     .where((e) => e.isNotEmpty)
-          //     .toList();
-          //
-          // if (correctOrder.length != q.options.length) {
-          //   _showError(
-          //     'Reorder question "${q.question}" must have correct order matching all options.',
-          //   );
-          //   return;
-          // }
-          // if (!Set.from(q.options).containsAll(correctOrder)) {
-          //   _showError(
-          //     'Correct order does not match options in question "${q.question}".',
-          //   );
-          //   return;
-          // }
           print("Reorder question log");
           print("Reorder question options: ${q.options}");
           print("Reorder question correct answer: ${q.correctAnswer}");
@@ -142,7 +134,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
 
         case QuestionType.trueFalse:
           print("Correct answer type: ${q.correctAnswer.runtimeType}");
-          if (!(q.correctAnswer == 'True' || q.correctAnswer == 'False')) {
+          if (!(q.correctAnswer.first == 'True' || q.correctAnswer.first == 'False')) {
             _showError(
               'True/False question "${q.question}" must have a correct answer selected.',
             );
@@ -151,7 +143,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           break;
       }
     }
-    print("___out of switch");
+    print("___out of Validation switch");
 
     // Reorder question shuffling (don’t change correctAnswer!)
     for (var q in questions) {
@@ -163,7 +155,9 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
       }
     }
 
+
     // Save to dummy data
+    dummy_data.clearDummyData(); // Clear existing questions
     dummy_data.questions.addAll(questions);
 
     ScaffoldMessenger.of(
@@ -234,59 +228,13 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Create Quiz'),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18.0),
-              child: ElevatedButton(
-                onPressed: questions.isEmpty
-                    ? () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            elevation: 8,
-                            backgroundColor: Colors.redAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            content: Row(
-                              children: [
-                                Icon(Icons.error_outline, color: Colors.white),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    "Add a question to save the quiz.",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            duration: Duration(seconds: 3),
-                          ),
-                        );
-                      }
-                    : _saveQuestions,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).buttonTheme.colorScheme?.primary,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("Save"),
-                    SizedBox(width: 5),
-                    Icon(Icons.save),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        title: FittedBox(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Create Quiz'),
+            ],
+          ),
         ),
         actions: [
           Row(
@@ -306,8 +254,52 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                   ],
                 ),
               ),
-
               SizedBox(width: 5),
+              ElevatedButton(
+                onPressed: questions.isEmpty
+                    ? () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      elevation: 8,
+                      backgroundColor: Colors.redAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      content: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Add a question to save the quiz.",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+                    : _saveQuestions,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).buttonTheme.colorScheme?.primary,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Save"),
+                    SizedBox(width: 5),
+                    Icon(Icons.save),
+                  ],
+                ),
+              )
             ],
           ),
         ],
@@ -355,7 +347,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.8),
+                                color: Colors.grey.withValues(alpha: 0.8),
                                 spreadRadius: 2,
                                 blurRadius: 5,
                               ),

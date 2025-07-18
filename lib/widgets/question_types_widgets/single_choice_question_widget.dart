@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/models/Question.dart';
-import 'package:kvizz/providers/dummy_data.dart';
 
 class SingleChoiceQuestionWidget extends StatefulWidget {
   final QuestionModel question;
@@ -34,7 +33,8 @@ class _SingleChoiceQuestionWidgetState
         .toList();
 
     if (widget.question.correctAnswer.isNotEmpty) {
-      _correctAnswerIndex = widget.question.correctAnswer.first;
+      final correctText = widget.question.correctAnswer.first;
+      _correctAnswerIndex = widget.question.options.indexOf(correctText);
     }
   }
 
@@ -65,38 +65,36 @@ class _SingleChoiceQuestionWidgetState
   }
 
   void _updateModel() {
-    widget.question.question = _questionController.text;
+    widget.question.question = _questionController.text.trim();
     widget.question.options =
         _optionControllers.map((c) => c.text.trim()).toList();
-    widget.question.correctAnswer = _correctAnswerIndex != null
-        ? [_correctAnswerIndex!]
-        : [];
 
-    print("----------- UpdateModel print statement");
-    print("question: ${widget.question.question}");
-    print("Options: ${widget.question.options}");
-    print("answer: ${widget.question.correctAnswer}");
+    if (_correctAnswerIndex != null &&
+        _correctAnswerIndex! < widget.question.options.length) {
+      final correctText = widget.question.options[_correctAnswerIndex!];
+      widget.question.correctAnswer = [correctText];
+    } else {
+      widget.question.correctAnswer = [];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // _updateModel();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Single Choice Question",
             style: Theme.of(context).textTheme.bodyLarge),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextField(
           controller: _questionController,
           onChanged: (_) => _updateModel(),
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Question',
             border: OutlineInputBorder(),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Text(
           'Options (Select single correct)',
           style: Theme.of(context).textTheme.titleMedium,
@@ -134,24 +132,25 @@ class _SingleChoiceQuestionWidgetState
                 ),
               ),
               trailing: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
+                icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () => _removeOption(index),
               ),
             ),
           );
         }),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: _optionControllers.length >= 4? null : _addOption,
-          icon: Icon(Icons.add),
-          label: Text('Add Option'),
+          onPressed: _optionControllers.length >= 4 ? null : _addOption,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Option'),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            icon: Icon(Icons.delete_forever, color: Colors.red),
-            label: Text('Delete Question', style: TextStyle(color: Colors.red)),
+            icon: const Icon(Icons.delete_forever, color: Colors.red),
+            label: const Text('Delete Question',
+                style: TextStyle(color: Colors.red)),
             onPressed: widget.onDelete,
           ),
         )

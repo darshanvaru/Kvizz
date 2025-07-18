@@ -25,11 +25,10 @@ class _OpenEndedQuestionWidgetState extends State<OpenEndedQuestionWidget> {
     super.initState();
     _questionController =
         TextEditingController(text: widget.question.question);
-    final correctAnswer = widget.question.correctAnswer;
+
+    // Join list into a single comma-separated string
     _answerController = TextEditingController(
-      text: correctAnswer is String
-          ? correctAnswer
-          : (correctAnswer is List ? correctAnswer.join(', ') : ''),
+      text: widget.question.correctAnswer.join(', '),
     );
   }
 
@@ -45,12 +44,11 @@ class _OpenEndedQuestionWidgetState extends State<OpenEndedQuestionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Textual Question",
-            style: Theme.of(context).textTheme.bodyLarge),
-        SizedBox(height: 8),
+        Text("Textual Question", style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 8),
         TextField(
           controller: _questionController,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Question',
             border: OutlineInputBorder(),
           ),
@@ -61,20 +59,25 @@ class _OpenEndedQuestionWidgetState extends State<OpenEndedQuestionWidget> {
         const SizedBox(height: 10),
         TextField(
           controller: _answerController,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Correct Answers',
             border: OutlineInputBorder(),
             hintText: "Comma-separated answers",
           ),
           onChanged: (value) {
-            widget.question.correctAnswer = value; //string value
+            // Split input by comma and trim whitespace
+            widget.question.correctAnswer = value
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
           },
         ),
         const SizedBox(height: 10),
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(
-            icon: Icon(Icons.delete, color: Colors.red),
+            icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: widget.onDelete,
           ),
         ),

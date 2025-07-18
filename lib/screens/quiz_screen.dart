@@ -95,13 +95,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     switch (question.type) {
       case QuestionType.single:
-        isCorrect = selectedRadio == question.correctAnswer.first;
+        isCorrect = question.options[selectedRadio?? 0] == question.correctAnswer.first;
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Answer: ${question.options[question.correctAnswer.first]}");
+        print("Answer: ${question.correctAnswer.first}");
         print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken Milliseconds");
@@ -114,16 +114,16 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         break;
 
       case QuestionType.multiple:
-        Set<int> correct = Set<int>.from(question.correctAnswer);
-        isCorrect =
-            Set<int>.from(selectedIndexes).containsAll(correct) &&
-                selectedIndexes.length == correct.length;
+        isCorrect = selectedIndexes.every((index) => question.correctAnswer.contains(question.options[index])) &&
+            selectedIndexes.length == question.correctAnswer.length;
+            // Set<int>.from(selectedIndexes).containsAll(correct) &&
+            //     selectedIndexes.length == correct.length;
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Correct Answers: ${correct.map((i) => question.options[i]).join(', ')}");
+        print("Correct Answers: ${(question.correctAnswer as List).map((i) => question.options[i]).join(', ')}");
         print("Selected Answers: ${selectedIndexes.map((i) => question.options[i]).join(', ')}");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken Milliseconds");
@@ -137,21 +137,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
       case QuestionType.open:
         final answer = answerController.text.trim();
-        bool isStringInList(String input, List<String> options) {
-          return options.any(
-                (element) => element.trim().toLowerCase() == input.trim().toLowerCase(),
-          );
-        }
-
-        isCorrect = answer.isNotEmpty &&
-            isStringInList(answer, question.correctAnswer.split(','));
+        isCorrect = answer.isNotEmpty && question.correctAnswer.contains(answer);
 
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Correct Answers: ${question.correctAnswer}");
+        print("Correct Answers: ${question.correctAnswer.join(', ')}");
         print("Answer Submitted: $answer");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken Milliseconds");
@@ -165,7 +158,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
       case QuestionType.reorder:
         List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
-        List<String> correctOrder = List<String>.from(question.correctAnswer);
+        List<String> correctOrder = question.correctAnswer;
 
         isCorrect = const ListEquality().equals(userOrder, correctOrder);
         pointsAwarded = isCorrect ? 1 : 0;
@@ -186,20 +179,18 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         break;
 
       case QuestionType.trueFalse:
-        print("SelectedRadio: $selectedRadio");
-        print("CorrectAnswer (String): ${question.correctAnswer}");
-
         // Convert the string "true"/"false" to index: 1 for true, 0 for false
-        int correctIndex = question.correctAnswer.trim().toLowerCase() == "true" ? 1 : 0;
+        // int correctIndex = question.correctAnswer.first.toLowerCase() == "true" ? 1 : 0;
+        String selectedLabel = selectedRadio == 0 ? "true" : "false";
 
-        isCorrect = selectedRadio == correctIndex;
+        isCorrect = selectedLabel == question.correctAnswer.first.toLowerCase();
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Correct Answer: ${correctIndex == 1 ? 'True' : 'False'}");
-        print("Answer Submitted: ${selectedRadio == 1 ? 'True' : selectedRadio == 0 ? 'False' : 'None'}");
+        print("Correct Answer: ${question.correctAnswer.first}");
+        print("Answer Submitted: ${selectedLabel}");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken seconds");
         print("-------------------");
@@ -238,6 +229,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
     ///Result screen
     if (currentIndex >= questions.length) {
       return Scaffold(
@@ -431,8 +423,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       if (question.type == QuestionType.single)
                         ...List.generate(question.options.length, (index) {
                           final isSelected = selectedRadio == index;
-                          final isCorrect =
-                              answered && index == question.correctAnswer.first;
+                          final isCorrect = question.options[index] == question.correctAnswer.first;
+                          // final isCorrect =
+                          //     answered && index == question.correctAnswer;
                           final isIncorrect =
                               answered && isSelected && !isCorrect;
 
@@ -497,9 +490,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                   ? null
                                   : () => setState(() {
                                       selectedRadio = index;
-                                      timeTaken = DateTime.now()
-                                          .difference(questionStartTime!)
-                                          .inMilliseconds;
+                                      timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
                                       answered = true;
                                     }),
                             ),
@@ -513,20 +504,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           children: [
                             // Options
                             ...List.generate(question.options.length, (index) {
-                              final isSelected = selectedIndexes.contains(
-                                index,
-                              );
+                              final isSelected = selectedIndexes.contains(index);
                               final isCorrect =
                                   (answered || timeUp) &&
-                                  (question.correctAnswer as List).contains(
-                                    index,
-                                  );
+                                  question.correctAnswer.contains(question.options[index]);
                               final isIncorrect =
                                   (answered || timeUp) &&
                                   isSelected &&
-                                  (question.correctAnswer as List).contains(
-                                    index,
-                                  );
+                                  !question.correctAnswer.contains(question.options[index]);
 
                               // Colors and styles
                               Color? tileColor = Colors.white;
@@ -741,7 +726,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             ...List.generate(2, (index) {
-                              final correctAnswerIndex = question.correctAnswer.toString().toLowerCase() == 'true' ? 1 : 0;
+                              final correctAnswerIndex = question.correctAnswer.first.toLowerCase() == 'true' ? 0 : 1;
                               final isSelected = selectedRadio == index;
                               final isCorrect = answered && index == correctAnswerIndex;
                               final isIncorrect = answered && isSelected && !isCorrect;
@@ -800,9 +785,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                     setState(() {
                                       selectedRadio = index;
                                       answered = true;
-                                      timeTaken = DateTime.now()
-                                          .difference(questionStartTime!)
-                                          .inMilliseconds;
+                                      timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
                                     });
                                   },
                                 ),

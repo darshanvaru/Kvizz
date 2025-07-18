@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kvizz/models/Question.dart';
 
-
 class MultipleChoiceQuestionWidget extends StatefulWidget {
   final QuestionModel question;
   final VoidCallback? onDelete;
@@ -22,7 +21,7 @@ class _MultipleChoiceQuestionWidgetState
     extends State<MultipleChoiceQuestionWidget> {
   final TextEditingController _questionController = TextEditingController();
   List<TextEditingController> _optionControllers = [];
-  Set<dynamic> _correctAnswerIndices = {};
+  Set<String> _correctAnswerValues = {};
 
   @override
   void initState() {
@@ -33,7 +32,7 @@ class _MultipleChoiceQuestionWidgetState
         .map((opt) => TextEditingController(text: opt))
         .toList();
 
-    _correctAnswerIndices = widget.question.correctAnswer.toSet();
+    _correctAnswerValues = widget.question.correctAnswer.toSet();
   }
 
   @override
@@ -53,21 +52,19 @@ class _MultipleChoiceQuestionWidgetState
 
   void _removeOption(int index) {
     setState(() {
+      String removedValue = _optionControllers[index].text.trim();
       _optionControllers.removeAt(index);
-      _correctAnswerIndices =
-          _correctAnswerIndices.where((i) => i != index).map((i) {
-            // Shift indices after removed option
-            return i > index ? i - 1 : i;
-          }).toSet();
+      _correctAnswerValues.remove(removedValue);
     });
   }
 
   void _toggleCorrectAnswer(int index) {
+    String value = _optionControllers[index].text.trim();
     setState(() {
-      if (_correctAnswerIndices.contains(index)) {
-        _correctAnswerIndices.remove(index);
+      if (_correctAnswerValues.contains(value)) {
+        _correctAnswerValues.remove(value);
       } else {
-        _correctAnswerIndices.add(index);
+        _correctAnswerValues.add(value);
       }
     });
   }
@@ -76,7 +73,11 @@ class _MultipleChoiceQuestionWidgetState
     widget.question.question = _questionController.text.trim();
     widget.question.options =
         _optionControllers.map((c) => c.text.trim()).toList();
-    widget.question.correctAnswer = _correctAnswerIndices.toList();
+
+    // Update correct answers only if they exist in current options
+    widget.question.correctAnswer = _correctAnswerValues
+        .where((ans) => widget.question.options.contains(ans))
+        .toList();
   }
 
   @override
@@ -103,7 +104,8 @@ class _MultipleChoiceQuestionWidgetState
           style: Theme.of(context).textTheme.titleMedium,
         ),
         ...List.generate(_optionControllers.length, (index) {
-          final isCorrect = _correctAnswerIndices.contains(index);
+          final text = _optionControllers[index].text.trim();
+          final isCorrect = _correctAnswerValues.contains(text);
 
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -136,7 +138,7 @@ class _MultipleChoiceQuestionWidgetState
         }),
         SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: _optionControllers.length >= 4? null : _addOption,
+          onPressed: _optionControllers.length >= 4 ? null : _addOption,
           icon: Icon(Icons.add),
           label: Text('Add Option'),
         ),

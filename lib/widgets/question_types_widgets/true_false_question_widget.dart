@@ -24,15 +24,15 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
   void initState() {
     super.initState();
     _questionController = TextEditingController(text: widget.question.question);
-    _correctAnswer = (widget.question.correctAnswer != null && widget.question.correctAnswer!.isNotEmpty)
-        ? widget.question.correctAnswer!.first
-        : 'True';
+    _correctAnswer = (widget.question.correctAnswer.isNotEmpty)
+        ? widget.question.correctAnswer.first
+        : 'True'; // Default to 'True' if empty
   }
 
   void _setCorrectAnswer(String value) {
     setState(() {
       _correctAnswer = value;
-      widget.question.correctAnswer = value;
+      widget.question.correctAnswer = [value]; // Store as List<String>
     });
   }
 
@@ -49,12 +49,13 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
       children: [
         Text("True or False Question",
             style: Theme.of(context).textTheme.bodyLarge),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
+
         // Question Field
         TextFormField(
           controller: _questionController,
           onChanged: (val) => widget.question.question = val,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'True/False Question',
             border: OutlineInputBorder(),
           ),
@@ -63,7 +64,8 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
         const SizedBox(height: 16),
 
         // True/False Selection
-        Text("Select the correct answer:", style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text("Select the correct answer:",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         Row(
           children: ['True', 'False'].map((value) {
             return Expanded(
@@ -72,7 +74,6 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
                 value: value,
                 groupValue: _correctAnswer,
                 onChanged: (val) {
-                  print("Correct Answer: $val");
                   if (val != null) _setCorrectAnswer(val);
                 },
               ),
@@ -86,8 +87,8 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
             alignment: Alignment.bottomRight,
             child: TextButton.icon(
               onPressed: widget.onDelete,
-              icon: Icon(Icons.delete, color: Colors.red),
-              label: Text('Delete', style: TextStyle(color: Colors.red)),
+              icon: const Icon(Icons.delete, color: Colors.red),
+              label: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ),
       ],
