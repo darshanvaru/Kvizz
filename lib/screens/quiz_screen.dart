@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 
-import '../providers/dummy_data.dart' as dummy;
+import '../providers/dummy_data.dart' as dummy_data;
 import '../models/Question.dart';
+import 'create_quiz_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -14,7 +15,7 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
-  final List<QuestionModel> questions = dummy.questions;
+  final List<QuestionModel> questions = dummy_data.questions;
 
   int currentIndex = 0;
   int score = 0;
@@ -94,16 +95,16 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     switch (question.type) {
       case QuestionType.single:
-        isCorrect = selectedRadio == question.correctAnswer;
+        print("SelectedRadio: $selectedRadio");
+        print("CorrectAnsewer: ${question.correctAnswer}");
+        isCorrect = selectedRadio == question.correctAnswer.first;
         pointsAwarded = isCorrect ? 1 : 0;
 
         print("-------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
-        print("Answer: ${question.options[question.correctAnswer]}");
-        print(
-          "Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}",
-        );
+        print("Answer: ${question.options[question.correctAnswer.first]}");
+        print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken seconds");
         print("-------------------");
@@ -116,12 +117,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
       case QuestionType.multiple:
         Set<int> correct = Set<int>.from(question.correctAnswer);
-        pointsAwarded = selectedIndexes
-            .where((i) => correct.contains(i))
-            .length;
         isCorrect =
             Set<int>.from(selectedIndexes).containsAll(correct) &&
             selectedIndexes.length == correct.length;
+        pointsAwarded = isCorrect ? 1 : 0;
 
         Future.delayed(const Duration(seconds: 5), () {
           currentIndex++;
@@ -197,7 +196,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-
     ///Result screen
     if (currentIndex >= questions.length) {
       return Scaffold(
@@ -225,6 +223,18 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 icon: const Icon(Icons.refresh),
                 label: const Text("Restart Quiz"),
               ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => QuizCreationScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text("Create Quiz"),
+              ),
             ],
           ),
         ),
@@ -242,7 +252,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 /// Progress Bar
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
@@ -340,12 +349,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         children: [
                           Text(
                             question.type == QuestionType.single
-                                ? "Multiple Choice Question"
+                                ? "Single Choice Question"
                                 : question.type == QuestionType.open
                                 ? "Open Ended Question"
                                 : question.type == QuestionType.reorder
                                 ? "Reorder Question"
-                                : "Single Choice Question",
+                                : "Multiple Choice Question",
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -381,7 +390,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         ...List.generate(question.options.length, (index) {
                           final isSelected = selectedRadio == index;
                           final isCorrect =
-                              answered && index == question.correctAnswer;
+                              answered && index == question.correctAnswer.first;
                           final isIncorrect =
                               answered && isSelected && !isCorrect;
 
@@ -403,9 +412,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               );
                               optionTextColor = Colors.teal;
                             } else if (isIncorrect) {
-                              tileColor = Theme.of(
-                                context,
-                              ).primaryColor.withValues(alpha: 0.1);
+                              tileColor = Theme.of(context,).primaryColor.withValues(alpha: 0.1);
                               borderColor = Colors.redAccent;
                               leadingIcon = const Icon(
                                 Icons.cancel,
@@ -417,7 +424,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             tileColor = Colors.grey.shade200;
                             borderColor = const Color(0xFF57A2C3);
                             leadingIcon = const Icon(
-                              Icons.circle_outlined,
+                              Icons.circle,
                               color: Color(0xFF53BDEB),
                             );
                             optionTextColor = Colors.black87;
@@ -469,13 +476,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               );
                               final isCorrect =
                                   (answered || timeUp) &&
-                                  (question.correctAnswer as Set).contains(
+                                  (question.correctAnswer as List).contains(
                                     index,
                                   );
                               final isIncorrect =
                                   (answered || timeUp) &&
                                   isSelected &&
-                                  !(question.correctAnswer as Set).contains(
+                                  (question.correctAnswer as List).contains(
                                     index,
                                   );
 
@@ -538,9 +545,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 ),
                               );
                             }),
-
                             const SizedBox(height: 10),
-
                             // Submit Button
                             if (!answered && !timeUp)
                               ElevatedButton(
@@ -630,7 +635,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               itemCount: question.options.length,
                               buildDefaultDragHandles: false,
                               onReorder: answered || timeUp
-                                  ? (_,__,) {} // still required, but won't be triggered
+                                  ? (
+                                      _,
+                                      __,
+                                    ) {} // still required, but won't be triggered
                                   : (oldIndex, newIndex) {
                                       setState(() {
                                         if (newIndex > oldIndex) newIndex -= 1;
@@ -673,18 +681,18 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 onPressed: (answered || timeUp)
                                     ? null
                                     : () {
-                                  setState(() {
-                                    answered = true;
+                                        setState(() {
+                                          answered = true;
 
-                                    // Save time taken
-                                    timeTaken = DateTime.now()
-                                        .difference(questionStartTime!)
-                                        .inMilliseconds;
-                                  });
-                                },
+                                          // Save time taken
+                                          timeTaken = DateTime.now()
+                                              .difference(questionStartTime!)
+                                              .inMilliseconds;
+                                        });
+                                      },
                                 child: const Text("Submit"),
                               ),
-                            )
+                            ),
                           ],
                         ),
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/models/Question.dart';
+import 'package:kvizz/providers/dummy_data.dart';
 
 class SingleChoiceQuestionWidget extends StatefulWidget {
   final QuestionModel question;
@@ -70,11 +71,16 @@ class _SingleChoiceQuestionWidgetState
     widget.question.correctAnswer = _correctAnswerIndex != null
         ? [_correctAnswerIndex!]
         : [];
+
+    print("----------- UpdateModel print statement");
+    print("question: ${widget.question.question}");
+    print("Options: ${widget.question.options}");
+    print("answer: ${widget.question.correctAnswer}");
   }
 
   @override
   Widget build(BuildContext context) {
-    _updateModel();
+    // _updateModel();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +120,7 @@ class _SingleChoiceQuestionWidgetState
                 onChanged: (val) {
                   setState(() {
                     _correctAnswerIndex = val;
+                    _updateModel();
                   });
                 },
               ),
