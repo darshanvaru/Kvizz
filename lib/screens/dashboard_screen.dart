@@ -27,9 +27,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // TODO: Replace this with your real join logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Joining lobby with code: $code')),
-    );
+    // Implement join lobby logic here
+    print('Join lobby logic not implemented.');
   }
 
   @override

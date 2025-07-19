@@ -55,6 +55,7 @@ class SettingsScreen extends StatelessWidget {
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       // TODO: Navigate to Profile Details/Edit screen
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => Placeholder()));
                     },
                   ),
                 ),
@@ -89,9 +90,8 @@ class SettingsScreen extends StatelessWidget {
                         "Are you sure you want to logout?",
                             () {
                           // TODO: Add logout logic here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Logged out")),
-                          );
+                          // Implement logout logic here
+                          print('Logout logic not implemented.');
                         },
                       );
                     },
@@ -115,9 +115,8 @@ class SettingsScreen extends StatelessWidget {
                         "This action is permanent. Are you sure?",
                             () {
                           // TODO: Add delete account logic here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Account deleted")),
-                          );
+                          // Implement delete account logic here
+                          print('Delete account logic not implemented.');
                         },
                       );
                     },
