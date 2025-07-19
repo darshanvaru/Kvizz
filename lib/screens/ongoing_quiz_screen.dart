@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:collection/collection.dart';
-import 'package:kvizz/screens/dashboard_screen.dart';
 
-import '../providers/dummy_data.dart' as dummy_data;
 import '../models/Question.dart';
-import 'create_or_edit_quiz_screen.dart';
+import '../providers/tab_index_provider.dart';
 
 class OngoingQuizScreen extends StatefulWidget {
   final List<QuestionModel> questions;
@@ -258,12 +257,10 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {
-                  // Navigator.pop(context);
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => DashboardScreen(),
-                    ),
-                  );
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+
+                  // Then update the index
+                  Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
                 },
                 icon: const Icon(Icons.home),
                 label: const Text("Return Home"),
@@ -770,7 +767,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                   leadingIcon = const Icon(Icons.check_circle, color: Colors.teal);
                                   optionTextColor = Colors.teal;
                                 } else if (isIncorrect) {
-                                  tileColor = Theme.of(context).primaryColor.withOpacity(0.1);
+                                  tileColor = Theme.of(context).primaryColor.withValues(alpha: .1);
                                   borderColor = Colors.redAccent;
                                   leadingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
                                   optionTextColor = Colors.redAccent;

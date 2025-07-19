@@ -20,7 +20,7 @@ class MyQuizzesScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => QuizCreationOrEditScreen()),
+                    MaterialPageRoute(builder: (_) => CreateOrEditQuizScreen()),
                   );
                 },
                 icon: const Icon(Icons.add),

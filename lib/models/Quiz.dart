@@ -1,10 +1,10 @@
 import 'package:kvizz/models/Question.dart';
 
-class Quiz {
+class QuizModel {
   final String id;
   final String title;
   final String description;
-  List<QuestionModel> questions;
+  final List<QuestionModel> questions;
   final String type;
   final int timePerQuestion;
   final String questionOrder;
@@ -17,7 +17,7 @@ class Quiz {
   final bool isActive;
   final DateTime createdAt;
 
-  Quiz({
+  QuizModel({
     required this.id,
     required this.title,
     required this.description,
@@ -34,4 +34,26 @@ class Quiz {
     required this.isActive,
     required this.createdAt,
   });
+
+  factory QuizModel.fromJson(Map<String, dynamic> json) {
+    return QuizModel(
+      id: json['_id'],
+      title: json['title'],
+      description: json['description'],
+      questions: (json['questions'] as List)
+          .map((q) => QuestionModel.fromJson(q))
+          .toList(),
+      type: json['type'],
+      timePerQuestion: json['timePerQuestion'],
+      questionOrder: json['questionOrder'],
+      pointsPerQuestion: json['pointsPerQuestion'],
+      timesPlayed: json['stats']?['timesPlayed'] ?? 0,
+      averageScore: json['stats']?['averageScore'] ?? 0,
+      totalUserPlayed: json['stats']?['totalUserPlayed'] ?? 0,
+      participantLimit: json['participantLimit'] ?? 10,
+      difficulty: json['difficulty'],
+      isActive: json['isActive'] ?? true,
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
 }

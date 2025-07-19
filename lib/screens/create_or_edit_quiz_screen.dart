@@ -10,16 +10,16 @@ import '../widgets/question_types_widgets/reorderable_question_widget.dart';
 import '../widgets/question_types_widgets/single_choice_question_widget.dart';
 import '../widgets/question_types_widgets/true_false_question_widget.dart';
 
-class QuizCreationOrEditScreen extends StatefulWidget {
+class CreateOrEditQuizScreen extends StatefulWidget {
   final List<QuestionModel>? questions;
 
-  QuizCreationOrEditScreen({Key? key, this.questions}) : super(key: key);
+  CreateOrEditQuizScreen({Key? key, this.questions}) : super(key: key);
 
   @override
-  _QuizCreationOrEditScreenState createState() => _QuizCreationOrEditScreenState();
+  _CreateOrEditQuizScreenState createState() => _CreateOrEditQuizScreenState();
 }
 
-class _QuizCreationOrEditScreenState extends State<QuizCreationOrEditScreen> {
+class _CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
   late List<QuestionModel> questions;
 
   @override
