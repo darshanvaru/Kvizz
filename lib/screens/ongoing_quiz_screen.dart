@@ -101,14 +101,14 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
         isCorrect = question.options[selectedRadio?? 0] == question.correctAnswer.first;
         pointsAwarded = isCorrect ? 1 : 0;
 
-        print("-------------------");
+        print("-----------------------------------");
         print("Question Type: ${question.type}");
         print("Question: ${question.question}");
         print("Answer: ${question.correctAnswer.first}");
         print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
         print("Is Correct? $isCorrect");
         print("Time Taken: $timeTaken Milliseconds");
-        print("-------------------");
+        print("-----------------------------------");
 
         Future.delayed(const Duration(seconds: 5), () {
           currentIndex++;
