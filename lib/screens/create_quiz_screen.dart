@@ -239,6 +239,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
         actions: [
           Row(
             children: [
+              //Give Quiz
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
@@ -255,6 +256,8 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                 ),
               ),
               SizedBox(width: 5),
+
+              //Save Button
               ElevatedButton(
                 onPressed: questions.isEmpty
                     ? () {
@@ -286,11 +289,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                         );
                       }
                     : _saveQuestions,
-                // style: ElevatedButton.styleFrom(
-                //   backgroundColor: Theme.of(
-                //     context,
-                //   ).buttonTheme.colorScheme?.primary,
-                // ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -334,8 +332,9 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                       });
                     },
                     itemBuilder: (context, index) {
-                      return Padding(
-                        key: ValueKey(questions[index].id),
+                      print("Ids: ${questions[index].id}");
+                      return Container(
+                        key: Key('${questions[index].id}_$index'),
                         padding: const EdgeInsets.symmetric(
                           vertical: 15,
                           horizontal: 10,
