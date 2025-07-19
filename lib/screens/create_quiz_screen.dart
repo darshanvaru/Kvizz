@@ -1,5 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:kvizz/screens/quiz_screen.dart';
+import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 
 import '../models/Question.dart';
 import '../providers/dummy_data.dart' as dummy_data;
@@ -29,7 +31,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
 
   void _addQuestion(QuestionType type) {
     final newQuestion = QuestionModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '${DateTime.now().millisecondsSinceEpoch}*${Random().nextInt(100000)}',
       question: '',
       options: [],
       correctAnswer: [],
@@ -240,7 +242,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => QuizScreen()),
+                    MaterialPageRoute(builder: (context) => OngoingQuizScreen()),
                   );
                 },
                 child: Row(
@@ -284,11 +286,11 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                         );
                       }
                     : _saveQuestions,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).buttonTheme.colorScheme?.primary,
-                ),
+                // style: ElevatedButton.styleFrom(
+                //   backgroundColor: Theme.of(
+                //     context,
+                //   ).buttonTheme.colorScheme?.primary,
+                // ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

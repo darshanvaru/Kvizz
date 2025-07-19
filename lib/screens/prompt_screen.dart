@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// import '../widgets/csv_picker_widget.dart';
+// import '../widgets/pdf_picker_widget.dart';
+
 class PromptScreen extends StatefulWidget {
   const PromptScreen({Key? key}) : super(key: key);
 
@@ -56,16 +59,19 @@ class _PromptScreenState extends State<PromptScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey[50],
+      // backgroundColor: Colors.blueGrey[50],
       body: FadeTransition(
         opacity: _fadeInAnimation,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.light
+                    ? const Color(0xFFF8F9FA)
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -83,7 +89,7 @@ class _PromptScreenState extends State<PromptScreen>
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      // color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -97,13 +103,13 @@ class _PromptScreenState extends State<PromptScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      // fillColor: Colors.grey[100],
                     ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                      // backgroundColor: Colors.blueAccent,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 14),
                       shape: RoundedRectangleBorder(

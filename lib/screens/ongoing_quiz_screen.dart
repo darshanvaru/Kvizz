@@ -7,14 +7,14 @@ import '../providers/dummy_data.dart' as dummy_data;
 import '../models/Question.dart';
 import 'create_quiz_screen.dart';
 
-class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key});
+class OngoingQuizScreen extends StatefulWidget {
+  const OngoingQuizScreen({super.key});
 
   @override
-  State<QuizScreen> createState() => _QuizScreenState();
+  State<OngoingQuizScreen> createState() => _OngoingQuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
+class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProviderStateMixin {
   final List<QuestionModel> questions = dummy_data.questions;
 
   int currentIndex = 0;

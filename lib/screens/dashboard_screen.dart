@@ -45,6 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: TextField(
                   controller: _codeController,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     hintText: 'Enter lobby code',
                     border: OutlineInputBorder(
@@ -57,9 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ElevatedButton(
                 onPressed: joinLobby,
                 child: const Text('Join'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF4B39EF),
-                ),
               ),
             ],
           ),
