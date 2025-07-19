@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/Quiz.dart';
 
 class QuizCard extends StatefulWidget {
-  final Quiz quiz;
+  final QuizModel quiz;
 
   const QuizCard({super.key, required this.quiz});
 

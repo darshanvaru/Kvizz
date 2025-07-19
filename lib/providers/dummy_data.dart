@@ -32,8 +32,8 @@ final List<QuestionModel> questions = [
   ),
 ];
 
-final List<Quiz> dummyQuizzes = [
-  Quiz(
+final List<QuizModel> dummyQuizzes = [
+  QuizModel(
     id: "1",
     title: "AI Basics",
     description: "Introduction to AI concepts.",
@@ -50,7 +50,7 @@ final List<Quiz> dummyQuizzes = [
     isActive: true,
     createdAt: DateTime.now().subtract(const Duration(days: 2)),
   ),
-  Quiz(
+  QuizModel(
     id: "2",
     title: "Flutter Deep Dive",
     description: "Advanced concepts in Flutter.",

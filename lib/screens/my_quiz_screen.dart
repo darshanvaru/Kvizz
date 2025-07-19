@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/screens/quiz_detail_screen.dart';
-import 'package:kvizz/widgets/quiz_card.dart';
-import '../providers/dummy_data.dart';
+import 'package:provider/provider.dart';
+import '../models/Quiz.dart';
+import '../providers/quiz_provider.dart';
 import 'create_or_edit_quiz_screen.dart';
+import 'quiz_detail_screen.dart';
+import '../widgets/quiz_card.dart';
 
 class MyQuizzesScreen extends StatelessWidget {
   const MyQuizzesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final quizzes = Provider.of<QuizProvider>(context).quizzes;
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -20,7 +24,7 @@ class MyQuizzesScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => QuizCreationOrEditScreen()),
+                    MaterialPageRoute(builder: (_) => CreateOrEditQuizScreen()),
                   );
                 },
                 icon: const Icon(Icons.add),
@@ -32,24 +36,30 @@ class MyQuizzesScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Expanded makes the GridView take remaining space
             Expanded(
-              child: GridView.builder(
+              child: quizzes.isEmpty
+                  ? const Center(
+                child: Text(
+                  "No quizzes created yet.",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+                  : GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                 ),
-                itemCount: dummyQuizzes.length,
+                itemCount: quizzes.length,
                 itemBuilder: (ctx, index) {
-                  final quiz = dummyQuizzes[index];
                   return InkWell(
                     onTap: () {
-                      print("On Tap for quiz: ${quiz.title}");
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => QuizDetailScreen(quiz: quiz)),
+                        MaterialPageRoute(
+                          builder: (_) => QuizDetailScreen(quiz: quizzes[index]),
+                        ),
                       );
                     },
-                    child: QuizCard(quiz: quiz),
+                    child: QuizCard(quiz: quizzes[index]),
                   );
                 },
               ),

@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/providers/quiz_provider.dart';
+import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
-import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
+// import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
-import 'package:kvizz/screens/my_quiz.dart';
+import 'package:kvizz/screens/my_quiz_screen.dart';
 import 'package:kvizz/screens/prompt_screen.dart';
 import 'package:kvizz/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:provider/provider.dart';
 // import 'package:kvizz/screens/auth_screen.dart';
-import 'package:kvizz/screens/ongoing_quiz_screen.dart';
+// import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SelectedIndexProvider()),
+        ChangeNotifierProvider(create: (_) => QuizProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -48,14 +53,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
   final List<Widget> _pages = [
     DashboardScreen(),
     MyQuizzesScreen(),
     PromptScreen(),
-    SettingsScreen()
-    ,
+    SettingsScreen(),
   ];
 
   final List<String> _titles = [
@@ -65,23 +67,22 @@ class _HomeScreenState extends State<HomeScreen> {
     'Settings',
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final selectedIndexProvider = Provider.of<SelectedIndexProvider>(context);
+    final selectedIndex = selectedIndexProvider.selectedIndex;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
+        title: Text(_titles[selectedIndex]),
         elevation: 1,
       ),
-      body: _pages[_selectedIndex],
+      body: _pages[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: selectedIndex,
+        onTap: (index) {
+          selectedIndexProvider.updateSelectedIndex(index);
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'MyQuiz'),

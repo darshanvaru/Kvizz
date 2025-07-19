@@ -1,7 +1,7 @@
-enum QuestionType { multiple, single, open, reorder, trueFalse}
+enum QuestionType { single, multiple, open, reorder, trueFalse }
 
 class QuestionModel {
-  String id;
+  final String id;
   QuestionType type;
   String question;
   List<String> options;
@@ -14,4 +14,17 @@ class QuestionModel {
     required this.options,
     required this.correctAnswer,
   });
+
+  factory QuestionModel.fromJson(Map<String, dynamic> json) {
+    return QuestionModel(
+      id: json['_id'],
+      question: json['question'],
+      options: List<String>.from(json['options']),
+      correctAnswer: List<String>.from(json['correctAnswer']),
+      type: QuestionType.values.firstWhere(
+            (e) => e.name == json['type'],
+        orElse: () => QuestionType.single,
+      ),
+    );
+  }
 }
