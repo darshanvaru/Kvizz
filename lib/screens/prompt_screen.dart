@@ -71,6 +71,7 @@
           print("✅ AI Output: $quizData");
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              behavior: SnackBarBehavior.floating,
               content: const Text(
                 "Quiz generated!, you can check your quiz in MyQuiz Tab",
               ),
