@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/widgets/quiz_card.dart';
 import '../providers/dummy_data.dart';
 import 'create_quiz_screen.dart';
 
@@ -11,59 +12,52 @@ class MyQuizzesScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("My Quizzes"),
       ),
-      body: ListView.builder(
-        itemCount: dummyQuizzes.length,
-        itemBuilder: (ctx, index) {
-          final quiz = dummyQuizzes[index];
-          return InkWell(
-            onTap: () {
-              print("On Tap for quiz: ${quiz.title}");
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => QuizCreationScreen(questions: quiz.questions)),
-              );
-            },
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                title: Text(
-                  quiz.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Text(quiz.description),
-                    const SizedBox(height: 6),
-                    Text("Difficulty: ${quiz.difficulty}"),
-                    Text("Type: ${quiz.type}"),
-                    Text("Questions: ${quiz.timePerQuestion}s each"),
-                    Text("Points: ${quiz.pointsPerQuestion}"),
-                    Text("Plays: ${quiz.timesPlayed}"),
-                  ],
-                ),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: Theme.of(context).primaryColor,
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => QuizCreationScreen()),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text("Add New Quiz"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => QuizCreationScreen()),
-          );
-        },
-        label: const Text("Add New Quiz"),
-        icon: const Icon(Icons.add),
+            const SizedBox(height: 12),
+            // Expanded makes the GridView take remaining space
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                ),
+                itemCount: dummyQuizzes.length,
+                itemBuilder: (ctx, index) {
+                  final quiz = dummyQuizzes[index];
+                  return InkWell(
+                    onTap: () {
+                      print("On Tap for quiz: ${quiz.title}");
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuizCreationScreen(questions: quiz.questions)),
+                      );
+                    },
+                    child: QuizCard(quiz: quiz),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

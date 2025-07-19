@@ -38,6 +38,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    print("Questions.isEmpty: ${questions.isEmpty}");
     _prepareQuestion();
   }
 

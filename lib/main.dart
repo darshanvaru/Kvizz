@@ -81,7 +81,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Kwizz',
       theme: quizAppTheme,
-      home: PromptScreen()
+      home: MyQuizzesScreen()
     );
   }
 }

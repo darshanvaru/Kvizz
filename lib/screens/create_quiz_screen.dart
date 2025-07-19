@@ -58,7 +58,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
 
       // Specific validation based on question type
       switch (q.type) {
-
         ///Single choice question
         case QuestionType.single:
           if (q.options.length < 2) {
@@ -118,7 +117,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           }
           break;
 
-
         case QuestionType.reorder:
           if (q.options.length < 3) {
             _showError(
@@ -129,12 +127,15 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
           print("Reorder question log");
           print("Reorder question options: ${q.options}");
           print("Reorder question correct answer: ${q.correctAnswer}");
-          print("Reorder question correct answer index: ${q.correctAnswer.runtimeType}");
+          print(
+            "Reorder question correct answer index: ${q.correctAnswer.runtimeType}",
+          );
           break;
 
         case QuestionType.trueFalse:
           print("Correct answer type: ${q.correctAnswer.runtimeType}");
-          if (!(q.correctAnswer.first == 'True' || q.correctAnswer.first == 'False')) {
+          if (!(q.correctAnswer.first == 'True' ||
+              q.correctAnswer.first == 'False')) {
             _showError(
               'True/False question "${q.question}" must have a correct answer selected.',
             );
@@ -154,7 +155,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
         }
       }
     }
-
 
     // Save to dummy data
     dummy_data.clearDummyData(); // Clear existing questions
@@ -231,9 +231,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
         title: FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Create Quiz'),
-            ],
+            children: [Text('Create Quiz')],
           ),
         ),
         actions: [
@@ -258,33 +256,33 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
               ElevatedButton(
                 onPressed: questions.isEmpty
                     ? () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      behavior: SnackBarBehavior.floating,
-                      elevation: 8,
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      content: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.white),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              "Add a question to save the quiz.",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            elevation: 8,
+                            backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            content: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.white),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    "Add a question to save the quiz.",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            duration: Duration(seconds: 3),
                           ),
-                        ],
-                      ),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                }
+                        );
+                      }
                     : _saveQuestions,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(
@@ -299,7 +297,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                     Icon(Icons.save),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ],
@@ -325,7 +323,7 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                 : ReorderableListView.builder(
                     padding: EdgeInsets.all(16),
                     itemCount: questions.length,
-                    buildDefaultDragHandles: true,
+                    buildDefaultDragHandles: false,
                     onReorder: (oldIndex, newIndex) {
                       setState(() {
                         if (newIndex > oldIndex) newIndex -= 1;
@@ -356,7 +354,13 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.drag_handle, color: Colors.grey),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               SizedBox(height: 10),
                               _buildQuestionWidget(questions[index]),
                             ],
