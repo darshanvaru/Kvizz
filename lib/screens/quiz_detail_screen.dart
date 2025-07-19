@@ -1,19 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/models/Quiz.dart';
+import 'package:kvizz/providers/quiz_provider.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/ongoing_quiz_screen.dart';
+import 'package:provider/provider.dart';
 
 class QuizDetailScreen extends StatelessWidget {
   final QuizModel quiz;
 
   const QuizDetailScreen({super.key, required this.quiz});
 
+  void _confirmAndDeleteQuiz(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Quiz'),
+        content: const Text('Are you sure you want to delete this quiz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<QuizProvider>(context, listen: false)
+                  .deleteQuizById(quiz.id);
+              Navigator.pop(ctx); // Close dialog
+              Navigator.pop(context); // Exit detail screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Quiz deleted successfully!")),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(quiz.title),
-        // backgroundColor: Colors.deepPurple,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: 'Delete Quiz',
+            onPressed: () => _confirmAndDeleteQuiz(context),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -35,7 +72,6 @@ class QuizDetailScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.visibility),
                   label: const Text("Preview"),
-                  // style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
                 ),
               ),
               const SizedBox(width: 12),
@@ -45,13 +81,13 @@ class QuizDetailScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => CreateOrEditQuizScreen(questions: quiz.questions),
+                        builder: (_) =>
+                            CreateOrEditQuizScreen(editingQuiz: quiz),
                       ),
                     );
                   },
                   icon: const Icon(Icons.edit),
                   label: const Text("Edit"),
-                  // style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[800]),
                 ),
               ),
               const SizedBox(width: 12),
@@ -60,13 +96,13 @@ class QuizDetailScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => OngoingQuizScreen(questions: quiz.questions),
+                        builder: (context) =>
+                            OngoingQuizScreen(questions: quiz.questions),
                       ),
                     );
                   },
                   icon: const Icon(Icons.play_arrow),
                   label: const Text("Play"),
-                  // style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700]),
                 ),
               ),
             ],
@@ -80,28 +116,25 @@ class QuizDetailScreen extends StatelessWidget {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      // color: Colors.deepPurple.shade50,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(quiz.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Text(quiz.description, style: Theme.of(context).textTheme.bodyMedium),
+            Text(quiz.description,
+                style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 10),
             Row(
               children: [
-                Chip(
-                  label: Text(quiz.difficulty),
-                  // backgroundColor: Colors.deepPurple.shade100,
-                ),
+                Chip(label: Text(quiz.difficulty)),
                 const SizedBox(width: 10),
-                Chip(
-                  label: Text(quiz.isActive ? 'Active' : 'Inactive'),
-                  // backgroundColor: quiz.isActive ? Colors.green.shade100 : Colors.red.shade100,
-                ),
+                Chip(label: Text(quiz.isActive ? 'Active' : 'Inactive')),
               ],
             ),
           ],
@@ -111,9 +144,6 @@ class QuizDetailScreen extends StatelessWidget {
   }
 
   Widget _buildStatsGrid(BuildContext context) {
-    // final labelStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey[800]);
-    // final valueStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87);
-
     final stats = <Map<String, String>>[
       {'Type': quiz.type},
       {'Time per Question': '${quiz.timePerQuestion} sec'},
@@ -147,7 +177,7 @@ class QuizDetailScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: .15),
+                color: Colors.grey.withOpacity(.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -161,7 +191,7 @@ class QuizDetailScreen extends StatelessWidget {
               children: [
                 Text(entry.key),
                 const SizedBox(height: 4),
-                Text(entry.value,),
+                Text(entry.value),
               ],
             ),
           ),

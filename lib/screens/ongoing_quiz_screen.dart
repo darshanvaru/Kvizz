@@ -18,7 +18,7 @@ class OngoingQuizScreen extends StatefulWidget {
 class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProviderStateMixin {
   late final List<QuestionModel> questions;
 
-  int currentIndex = 3;
+  int currentIndex = 0;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
