@@ -24,7 +24,7 @@ void main() {
   );
 }
 
-// ---------------- MyApp ------------------
+/// ---------------- MyApp ------------------
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ---------------- HomeScreen ------------------
+/// ---------------- HomeScreen ------------------
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

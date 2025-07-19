@@ -16,7 +16,7 @@ class CreateOrEditQuizScreen extends StatefulWidget {
   final List<QuestionModel>? questions;
   final QuizModel? editingQuiz;
 
-  CreateOrEditQuizScreen({Key? key, this.questions, this.editingQuiz}) : super(key: key);
+  const CreateOrEditQuizScreen({super.key, this.questions, this.editingQuiz});
 
   @override
   _CreateOrEditQuizScreenState createState() => _CreateOrEditQuizScreenState();
