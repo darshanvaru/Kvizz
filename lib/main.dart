@@ -2,16 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:kvizz/providers/quiz_provider.dart';
 import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
+import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
 import 'package:kvizz/screens/my_quiz_screen.dart';
 import 'package:kvizz/screens/prompt_screen.dart';
 import 'package:kvizz/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  print("----------Preference initialized");
+  print("----------Preference initialized in Main(), isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
   runApp(
     MultiProvider(
       providers: [
@@ -19,14 +26,16 @@ void main() {
         ChangeNotifierProvider(create: (_) => SelectedIndexProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
       ],
-      child: const MyApp(),
+      child: MyApp(isLoggedIn: prefs.getBool("isLoggedIn") ?? false),
     ),
   );
 }
 
 /// ---------------- MyApp ------------------
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +48,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: const HomeScreen(),
+      home: isLoggedIn? const HomeScreen() : const AuthScreen(),
     );
   }
 }

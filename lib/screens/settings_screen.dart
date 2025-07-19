@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/screens/auth_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
-  void _showConfirmationDialog(BuildContext context, String title, String content, VoidCallback onConfirm) {
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late final prefs;
+
+  @override
+  void initState() {
+    initializePreferences();
+    super.initState();
+  }
+
+  void initializePreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    print("----------Preference initialized in SettingsScreen, isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
+  }
+
+  void _showConfirmationDialog(
+    BuildContext context,
+    String title,
+    String content,
+    VoidCallback onConfirm,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -33,9 +58,7 @@ class SettingsScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-      ),
+      appBar: AppBar(title: const Text("Settings")),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -55,7 +78,10 @@ class SettingsScreen extends StatelessWidget {
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       // TODO: Navigate to Profile Details/Edit screen
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => Placeholder()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Placeholder()),
+                      );
                     },
                   ),
                 ),
@@ -88,16 +114,21 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         "Logout",
                         "Are you sure you want to logout?",
-                            () {
-                          // TODO: Add logout logic here
-                          // Implement logout logic here
+                        () {
+                          prefs.setBool('isLoggedIn', false);
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AuthScreen()), (route) => false,
+                          );
                           print('Logout logic not implemented.');
                         },
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSecondary,
                     ),
                     child: const Text("Logout"),
                   ),
@@ -113,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         "Delete Account",
                         "This action is permanent. Are you sure?",
-                            () {
+                        () {
                           // TODO: Add delete account logic here
                           // Implement delete account logic here
                           print('Delete account logic not implemented.');

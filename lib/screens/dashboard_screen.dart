@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/quiz_provider.dart';
+import '../models/Quiz.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -10,13 +13,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _codeController = TextEditingController();
 
-  // Dummy active quizzes (replace with real-time API data)
-  final List<Map<String, String>> activeQuizzes = [
-    {'title': 'Flutter Basics', 'host': 'Alice'},
-    {'title': 'AI & ML Trivia', 'host': 'Bob'},
-    {'title': 'DBMS Concepts', 'host': 'Charlie'},
-  ];
-
   void joinLobby() {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
@@ -26,19 +22,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    // TODO: Replace this with your real join logic
-    // Implement join lobby logic here
-    print('Join lobby logic not implemented.');
+    // TODO: Add actual lobby join logic here
+    print('Join logic for code: $code not implemented');
   }
 
   @override
   Widget build(BuildContext context) {
+    final quizProvider = Provider.of<QuizProvider>(context);
+    final List<QuizModel> activeQuizzes =
+    quizProvider.quizzes.where((q) => q.isActive).toList();
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Code input + Join button
+          /// Lobby code + Join button
           Row(
             children: [
               Expanded(
@@ -69,21 +68,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
 
-          // List of active quizzes
+          /// Active quizzes list
           Expanded(
-            child: ListView.builder(
+            child: activeQuizzes.isEmpty
+                ? const Center(child: Text("No active quizzes available."))
+                : ListView.builder(
               itemCount: activeQuizzes.length,
               itemBuilder: (context, index) {
                 final quiz = activeQuizzes[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 2,
                   child: ListTile(
-                    title: Text(quiz['title'] ?? ''),
-                    subtitle: Text("Hosted by: ${quiz['host']}"),
+                    title: Text(quiz.title),
+                    subtitle: Text("Hosted: ${quiz.timesPlayed} times"),
                     trailing: const Icon(Icons.play_circle_outline),
                     onTap: () {
+                      // TODO: Handle quiz join/view
                     },
                   ),
                 );
