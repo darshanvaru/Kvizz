@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 
 import '../models/Question.dart';
 import '../providers/dummy_data.dart' as dummy_data;
@@ -11,16 +10,16 @@ import '../widgets/question_types_widgets/reorderable_question_widget.dart';
 import '../widgets/question_types_widgets/single_choice_question_widget.dart';
 import '../widgets/question_types_widgets/true_false_question_widget.dart';
 
-class QuizCreationScreen extends StatefulWidget {
+class QuizCreationOrEditScreen extends StatefulWidget {
   final List<QuestionModel>? questions;
 
-  QuizCreationScreen({Key? key, this.questions}) : super(key: key);
+  QuizCreationOrEditScreen({Key? key, this.questions}) : super(key: key);
 
   @override
-  _QuizCreationScreenState createState() => _QuizCreationScreenState();
+  _QuizCreationOrEditScreenState createState() => _QuizCreationOrEditScreenState();
 }
 
-class _QuizCreationScreenState extends State<QuizCreationScreen> {
+class _QuizCreationOrEditScreenState extends State<QuizCreationOrEditScreen> {
   late List<QuestionModel> questions;
 
   @override
@@ -239,24 +238,6 @@ class _QuizCreationScreenState extends State<QuizCreationScreen> {
         actions: [
           Row(
             children: [
-              //Give Quiz
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => OngoingQuizScreen()),
-                  );
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("Give Quiz"),
-                    SizedBox(width: 5),
-                    Icon(Icons.save),
-                  ],
-                ),
-              ),
-              SizedBox(width: 5),
-
               //Save Button
               ElevatedButton(
                 onPressed: questions.isEmpty

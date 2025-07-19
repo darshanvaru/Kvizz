@@ -2,22 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
+import 'package:kvizz/screens/dashboard_screen.dart';
 
 import '../providers/dummy_data.dart' as dummy_data;
 import '../models/Question.dart';
-import 'create_quiz_screen.dart';
+import 'create_or_edit_quiz_screen.dart';
 
 class OngoingQuizScreen extends StatefulWidget {
-  const OngoingQuizScreen({super.key});
+  final List<QuestionModel> questions;
+  const OngoingQuizScreen({super.key, required this.questions});
 
   @override
   State<OngoingQuizScreen> createState() => _OngoingQuizScreenState();
 }
 
 class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProviderStateMixin {
-  final List<QuestionModel> questions = dummy_data.questions;
+  late final List<QuestionModel> questions;
 
-  int currentIndex = 0;
+  int currentIndex = 3;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
@@ -38,6 +40,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
+    questions = widget.questions;
     print("Questions.isEmpty: ${questions.isEmpty}");
     _prepareQuestion();
   }
@@ -173,6 +176,8 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
         print("Time Taken: $timeTaken Milliseconds");
         print("-------------------");
 
+
+        print("----------------------Reorder check complete");
         Future.delayed(const Duration(seconds: 5), () {
           currentIndex++;
           _prepareQuestion();
@@ -231,8 +236,12 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
 
+    print("----------------------Build Run");
+    print("----------------------Currennt index: $currentIndex");
+    print("----------------------Question Length : ${questions.length}");
     ///Result screen
     if (currentIndex >= questions.length) {
+      timer?.cancel();
       return Scaffold(
         appBar: AppBar(title: const Text("Quiz Completed")),
         body: Center(
@@ -249,27 +258,39 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {
-                  setState(() {
-                    currentIndex = 0;
-                    score = 0;
-                    _prepareQuestion();
-                  });
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text("Restart Quiz"),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
+                  // Navigator.pop(context);
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => QuizCreationScreen(),
+                      builder: (context) => DashboardScreen(),
                     ),
                   );
                 },
-                icon: const Icon(Icons.refresh),
-                label: const Text("Create Quiz"),
+                icon: const Icon(Icons.home),
+                label: const Text("Return Home"),
               ),
+              // ElevatedButton.icon(
+              //   onPressed: () {
+              //     setState(() {
+              //       currentIndex = 0;
+              //       score = 0;
+              //       _prepareQuestion();
+              //     });
+              //   },
+              //   icon: const Icon(Icons.refresh),
+              //   label: const Text("Restart Quiz"),
+              // ),
+              // const SizedBox(height: 20),
+              // ElevatedButton.icon(
+              //   onPressed: () {
+              //     Navigator.of(context).pushReplacement(
+              //       MaterialPageRoute(
+              //         builder: (context) => QuizCreationOrEditScreen(),
+              //       ),
+              //     );
+              //   },
+              //   icon: const Icon(Icons.refresh),
+              //   label: const Text("Create Quiz"),
+              // ),
             ],
           ),
         ),

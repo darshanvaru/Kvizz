@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/screens/quiz_detail_screen.dart';
 import 'package:kvizz/widgets/quiz_card.dart';
 import '../providers/dummy_data.dart';
-import 'create_quiz_screen.dart';
+import 'create_or_edit_quiz_screen.dart';
 
 class MyQuizzesScreen extends StatelessWidget {
   const MyQuizzesScreen({super.key});
@@ -19,7 +20,7 @@ class MyQuizzesScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => QuizCreationScreen()),
+                    MaterialPageRoute(builder: (_) => QuizCreationOrEditScreen()),
                   );
                 },
                 icon: const Icon(Icons.add),
@@ -45,7 +46,7 @@ class MyQuizzesScreen extends StatelessWidget {
                       print("On Tap for quiz: ${quiz.title}");
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => QuizCreationScreen(questions: quiz.questions)),
+                        MaterialPageRoute(builder: (_) => QuizDetailScreen(quiz: quiz)),
                       );
                     },
                     child: QuizCard(quiz: quiz),

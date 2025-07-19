@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/providers/theme_provider.dart';
-import 'package:kvizz/screens/create_quiz_screen.dart';
+import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
 import 'package:kvizz/screens/my_quiz.dart';
 import 'package:kvizz/screens/prompt_screen.dart';
