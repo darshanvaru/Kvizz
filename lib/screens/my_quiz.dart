@@ -9,9 +9,6 @@ class MyQuizzesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Quizzes"),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(

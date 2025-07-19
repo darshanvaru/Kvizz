@@ -57,12 +57,6 @@ class _PromptScreenState extends State<PromptScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blueGrey[50],
-      appBar: AppBar(
-        title: const Text("Prompt Generator"),
-        // centerTitle: true,
-        backgroundColor: Colors.blueAccent,
-        elevation: 0,
-      ),
       body: FadeTransition(
         opacity: _fadeInAnimation,
         child: Center(
