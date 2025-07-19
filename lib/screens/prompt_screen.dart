@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io' show Platform;
+
+import '../providers/tab_index_provider.dart';
 
 class PromptScreen extends StatefulWidget {
   const PromptScreen({Key? key}) : super(key: key);
@@ -16,82 +16,92 @@ class PromptScreen extends StatefulWidget {
 class _PromptScreenState extends State<PromptScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _promptController = TextEditingController();
+  final TextEditingController _uploadPromptController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
-  final TextEditingController _uploadPromptController = TextEditingController();
+
   String? _selectedFileName;
   String? _selectedFileType;
   String? _fileError;
   PlatformFile? _selectedFile;
 
+  bool _isGenerating = false;
+  bool _isUploading = false;
+
   @override
   void initState() {
     super.initState();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-
     _fadeInAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeIn,
     );
-
     _animationController.forward();
   }
 
   @override
   void dispose() {
     _promptController.dispose();
+    _uploadPromptController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
   void _onGeneratePressed() async {
     try {
-      print("Generate button pressed");
+      setState(() => _isGenerating = true);
       final prompt = _promptController.text.trim();
       if (prompt.isEmpty) {
-        print("Prompt is empty");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter a prompt.")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Please enter a prompt.")));
         return;
       }
 
-      print("About to send HTTP request");
       final response = await http.post(
         Uri.parse('http://192.168.67.181:8000/generate'),
         body: {'prompt': prompt},
       );
-      print("HTTP request completed");
-
-      print("Response status: "+response.statusCode.toString());
-      print("Response body: "+response.body);
 
       if (response.statusCode == 200) {
         final quizData = jsonDecode(response.body);
         print("✅ AI Output: $quizData");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Quiz generated!")),
+          SnackBar(
+            content: const Text(
+              "Quiz generated!, you can check your quiz in MyQuiz Tab",
+            ),
+            action: SnackBarAction(
+              label: "My Quiz",
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Provider.of<SelectedIndexProvider>(
+                  context,
+                  listen: false,
+                ).updateSelectedIndex(1);
+              },
+              textColor: Colors.white,
+            ),
+            backgroundColor: Colors.blueAccent,
+          ),
         );
       } else {
-        print("Failed to generate quiz");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to generate quiz")),
+          const SnackBar(content: Text("Failed to generate quiz")),
         );
       }
-    } catch (e, stack) {
-      print("Exception in _onGeneratePressed: $e");
-      print(stack);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } finally {
+      _promptController.text = "";
+      setState(() => _isGenerating = false);
     }
   }
-
-
 
   Future<void> _pickFile() async {
     setState(() {
@@ -111,48 +121,54 @@ class _PromptScreenState extends State<PromptScreen>
       }
     } catch (e) {
       setState(() {
-        _fileError = 'Failed to pick file: '
-            '${e.toString()}';
+        _fileError = 'Failed to pick file: ${e.toString()}';
       });
     }
   }
 
   void _onUploadGeneratePressed() async {
-    final prompt = _uploadPromptController.text.trim();
-    if (_selectedFile == null) {
-      setState(() {
-        _fileError = 'Please select a PDF or CSV file.';
-      });
-      return;
-    }
-    if (prompt.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a prompt.')),
-      );
-      return;
-    }
-    final url = Uri.parse("http://192.168.67.181:8000/generate-from-file");
-    var request = http.MultipartRequest('POST', url);
-    request.fields['prompt'] = prompt;
-    request.files.add(await http.MultipartFile.fromPath('file', _selectedFile!.path!));
+    setState(() => _isUploading = true);
     try {
+      final prompt = _uploadPromptController.text.trim();
+      if (_selectedFile == null) {
+        setState(() {
+          _fileError = 'Please select a PDF or CSV file.';
+          _isUploading = false;
+        });
+        return;
+      }
+      if (prompt.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please enter a prompt.')));
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      final url = Uri.parse("http://192.168.67.181:8000/generate-from-file");
+      var request = http.MultipartRequest('POST', url);
+      request.fields['prompt'] = prompt;
+      request.files.add(
+        await http.MultipartFile.fromPath('file', _selectedFile!.path!),
+      );
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         print("🎉 Quiz JSON from file: $jsonData");
-        // TODO: Navigate to quiz screen or show result
       } else {
-        print("⚠️ Server error: "+response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Server error: ${response.statusCode}")),
         );
       }
     } catch (e) {
-      print("❌ Exception: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Network error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Network error: $e")));
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
@@ -169,7 +185,6 @@ class _PromptScreenState extends State<PromptScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // AI Prompt Card
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -191,16 +206,16 @@ class _PromptScreenState extends State<PromptScreen>
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 20),
                         TextField(
                           controller: _promptController,
+                          enabled: _isGenerating ? false : true,
                           maxLines: 4,
                           minLines: 2,
                           decoration: InputDecoration(
-                            hintText: "Type your prompt here...",
+                            hintText: "Type your Keywords here... \nExample: \"Mathematics Quiz\"",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -210,27 +225,36 @@ class _PromptScreenState extends State<PromptScreen>
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
+                          onPressed: _isGenerating ? null : _onGeneratePressed,
+                          icon: _isGenerating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.auto_awesome),
+                          label: Text(
+                            _isGenerating ? "Generating..." : "Generate",
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14),
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          onPressed: _onGeneratePressed,
-                          icon: const Icon(Icons.auto_awesome),
-                          label: const Text(
-                            "Generate",
-                            style: TextStyle(fontSize: 16),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Spacing between cards
                   const SizedBox(height: 36),
-                  // Upload PDF/CSV Card
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -252,7 +276,6 @@ class _PromptScreenState extends State<PromptScreen>
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -264,7 +287,9 @@ class _PromptScreenState extends State<PromptScreen>
                                 label: Text(_selectedFileName ?? 'Choose File'),
                                 onPressed: _pickFile,
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   side: BorderSide(color: Colors.blueAccent),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -287,7 +312,10 @@ class _PromptScreenState extends State<PromptScreen>
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               _fileError!,
-                              style: const TextStyle(color: Colors.red, fontSize: 13),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         const SizedBox(height: 16),
@@ -306,18 +334,34 @@ class _PromptScreenState extends State<PromptScreen>
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
+                          onPressed: _isUploading
+                              ? null
+                              : _onUploadGeneratePressed,
+                          icon: _isUploading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.auto_awesome),
+                          label: Text(
+                            _isUploading
+                                ? "Generating..."
+                                : "Generate from File",
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          onPressed: _onUploadGeneratePressed,
-                          icon: const Icon(Icons.auto_awesome),
-                          label: const Text(
-                            "Generate from File",
-                            style: TextStyle(fontSize: 16),
                           ),
                         ),
                       ],
