@@ -45,15 +45,6 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     final quizzes = Provider.of<QuizProvider>(context).quizzes;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Quizzes"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchMyQuizzes,
-          )
-        ],
-      ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(

@@ -74,7 +74,7 @@ class QuizProvider with ChangeNotifier {
   }
 
   Future<void> fetchMyQuizzes(String userId) async {
-    final url = Uri.parse("http://192.168.67.75:8000/api/v1/quizzes/of/$userId");
+    final url = Uri.parse("http://192.168.104.75:8000/api/v1/quizzes/of/$userId");
     try {
       final response = await http.get(url);
 
