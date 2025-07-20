@@ -26,6 +26,8 @@ class _AuthScreenState extends State<AuthScreen> {
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true;
+  bool isLoading = false;
+
 
   String email = '';
   String password = '';
@@ -47,138 +49,118 @@ class _AuthScreenState extends State<AuthScreen> {
 
 
   void _submit() async {
+    if (isLoading) return;
 
-    //For login
-    if(isLogin){
-      print("-----------Login button pressed");
-      if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter both email and password!')),
-        );
-        return;
-      }
+    setState(() {
+      isLoading = true;
+    });
 
-      // setState(() {
-      //   isLoading = true;
-      // });
+    try {
+      if (isLogin) {
+        // Login
+        if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+          _showError("Please enter both email and password!");
+          return;
+        }
 
-      final apiUrl = Uri.parse("$api/login");
-      final Map<String, String> data = {
-        "email": _emailController.text,
-        "password": _passwordController.text,
-      };
+        final apiUrl = Uri.parse("$api/login");
+        final Map<String, String> data = {
+          "email": _emailController.text,
+          "password": _passwordController.text,
+        };
 
-      try {
-        print("print 1");
         final response = await http.post(
           apiUrl,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(data),
         );
-        print("Status code: ${response.statusCode}");
-        print("Response body: '${response.body}'"); // ✅ Print actual body
 
-        if (response.statusCode == 200 && response.body.isNotEmpty) {
+        if (response.statusCode == 200) {
           final decoded = jsonDecode(response.body);
           if (decoded["status"] == "success") {
-            print("Before jwt set");
-            // Save JWT
-            prefs.setString("jwt", decoded["token"]); // Not decoded["data"]["token"]
-            print("After jwt set");
-
-            // Parse user model correctly
-            final user = UserModel.fromJson(decoded["user"]); // Not decoded["data"]["user"]
-
-            // Save to provider
+            prefs.setString("jwt", decoded["token"]);
+            final user = UserModel.fromJson(decoded["user"]);
             Provider.of<UserProvider>(context, listen: false).setUser(user);
-
-            if (user != null) {
-              print("✅ User is logged in: ${user.username}");
-            } else {
-              print("❌ User is not logged in.");
-            }
-
-            // Navigate to Home
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Login Failed")),
-            );
+            _showError(decoded["message"] ?? "Login failed.");
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Invalid response (${response.statusCode})")),
-          );
+          _showError("Invalid response (${response.statusCode})");
         }
-      } catch (e, stack) {
-        print('Exception: $e');
-        print('Stack trace: $stack');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${e} $stack")),
-        );
-      }
-    }
-    //For sign Up
-    else {
-      print("-----------SignUp button pressed");
-      if (_name.text.isEmpty || _emailController.text.isEmpty || _username.text.isEmpty || _passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter all the details!')),
-        );
-        return;
-      }
-      final apiUrl = Uri.parse("$api/signup");
-      final Map<String, String> data = {
-        "_id": DateTime.now().millisecondsSinceEpoch.toString(), // Unique ID
-        "name": _name.text,
-        "username": _username.text,
-        "email": _emailController.text,
-        "password": _passwordController.text,
-        "passwordConfirm": _confirmPasswordController.text,
-      };
+      } else {
+        // Signup
+        if (_name.text.isEmpty ||
+            _emailController.text.isEmpty ||
+            _username.text.isEmpty ||
+            _passwordController.text.isEmpty ||
+            _confirmPasswordController.text.isEmpty) {
+          _showError("Please fill all the fields.");
+          return;
+        }
 
-      try {
-        print("print 1");
+        if (_passwordController.text != _confirmPasswordController.text) {
+          _showError("Passwords do not match.");
+          return;
+        }
+
+        final apiUrl = Uri.parse("$api/signup");
+        final Map<String, String> data = {
+          "_id": DateTime.now().millisecondsSinceEpoch.toString(),
+          "name": _name.text,
+          "username": _username.text,
+          "email": _emailController.text,
+          "password": _passwordController.text,
+          "passwordConfirm": _confirmPasswordController.text,
+        };
+
         final response = await http.post(
           apiUrl,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(data),
         );
-        print("Status code: ${response.statusCode}");
-        print("Response body: '${response.body}'"); // ✅ Print actual body
 
-        if (response.statusCode == 200 && response.body.isNotEmpty) {
+        if (response.statusCode == 200) {
           final decoded = jsonDecode(response.body);
           if (decoded["status"] == "success") {
-
-
             setState(() {
               isLogin = true;
             });
-            Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
+            Provider.of<SelectedIndexProvider>(context, listen: false)
+                .updateSelectedIndex(0);
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Login Failed")),
-            );
+            _showError(decoded["message"] ?? "Signup failed.");
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Invalid response (${response.statusCode})")),
-          );
+          _showError("Signup failed: ${response.statusCode}");
         }
-      } catch (e, stack) {
-        print('Exception: $e');
-        print('Stack trace: $stack');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${e} $stack")),
-        );
       }
+    } catch (e, stack) {
+      _showError("An error occurred: $e");
+      print("Error: $e");
+      print(stack);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
+  }
+
+  void _showError(String message) {
+    setState(() {
+      isLoading = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
   }
 
 
@@ -271,7 +253,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     const SizedBox(height: 24),
 
-                    ElevatedButton(
+                    isLoading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
@@ -282,6 +266,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),
+
 
                     const SizedBox(height: 16),
 
