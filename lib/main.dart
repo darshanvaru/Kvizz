@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kvizz/providers/quiz_provider.dart';
 import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
+import 'package:kvizz/providers/user_provider.dart';
 import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
@@ -25,6 +26,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SelectedIndexProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: MyApp(isLoggedIn: prefs.getBool("isLoggedIn") ?? false),
     ),

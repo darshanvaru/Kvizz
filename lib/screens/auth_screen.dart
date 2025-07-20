@@ -1,6 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart'; // For HomeScreen
+import 'package:provider/provider.dart';
+import '../main.dart';
+import '../models/user_model.dart';
+import '../providers/tab_index_provider.dart';
+import '../providers/user_provider.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -10,39 +17,170 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  late final SharedPreferences prefs;
+  final api = "http://192.168.104.75:8000/api/v1/users";
+  final _name = TextEditingController();
+  final _emailController = TextEditingController();
+  final _username = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true;
 
   String email = '';
   String password = '';
   String confirmPassword = '';
+  String name = '';
+
+  @override
+  void initState() {
+    initializePreferences();
+    super.initState();
+  }
+
+  void initializePreferences() async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      prefs = preferences;
+    });
+  }
+
 
   void _submit() async {
-    final prefs = await SharedPreferences.getInstance();
-    print("----------Preference initialized in AuthScreen(), isLoggedIn: ${prefs.getBool("isLoggedIn") ?? false}");
 
-    _formKey.currentState!.save();
+    //For login
+    if(isLogin){
+      print("-----------Login button pressed");
+      if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter both email and password!')),
+        );
+        return;
+      }
 
-    if (!isLogin && password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords don't match")),
-      );
-      return;
+      // setState(() {
+      //   isLoading = true;
+      // });
+
+      final apiUrl = Uri.parse("$api/login");
+      final Map<String, String> data = {
+        "email": _emailController.text,
+        "password": _passwordController.text,
+      };
+
+      try {
+        print("print 1");
+        final response = await http.post(
+          apiUrl,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+        print("Status code: ${response.statusCode}");
+        print("Response body: '${response.body}'"); // ✅ Print actual body
+
+        if (response.statusCode == 200 && response.body.isNotEmpty) {
+          final decoded = jsonDecode(response.body);
+          if (decoded["status"] == "success") {
+            print("Before jwt set");
+            // Save JWT
+            prefs.setString("jwt", decoded["token"]); // Not decoded["data"]["token"]
+            print("After jwt set");
+
+            // Parse user model correctly
+            final user = UserModel.fromJson(decoded["user"]); // Not decoded["data"]["user"]
+
+            // Save to provider
+            Provider.of<UserProvider>(context, listen: false).setUser(user);
+
+            if (user != null) {
+              print("✅ User is logged in: ${user.username}");
+            } else {
+              print("❌ User is not logged in.");
+            }
+
+            // Navigate to Home
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Login Failed")),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Invalid response (${response.statusCode})")),
+          );
+        }
+      } catch (e, stack) {
+        print('Exception: $e');
+        print('Stack trace: $stack');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${e} $stack")),
+        );
+      }
     }
+    //For sign Up
+    else {
+      print("-----------SignUp button pressed");
+      if (_name.text.isEmpty || _emailController.text.isEmpty || _username.text.isEmpty || _passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter all the details!')),
+        );
+        return;
+      }
+      final apiUrl = Uri.parse("$api/signup");
+      final Map<String, String> data = {
+        "_id": DateTime.now().millisecondsSinceEpoch.toString(), // Unique ID
+        "name": _name.text,
+        "username": _username.text,
+        "email": _emailController.text,
+        "password": _passwordController.text,
+        "passwordConfirm": _confirmPasswordController.text,
+      };
 
-    await prefs.setBool("isLoggedIn", true);
-    if (isLogin && (prefs.getBool("isLoggedIn") ?? false)) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-      return;
+      try {
+        print("print 1");
+        final response = await http.post(
+          apiUrl,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+        print("Status code: ${response.statusCode}");
+        print("Response body: '${response.body}'"); // ✅ Print actual body
+
+        if (response.statusCode == 200 && response.body.isNotEmpty) {
+          final decoded = jsonDecode(response.body);
+          if (decoded["status"] == "success") {
+
+
+            setState(() {
+              isLogin = true;
+            });
+            Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Login Failed")),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Invalid response (${response.statusCode})")),
+          );
+        }
+      } catch (e, stack) {
+        print('Exception: $e');
+        print('Stack trace: $stack');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${e} $stack")),
+        );
+      }
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(isLogin ? 'Logged in!' : 'Signed up!')),
-    );
-
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +211,31 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Email Field
+                    if (!isLogin)
+                      TextFormField(
+                        controller: _name,
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                          prefixIcon: Icon(Icons.person),
+                        ),
+                        // onSaved: (value) => name = value ?? '',
+                      ),
+                    const SizedBox(height: 16),
+
+                    if (!isLogin)
+                      TextFormField(
+                        controller: _username,
+                        decoration: const InputDecoration(
+                          labelText: 'User Name',
+                          prefixIcon: Icon(Icons.person),
+                        ),
+                        // onSaved: (value) => username = value ?? '',
+                      ),
+                    const SizedBox(height: 16),
+
                     TextFormField(
                       key: const ValueKey('email'),
+                      controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email),
@@ -85,9 +245,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password Field
                     TextFormField(
                       key: const ValueKey('password'),
+                      controller: _passwordController,
                       decoration: const InputDecoration(
                         labelText: 'Password',
                         prefixIcon: Icon(Icons.lock),
@@ -97,10 +257,10 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Confirm Password (Signup only)
                     if (!isLogin)
                       TextFormField(
                         key: const ValueKey('confirm_password'),
+                        controller: _confirmPasswordController,
                         decoration: const InputDecoration(
                           labelText: 'Confirm Password',
                           prefixIcon: Icon(Icons.lock_outline),
@@ -111,7 +271,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Submit Button
                     ElevatedButton(
                       onPressed: _submit,
                       style: ElevatedButton.styleFrom(
@@ -126,7 +285,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Switch Mode
                     TextButton(
                       onPressed: () {
                         setState(() {
