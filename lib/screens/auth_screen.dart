@@ -18,7 +18,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   late final SharedPreferences prefs;
-  final api = "http://192.168.104.75:8000/api/v1/users";
+  final api = "http://192.168.67.75:8000/api/v1/users";
   final _name = TextEditingController();
   final _emailController = TextEditingController();
   final _username = TextEditingController();
@@ -64,6 +64,7 @@ class _AuthScreenState extends State<AuthScreen> {
         }
 
         final apiUrl = Uri.parse("$api/login");
+        print("API URL: $apiUrl");
         final Map<String, String> data = {
           "email": _emailController.text,
           "password": _passwordController.text,

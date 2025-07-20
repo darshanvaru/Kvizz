@@ -146,13 +146,6 @@ class QuizDetailScreen extends StatelessWidget {
   Widget _buildStatsGrid(BuildContext context) {
     final stats = <Map<String, String>>[
       {'Type': quiz.type},
-      {'Time per Question': '${quiz.timePerQuestion} sec'},
-      {'Order': quiz.questionOrder},
-      {'Points per Question': quiz.pointsPerQuestion.toString()},
-      {'Times Played': quiz.timesPlayed.toString()},
-      {'Avg. Score': '${quiz.averageScore.toStringAsFixed(1)}%'},
-      {'Total Players': quiz.totalUserPlayed.toString()},
-      {'Participant Limit': quiz.participantLimit.toString()},
       {'Created At': quiz.createdAt.toLocal().toString().split(' ')[0]},
     ];
 
@@ -177,7 +170,7 @@ class QuizDetailScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(.15),
+                color: Colors.grey.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

@@ -84,7 +84,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   elevation: 2,
                   child: ListTile(
                     title: Text(quiz.title),
-                    subtitle: Text("Hosted: ${quiz.timesPlayed} times"),
                     trailing: const Icon(Icons.play_circle_outline),
                     onTap: () {
                       // TODO: Handle quiz join/view

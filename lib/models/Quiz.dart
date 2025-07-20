@@ -5,14 +5,8 @@ class QuizModel {
   final String title;
   final String description;
   final List<QuestionModel> questions;
+  final String creator;
   final String type;
-  final int timePerQuestion;
-  final String questionOrder;
-  final int pointsPerQuestion;
-  final int timesPlayed;
-  final int averageScore;
-  final int totalUserPlayed;
-  final int participantLimit;
   final String difficulty;
   final bool isActive;
   final DateTime createdAt;
@@ -22,14 +16,8 @@ class QuizModel {
     required this.title,
     required this.description,
     required this.questions,
+    required this.creator,
     required this.type,
-    required this.timePerQuestion,
-    required this.questionOrder,
-    required this.pointsPerQuestion,
-    required this.timesPlayed,
-    required this.averageScore,
-    required this.totalUserPlayed,
-    required this.participantLimit,
     required this.difficulty,
     required this.isActive,
     required this.createdAt,
@@ -43,14 +31,8 @@ class QuizModel {
       questions: (json['questions'] as List)
           .map((q) => QuestionModel.fromJson(q))
           .toList(),
+      creator: json['creator'],
       type: json['type'],
-      timePerQuestion: json['timePerQuestion'],
-      questionOrder: json['questionOrder'],
-      pointsPerQuestion: json['pointsPerQuestion'],
-      timesPlayed: json['stats']?['timesPlayed'] ?? 0,
-      averageScore: json['stats']?['averageScore'] ?? 0,
-      totalUserPlayed: json['stats']?['totalUserPlayed'] ?? 0,
-      participantLimit: json['participantLimit'] ?? 10,
       difficulty: json['difficulty'],
       isActive: json['isActive'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),

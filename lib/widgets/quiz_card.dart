@@ -27,7 +27,7 @@ class _QuizCardState extends State<QuizCard> {
                 widget.quiz.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 20,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -37,13 +37,11 @@ class _QuizCardState extends State<QuizCard> {
             const SizedBox(height: 6),
 
             // Description
-            FittedBox(
-              child: Text(
-                widget.quiz.description,
-                style: TextStyle(color: Colors.grey[700]),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+            Text(
+              widget.quiz.description,
+              style: TextStyle(color: Colors.grey[700], fontSize: 16),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
 
             const SizedBox(height: 10),
@@ -56,36 +54,6 @@ class _QuizCardState extends State<QuizCard> {
                   const SizedBox(width: 6),
                   Text(
                     widget.quiz.difficulty,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            FittedBox(
-              child: Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: Colors.blue),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.quiz.timePerQuestion}s per question',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            FittedBox(
-              child: Row(
-                children: [
-                  Icon(Icons.star, size: 16, color: Colors.green),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.quiz.pointsPerQuestion} points/question',
                     style: const TextStyle(fontSize: 13),
                   ),
                 ],

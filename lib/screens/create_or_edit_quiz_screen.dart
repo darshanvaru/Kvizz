@@ -2,10 +2,12 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/Question.dart';
 import '../models/Quiz.dart';
 import '../providers/quiz_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/question_types_widgets/multiple_choice_question_widget.dart';
 import '../widgets/question_types_widgets/open_ended_question_widget.dart';
 import '../widgets/question_types_widgets/reorderable_question_widget.dart';
@@ -23,29 +25,32 @@ class CreateOrEditQuizScreen extends StatefulWidget {
 }
 
 class _CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
+  late final SharedPreferences prefs;
   late List<QuestionModel> questions;
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  final _timePerQuestionController = TextEditingController();
-  final _pointsPerQuestionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    initializePreferences();
     questions = widget.questions ?? widget.editingQuiz?.questions ?? [];
 
     _titleController.text = widget.editingQuiz?.title ?? '';
     _descController.text = widget.editingQuiz?.description ?? '';
-    _timePerQuestionController.text = widget.editingQuiz?.timePerQuestion.toString() ?? '30';
-    _pointsPerQuestionController.text = widget.editingQuiz?.pointsPerQuestion.toString() ?? '100';
+  }
+
+  void initializePreferences() async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      prefs = preferences;
+    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descController.dispose();
-    _timePerQuestionController.dispose();
-    _pointsPerQuestionController.dispose();
     super.dispose();
   }
 
@@ -67,14 +72,6 @@ class _CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
   void _saveQuestions() {
     if (_titleController.text.trim().isEmpty) {
       return _showError("Title can't be empty.");
-    }
-    if (_timePerQuestionController.text.trim().isEmpty ||
-        int.tryParse(_timePerQuestionController.text.trim()) == null) {
-      return _showError("Enter valid time per question (in seconds).");
-    }
-    if (_pointsPerQuestionController.text.trim().isEmpty ||
-        int.tryParse(_pointsPerQuestionController.text.trim()) == null) {
-      return _showError("Enter valid points per question.");
     }
 
     for (var q in questions) {
@@ -119,19 +116,17 @@ class _CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
     }
 
     final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = userProvider.currentUser?.id;
+    print("CreateOrEdit: Current user id: $userId");
+
     final quiz = QuizModel(
       id: widget.editingQuiz?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
       description: _descController.text.trim(),
       questions: questions,
       type: 'manual',
-      timePerQuestion: int.parse(_timePerQuestionController.text.trim()),
-      pointsPerQuestion: int.parse(_pointsPerQuestionController.text.trim()),
-      questionOrder: 'fixed',
-      timesPlayed: 0,
-      averageScore: 0,
-      totalUserPlayed: 0,
-      participantLimit: 10,
+      creator: userId.toString(),
       difficulty: 'medium',
       isActive: true,
       createdAt: DateTime.now(),
@@ -224,32 +219,6 @@ class _CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                     labelText: "Description",
                     border: OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _timePerQuestionController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: "Seconds per question",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _pointsPerQuestionController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: "Points per question",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
