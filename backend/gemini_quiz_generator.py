@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 import google.generativeai as genai
 
-genai.configure(api_key=os.getenv("AIzaSyA_ad0Bhjqk2e4XOFfNCvW-Vdpj2udcFRI") or "AIzaSyA_ad0Bhjqk2e4XOFfNCvW-Vdpj2udcFRI")
+genai.configure(api_key=os.getenv("YOUR_API_KEY") or "YOUR_API_KEY")
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 def generate_prompt(user_topic: str, context_text: str = "") -> str:
