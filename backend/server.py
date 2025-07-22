@@ -16,5 +16,5 @@ def generate_quiz():
     return jsonify(result)
 
 if __name__ == '__main__':
-    os.environ['AIzaSyA_ad0Bhjqk2e4XOFfNCvW-Vdpj2udcFRI'] = "AIzaSyA_ad0Bhjqk2e4XOFfNCvW-Vdpj2udcFRI"  # Optional: Or use .env
+    os.environ['YOUR_API_KEY'] = "YOUR_API_KEY"  # Optional: Or use .env
     app.run(host="0.0.0.0", port=8000, debug=True)
