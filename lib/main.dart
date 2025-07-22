@@ -3,7 +3,6 @@ import 'package:kvizz/providers/quiz_provider.dart';
 import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
 import 'package:kvizz/providers/user_provider.dart';
-import 'package:kvizz/screens/api_config.dart';
 import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
