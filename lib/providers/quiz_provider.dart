@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/Quiz.dart';
 
 class QuizProvider with ChangeNotifier {
@@ -74,7 +75,8 @@ class QuizProvider with ChangeNotifier {
   }
 
   Future<void> fetchMyQuizzes(String userId) async {
-    final url = Uri.parse("http://192.168.104.75:8000/api/v1/quizzes/of/$userId");
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final url = Uri.parse("http://10.20.51.115:8000/api/v1/quizzes/of/$userId");
     try {
       final response = await http.get(url);
 

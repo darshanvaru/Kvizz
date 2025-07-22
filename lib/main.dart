@@ -3,6 +3,7 @@ import 'package:kvizz/providers/quiz_provider.dart';
 import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
 import 'package:kvizz/providers/user_provider.dart';
+import 'package:kvizz/screens/api_config.dart';
 import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/dashboard_screen.dart';
@@ -11,15 +12,11 @@ import 'package:kvizz/screens/prompt_screen.dart';
 import 'package:kvizz/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:kvizz/screens/auth_screen.dart';
 // import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  print("----------Preference initialized");
-  print("----------Preference initialized in Main(), isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
   runApp(
     MultiProvider(
       providers: [
@@ -28,16 +25,16 @@ void main() async{
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
-      child: MyApp(isLoggedIn: prefs.getBool("isLoggedIn") ?? false),
+      child: MyApp(),
     ),
   );
 }
 
+
 /// ---------------- MyApp ------------------
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
 
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +43,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kwizz',
-      // theme: quizAppTheme,
       themeMode: themeProvider.themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: isLoggedIn? const HomeScreen() : const AuthScreen(),
+      home:  AuthScreen()
     );
   }
 }
