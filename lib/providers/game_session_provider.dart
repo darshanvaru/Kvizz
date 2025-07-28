@@ -176,4 +176,18 @@ class GameSessionProvider extends ChangeNotifier {
     }
     return null;
   }
+
+  // Get current question index (for UI display)
+  int getCurrentQuestionIndex() {
+    if (_gameSession?.currentQuestion != null && _gameSession?.quizData != null) {
+      final questionId = _gameSession!.currentQuestion!.questionId;
+      try {
+        return _gameSession!.quizData!.questions
+            .indexWhere((q) => q.id == questionId);
+      } catch (e) {
+        return -1;
+      }
+    }
+    return -1;
+  }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/providers/quiz_provider.dart';
+import 'package:kvizz/providers/game_session_provider.dart';
 import 'package:kvizz/providers/tab_index_provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
 import 'package:kvizz/providers/user_provider.dart';
@@ -24,6 +24,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SelectedIndexProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => GameSessionProvider()),
       ],
       child: MyApp(isLoggedIn: prefs.getBool("isLoggedIn") ?? false),
     ),
