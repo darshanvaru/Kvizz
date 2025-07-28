@@ -1,0 +1,85 @@
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Generated files and directories
+**/doc/api/
+**/generated_plugin_registrant.dart
+.flutter-plugins-dependencies
+.pubspec.lock
+
+# Android specific
+android/app/debug
+android/app/profile
+android/app/release
+android/app/*.jks
+android/app/google-services.json
+android/key.properties
+android/local.properties
+android/.gradle/
+android/captures/
+android/gradle-wrapper.properties
+android/gradlew
+android/gradlew.bat
+
+# iOS specific
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Pods/
+ios/Podfile.lock
+ios/Runner.xcworkspace/
+ios/.generated/
+ios/Flutter/Generated.xcconfig
+ios/Runner/GeneratedPluginRegistrant.*
+ios/GoogleService-Info.plist
+
+# Web specific
+web/icons/
+web/favicon.png
+web/manifest.json
+
+# Windows/Linux/macOS specific
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+
+# Firebase (if using)
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# Large asset directories (customize based on your project)
+assets/videos/
+assets/large_images/
+assets/audio/
