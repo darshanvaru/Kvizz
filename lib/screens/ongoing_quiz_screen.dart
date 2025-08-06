@@ -1,87 +1,164 @@
-import 'dart:async';
+// lib/screens/ongoing_quiz_screen.dart
+// Full replacement — ready to paste.
 
+import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:collection/collection.dart';
 
 import '../models/Question.dart';
+import '../models/game_session_model.dart';
+import '../providers/game_session_provider.dart';
 import '../providers/tab_index_provider.dart';
+import '../providers/user_provider.dart';       // <-- your existing user provider
+import '../services/socket_service.dart';
 
 class OngoingQuizScreen extends StatefulWidget {
-  final List<QuestionModel> questions;
-  const OngoingQuizScreen({super.key, required this.questions});
+  final List<QuestionModel> questions;   // fallback / single-player list
+  final bool isMultiplayer;
+  final String? gameSessionId;
+
+  const OngoingQuizScreen({
+    Key? key,
+    required this.questions,
+    this.isMultiplayer = false,
+    this.gameSessionId,
+  }) : super(key: key);
 
   @override
   State<OngoingQuizScreen> createState() => _OngoingQuizScreenState();
 }
 
-class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProviderStateMixin {
-  late final List<QuestionModel> questions;
+class _OngoingQuizScreenState extends State<OngoingQuizScreen>
+    with TickerProviderStateMixin {
+  late List<QuestionModel> _quizQuestions;
 
+  // quiz state
   int currentIndex = 0;
   int score = 0;
-  bool? lastAnswerCorrect;
   bool answered = false;
   bool timeUp = false;
+  bool? lastAnswerCorrect;
 
+  // answer helpers
   Set<int> selectedIndexes = {};
   int? selectedRadio;
-
-  DateTime? questionStartTime;
-  int timeTaken = 0;
-
   TextEditingController answerController = TextEditingController();
   List<MapEntry<int, String>> reorderedOptions = [];
 
+  // timing
   Timer? timer;
   int timeLeft = 10;
+  DateTime? questionStartTime;
+  int timeTaken = 0;
+
+  // services
+  final SocketService _socket = SocketService();
 
   @override
   void initState() {
     super.initState();
-    questions = widget.questions;
-    print("Questions.isEmpty: ${questions.isEmpty}");
+    _initialiseQuiz();
+  }
+
+  /* ────────────────────────────────────────────────────────────
+     INITIALISATION
+  ──────────────────────────────────────────────────────────── */
+  void _initialiseQuiz() {
+    if (widget.isMultiplayer) {
+      final gs = Provider.of<GameSessionProvider>(context, listen: false);
+      if (gs.hasSession && gs.quizData != null) {
+        _quizQuestions =
+            gs.quizData!.questions.map(_qToQuestionModel).toList();
+      } else {
+        _quizQuestions = widget.questions;
+      }
+    } else {
+      _quizQuestions = widget.questions;
+    }
     _prepareQuestion();
   }
 
-  /// Resets all the flags, controller and variables
-  void _prepareQuestion() {
-    setState(() {
-      answered = false;
-      timeUp = false;
-      selectedIndexes.clear();
-      selectedRadio = null;
-      answerController.clear();
-      timeLeft = 10;
-      questionStartTime = DateTime.now();
-      timeTaken = 0;
-      reorderedOptions = [];
-    });
-    if (timer != null) {
-      timer!.cancel();
-    }
-    _startTimer();
-    final question = questions[currentIndex];
-    if (question.type == QuestionType.reorder) {
-      reorderedOptions = question.options
-          .asMap()
-          .entries
-          .map((e) => MapEntry(e.key, e.value))
-          .toList();
+  QuestionModel _qToQuestionModel(QuizQuestion q) => QuestionModel(
+    id: q.id,
+    type: _stringToType(q.type),
+    question: q.question,
+    options: q.options,
+    correctAnswer: q.correctAnswer,
+    createdAt: DateTime.now(),
+  );
+
+  QuestionType _stringToType(String raw) {
+    switch (raw.toLowerCase()) {
+      case 'single':
+        return QuestionType.single;
+      case 'multiple':
+        return QuestionType.multiple;
+      case 'open':
+        return QuestionType.open;
+      case 'reorder':
+        return QuestionType.reorder;
+      case 'truefalse':
+      case 'true-false':
+        return QuestionType.trueFalse;
+      default:
+        return QuestionType.multiple;
     }
   }
 
-  /// Starts 10 sec timer and also set flag for times up and answered if 30 sec is completed
+  /* ────────────────────────────────────────────────────────────
+     QUESTION PREP / TIMER
+  ──────────────────────────────────────────────────────────── */
+  void _prepareQuestion() {
+    timer?.cancel();
+
+    setState(() {
+      answered = false;
+      timeUp = false;
+      lastAnswerCorrect = null;
+      selectedIndexes.clear();
+      selectedRadio = null;
+      answerController.clear();
+      reorderedOptions = [];
+
+      timeLeft = _initialTimeForQuestion();
+      questionStartTime = DateTime.now();
+      timeTaken = 0;
+
+      if (_currentQuestion.type == QuestionType.reorder) {
+        reorderedOptions = _currentQuestion.options
+            .asMap()
+            .entries
+            .map((e) => MapEntry(e.key, e.value))
+            .toList();
+      }
+    });
+
+    _startTimer();
+  }
+
+  int _initialTimeForQuestion() {
+    if (!widget.isMultiplayer) return 10;
+
+    final gs = Provider.of<GameSessionProvider>(context, listen: false);
+    // prefer precise endTime – otherwise settings – otherwise 10
+    if (gs.currentQuestion != null) {
+      final seconds =
+          gs.currentQuestion!.endTime.difference(DateTime.now()).inSeconds;
+      return seconds > 0 ? seconds : 10;
+    }
+    if (gs.settings != null) return gs.settings!.timePerQuestion;
+    return 10;
+  }
+
   void _startTimer() {
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timeLeft > 0) {
-        setState(() {
-          timeLeft--;
-        });
+        setState(() => timeLeft--);
         if (timeLeft == 0) {
           setState(() {
             timeUp = true;
-            submitAnswer();
+            _submitAnswer();
           });
         }
       } else {
@@ -90,741 +167,488 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
     });
   }
 
-  /// Check the question type and performs calculations accordingly
-  void submitAnswer() {
-    final question = questions[currentIndex];
+  /* ────────────────────────────────────────────────────────────
+     ANSWER SUBMISSION
+  ──────────────────────────────────────────────────────────── */
+  void _submitAnswer() {
+    final q = _currentQuestion;
     bool isCorrect = false;
-    int pointsAwarded = 0;
+    dynamic userAnswer;
 
-    switch (question.type) {
+    switch (q.type) {
       case QuestionType.single:
-        isCorrect = question.options[selectedRadio?? 0] == question.correctAnswer.first;
-        pointsAwarded = isCorrect ? 1 : 0;
-
-        print("-----------------------------------");
-        print("Question Type: ${question.type}");
-        print("Question: ${question.question}");
-        print("Answer: ${question.correctAnswer.first}");
-        print("Answer Submitted: ${selectedRadio != null ? question.options[selectedRadio!] : 'None'}");
-        print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken Milliseconds");
-        print("-----------------------------------");
-
-        Future.delayed(const Duration(seconds: 5), () {
-          currentIndex++;
-          _prepareQuestion();
-        });
+        userAnswer = selectedRadio?.toString() ?? '';
+        isCorrect = q.options[selectedRadio ?? 0] == q.correctAnswer.first;
         break;
 
       case QuestionType.multiple:
-        isCorrect = selectedIndexes.every((index) => question.correctAnswer.contains(question.options[index])) &&
-            selectedIndexes.length == question.correctAnswer.length;
-            // Set<int>.from(selectedIndexes).containsAll(correct) &&
-            //     selectedIndexes.length == correct.length;
-        pointsAwarded = isCorrect ? 1 : 0;
-
-        print("-------------------");
-        print("Question Type: ${question.type}");
-        print("Question: ${question.question}");
-        print("Correct Answers: ${question.correctAnswer.join(', ')}");
-        print("Selected Answers: ${selectedIndexes.map((i) => question.options[i]).join(', ')}");
-        print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken Milliseconds");
-        print("-------------------");
-
-        Future.delayed(const Duration(seconds: 5), () {
-          currentIndex++;
-          _prepareQuestion();
-        });
+        userAnswer = selectedIndexes.map((i) => i.toString()).toList();
+        isCorrect = selectedIndexes.length == q.correctAnswer.length &&
+            selectedIndexes.every((i) => q.correctAnswer.contains(q.options[i]));
         break;
 
       case QuestionType.open:
-        final answer = answerController.text.trim();
-        isCorrect = answer.isNotEmpty && question.correctAnswer.contains(answer);
-
-        pointsAwarded = isCorrect ? 1 : 0;
-
-        print("-------------------");
-        print("Question Type: ${question.type}");
-        print("Question: ${question.question}");
-        print("Correct Answers: ${question.correctAnswer.join(', ')}");
-        print("Answer Submitted: $answer");
-        print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken Milliseconds");
-        print("-------------------");
-
-        Future.delayed(const Duration(seconds: 5), () {
-          currentIndex++;
-          _prepareQuestion();
-        });
+        userAnswer = answerController.text.trim();
+        isCorrect = q.correctAnswer.contains(userAnswer);
         break;
 
       case QuestionType.reorder:
-        List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
-        List<String> correctOrder = question.correctAnswer;
-
-        isCorrect = const ListEquality().equals(userOrder, correctOrder);
-        pointsAwarded = isCorrect ? 1 : 0;
-
-        print("-------------------");
-        print("Question Type: ${question.type}");
-        print("Question: ${question.question}");
-        print("Correct Order: ${correctOrder.join(' → ')}");
-        print("User Order: ${userOrder.join(' → ')}");
-        print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken Milliseconds");
-        print("-------------------");
-
-
-        print("----------------------Reorder check complete");
-        Future.delayed(const Duration(seconds: 5), () {
-          currentIndex++;
-          _prepareQuestion();
-        });
+        userAnswer = reorderedOptions.map((e) => e.value).toList();
+        isCorrect = const ListEquality().equals(
+            userAnswer, q.correctAnswer);
         break;
 
       case QuestionType.trueFalse:
-        // Convert the string "true"/"false" to index: 1 for true, 0 for false
-        // int correctIndex = question.correctAnswer.first.toLowerCase() == "true" ? 1 : 0;
-        String selectedLabel = selectedRadio == 0 ? "true" : "false";
-
-        isCorrect = selectedLabel == question.correctAnswer.first.toLowerCase();
-        pointsAwarded = isCorrect ? 1 : 0;
-
-        print("-------------------");
-        print("Question Type: ${question.type}");
-        print("Question: ${question.question}");
-        print("Correct Answer: ${question.correctAnswer.first}");
-        print("Answer Submitted: $selectedLabel");
-        print("Is Correct? $isCorrect");
-        print("Time Taken: $timeTaken seconds");
-        print("-------------------");
-
-        Future.delayed(const Duration(seconds: 5), () {
-          currentIndex++;
-          _prepareQuestion();
-        });
+        userAnswer = selectedRadio == 0 ? 'false' : 'true';
+        isCorrect = userAnswer == q.correctAnswer.first.toLowerCase();
         break;
+    }
 
+    timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
+
+    if (widget.isMultiplayer) {
+      final gs = Provider.of<GameSessionProvider>(context, listen: false);
+      final userId = Provider.of<UserProvider>(context, listen: false).currentUser?.id??'';
+      if (gs.hasSession) {
+        _socket.submitAnswer(
+          gameSessionId: gs.gameSession!.id,
+          userId: userId,
+          questionId: q.id,
+          answer: userAnswer,
+          isCorrect: isCorrect,
+          timeTaken: timeTaken,
+        );
+      }
+    } else {
+      if (isCorrect) score++;
+      Future.delayed(const Duration(seconds: 3), _nextQuestion);
     }
 
     setState(() {
-      score += pointsAwarded;
-      lastAnswerCorrect = isCorrect;
       answered = true;
+      lastAnswerCorrect = isCorrect;
     });
   }
 
-  /// Increments the index and calls PrepareQuestion()
-  void nextQuestion() {
-    setState(() {
-      currentIndex++;
-    });
-    if (currentIndex < questions.length) {
+  void _nextQuestion() {
+    if (!mounted) return;
+    setState(() => currentIndex++);
+    if (currentIndex < _quizQuestions.length) {
       _prepareQuestion();
     }
   }
+
+  /* ────────────────────────────────────────────────────────────
+     GETTERS
+  ──────────────────────────────────────────────────────────── */
+  QuestionModel get _currentQuestion => _quizQuestions[currentIndex];
+
+  /* ────────────────────────────────────────────────────────────
+     UI BUILD
+  ──────────────────────────────────────────────────────────── */
+  @override
+  Widget build(BuildContext context) =>
+      widget.isMultiplayer ? _buildMulti() : _buildSingle();
+
+  /* ---------- Multiplayer wrapper ---------- */
+  Widget _buildMulti() {
+    return Consumer<GameSessionProvider>(
+      builder: (_, gs, __) {
+        if (!gs.hasSession) return _scaffoldCenter('Joining game...');
+        if (gs.isWaiting) return _scaffoldCenter('Waiting for host...');
+        if (gs.isFinished) return _leaderBoard(gs);
+        if (gs.isStarted) return _quizScaffold(gs);
+        return _scaffoldCenter('Loading...');
+      },
+    );
+  }
+
+  /* ---------- Single-player wrapper ---------- */
+  Widget _buildSingle() {
+    if (currentIndex >= _quizQuestions.length) {
+      return _singleResult();
+    }
+    return _quizScaffold(null);
+  }
+
+  /* ---------- QUIZ SCAFFOLD (shared) ---------- */
+  Widget _quizScaffold(GameSessionProvider? gs) {
+    final total = _quizQuestions.length;
+    final qLabel = widget.isMultiplayer
+        ? 'Q ${_serverProgress(gs!)}/$total'
+        : 'Q ${currentIndex + 1}/$total';
+
+    return Scaffold(
+      appBar: AppBar(title: Text(qLabel)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _timerBar(),
+          const SizedBox(height: 16),
+          _questionCard(),
+        ],
+      ),
+    );
+  }
+
+  /* ---------- TIMER WIDGET ---------- */
+  Widget _timerBar() {
+    final total = widget.isMultiplayer ? _initialTimeForQuestion() : 10;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 38,
+              height: 38,
+              child: CircularProgressIndicator(
+                value: timeLeft / total,
+                strokeWidth: 4,
+                valueColor:
+                const AlwaysStoppedAnimation<Color>(Color(0xFF53BDEB)),
+                backgroundColor: Colors.grey.shade200,
+              ),
+            ),
+            Text('$timeLeft',
+                style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          ],
+        )
+      ],
+    );
+  }
+
+  /* ---------- QUESTION CARD + OPTIONS ---------- */
+  Widget _questionCard() {
+    final q = _currentQuestion;
+
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(q.question,
+                style:
+                const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            ..._optionWidgets(q),
+            if (answered && timeUp) _answerBanner(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /* ---------- OPTION BUILDERS ---------- */
+  List<Widget> _optionWidgets(QuestionModel q) {
+    switch (q.type) {
+      case QuestionType.single:
+        return List.generate(q.options.length, (i) => _singleTile(q, i));
+      case QuestionType.multiple:
+        return [
+          ...List.generate(q.options.length, (i) => _multiTile(q, i)),
+          const SizedBox(height: 12),
+          if (!answered && !timeUp)
+            _submitButton(disabled: selectedIndexes.isEmpty),
+        ];
+      case QuestionType.open:
+        return [
+          TextField(
+            controller: answerController,
+            maxLines: 3,
+            enabled: !answered && !timeUp,
+            decoration: InputDecoration(
+              hintText: 'Type your answer...',
+              border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (!answered && !timeUp) _submitButton(),
+        ];
+      case QuestionType.reorder:
+        return [
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onReorder: answered || timeUp
+                ? (_, __) {}
+                : (o, n) {
+              setState(() {
+                if (n > o) n -= 1;
+                final item = reorderedOptions.removeAt(o);
+                reorderedOptions.insert(n, item);
+              });
+            },
+            itemCount: reorderedOptions.length,
+            itemBuilder: (_, i) {
+              final entry = reorderedOptions[i];
+              return ListTile(
+                key: ValueKey(entry.key),
+                title: Text(entry.value),
+                tileColor: Colors.grey.shade100,
+                trailing:
+                answered || timeUp ? const SizedBox() : const Icon(Icons.drag_handle),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          if (!answered && !timeUp) _submitButton(),
+        ];
+      case QuestionType.trueFalse:
+        return List.generate(2, (i) => _trueFalseTile(q, i));
+    }
+  }
+
+  /* ---------- TILE HELPERS ---------- */
+  Widget _singleTile(QuestionModel q, int i) {
+    final sel = selectedRadio == i;
+    final correct = q.options[i] == q.correctAnswer.first;
+    final incorrect = answered && sel && !correct;
+    Color border = Colors.grey.shade300;
+    Color textCol = Colors.black87;
+    Icon leading = const Icon(Icons.circle_outlined, color: Colors.grey);
+
+    if (timeUp) {
+      if (correct) {
+        border = Colors.teal;
+        leading = const Icon(Icons.check_circle, color: Colors.teal);
+        textCol = Colors.teal;
+      } else if (incorrect) {
+        border = Colors.redAccent;
+        leading = const Icon(Icons.cancel, color: Colors.redAccent);
+        textCol = Colors.redAccent;
+      }
+    } else if (!timeUp && sel) {
+      border = const Color(0xFF53BDEB);
+      leading = const Icon(Icons.circle, color: Color(0xFF53BDEB));
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: border, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: leading,
+        title: Text(q.options[i], style: TextStyle(color: textCol)),
+        onTap: answered
+            ? null
+            : () {
+          setState(() => selectedRadio = i);
+          answered = true;
+          _submitAnswer();
+        },
+      ),
+    );
+  }
+
+  Widget _multiTile(QuestionModel q, int i) {
+    final sel = selectedIndexes.contains(i);
+    final correct = (answered || timeUp) && q.correctAnswer.contains(q.options[i]);
+    final incorrect = (answered || timeUp) && sel && !correct;
+    Color border = Colors.grey.shade300;
+    Color textCol = Colors.black87;
+    if (correct) {
+      border = Colors.teal;
+      textCol = Colors.teal;
+    } else if (incorrect) {
+      border = Colors.redAccent;
+      textCol = Colors.redAccent;
+    } else if (sel) {
+      border = const Color(0xFF53BDEB);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: border, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: CheckboxListTile(
+        value: sel,
+        title: Text(q.options[i], style: TextStyle(color: textCol)),
+        controlAffinity: ListTileControlAffinity.leading,
+        onChanged: answered || timeUp
+            ? null
+            : (v) {
+          setState(() {
+            v! ? selectedIndexes.add(i) : selectedIndexes.remove(i);
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _trueFalseTile(QuestionModel q, int i) {
+    final sel = selectedRadio == i;
+    final correctAnsIdx =
+    q.correctAnswer.first.toLowerCase() == 'true' ? 1 : 0;
+    final correct = answered && i == correctAnsIdx;
+    final incorrect = answered && sel && !correct;
+    Color border = Colors.grey.shade300;
+    Color textCol = Colors.black87;
+    Icon leading = const Icon(Icons.circle_outlined, color: Colors.grey);
+
+    if (correct) {
+      border = Colors.teal;
+      leading = const Icon(Icons.check_circle, color: Colors.teal);
+      textCol = Colors.teal;
+    } else if (incorrect) {
+      border = Colors.redAccent;
+      leading = const Icon(Icons.cancel, color: Colors.redAccent);
+      textCol = Colors.redAccent;
+    } else if (sel) {
+      border = const Color(0xFF53BDEB);
+      leading = const Icon(Icons.circle, color: Color(0xFF53BDEB));
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: border, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: leading,
+        title: Text(i == 1 ? 'True' : 'False', style: TextStyle(color: textCol)),
+        onTap: answered
+            ? null
+            : () {
+          setState(() => selectedRadio = i);
+          answered = true;
+          _submitAnswer();
+        },
+      ),
+    );
+  }
+
+  Widget _submitButton({bool disabled = false}) => ElevatedButton(
+    onPressed: disabled ? null : _submitAnswer,
+    style: ElevatedButton.styleFrom(
+      minimumSize: const Size.fromHeight(48),
+      backgroundColor: const Color(0xFF53BDEB),
+    ),
+    child: const Text('Submit'),
+  );
+
+  Widget _answerBanner() => Padding(
+    padding: const EdgeInsets.only(top: 14),
+    child: Row(
+      children: [
+        Icon(
+          lastAnswerCorrect == true ? Icons.check_circle : Icons.cancel,
+          color: lastAnswerCorrect == true ? Colors.teal : Colors.redAccent,
+          size: 28,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          lastAnswerCorrect == true ? 'Correct!' : 'Incorrect!',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color:
+            lastAnswerCorrect == true ? Colors.teal : Colors.redAccent,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  /* ────────────────────────────────────────────────────────────
+     RESULTS & LEADERBOARD
+  ──────────────────────────────────────────────────────────── */
+  Widget _leaderBoard(GameSessionProvider gs) {
+    final entries = gs.leaderboard;
+    entries.sort((a, b) => a.rank.compareTo(b.rank));
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Leaderboard')),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.separated(
+              itemCount: entries.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final e = entries[i];
+                return ListTile(
+                  leading: CircleAvatar(
+                    child: Text(e.rank.toString()),
+                    backgroundColor: i == 0 ? Colors.amber : null,
+                  ),
+                  title: Text(e.username),
+                  trailing: Text('${e.score} pts'),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.home),
+              label: const Text('Return to Dashboard'),
+              onPressed: () {
+                // clear provider & navigate
+                gs.clearSession();
+                Navigator.of(context).popUntil((r) => r.isFirst);
+                Provider.of<SelectedIndexProvider>(context, listen: false)
+                    .updateSelectedIndex(0);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _singleResult() => Scaffold(
+    appBar: AppBar(title: const Text('Result')),
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Score: $score / ${_quizQuestions.length}',
+              style: const TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.home),
+            label: const Text('Return Home'),
+            onPressed: () {
+              Navigator.of(context).popUntil((r) => r.isFirst);
+              Provider.of<SelectedIndexProvider>(context, listen: false)
+                  .updateSelectedIndex(0);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+
+  /* ────────────────────────────────────────────────────────────
+     HELPERS
+  ──────────────────────────────────────────────────────────── */
+  int _serverProgress(GameSessionProvider gs) {
+    if (gs.currentQuestion == null) return currentIndex + 1;
+    final qId = gs.currentQuestion!.questionId;
+    return _quizQuestions.indexWhere((q) => q.id == qId) + 1;
+  }
+
+  Widget _scaffoldCenter(String msg) => Scaffold(
+    body: Center(child: Text(msg)),
+  );
 
   @override
   void dispose() {
     timer?.cancel();
     answerController.dispose();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    print("----------------------Build Ran");
-    ///Result screen
-    if (currentIndex >= questions.length) {
-      timer?.cancel();
-      return Scaffold(
-        appBar: AppBar(title: const Text("Quiz Completed")),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "🎉 Final Score: $score / ${questions.length}",
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-
-                  // Then update the index
-                  Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
-                },
-                icon: const Icon(Icons.home),
-                label: const Text("Return Home"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final question = questions[currentIndex];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6FBFF),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                /// Progress Bar
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFC3E2FF),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      FractionallySizedBox(
-                        widthFactor: (currentIndex + 1) / questions.length,
-                        child: Container(
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF56C7F9),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// Timer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _prepareQuestion,
-                      child: Text("Reset"),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: CircularProgressIndicator(
-                                  value: timeLeft / 10,
-                                  backgroundColor: Colors.grey.shade200,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xff53BDEB),
-                                  ),
-                                  strokeWidth: 4,
-                                ),
-                              ),
-                              Text(
-                                "$timeLeft",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Color(0xFF53BDEB),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                /// Question Card
-                Container(
-                  margin: const EdgeInsets.only(top: 16, bottom: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 32,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.07),
-                        blurRadius: 24,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      //Question Number/Total questions
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            question.type == QuestionType.single
-                                ? "Single Choice Question"
-                                : question.type == QuestionType.open
-                                ? "Open Ended Question"
-                                : question.type == QuestionType.reorder
-                                ? "Reorder Question"
-                                : "Multiple Choice Question",
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "${currentIndex + 1}/${questions.length}",
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Question
-                      Text(
-                        question.question,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(
-                        height: question.type != QuestionType.open ? 24 : 8,
-                      ),
-
-                      ///QuestionType Single Option builder
-                      if (question.type == QuestionType.single)
-                        ...List.generate(question.options.length, (index) {
-                          final isSelected = selectedRadio == index;
-                          final isCorrect = question.options[index] == question.correctAnswer.first;
-                          final isIncorrect = answered && isSelected && !isCorrect;
-
-                          Color? tileColor = Colors.white;
-                          Color borderColor = Colors.grey.shade300;
-                          Icon leadingIcon = const Icon(
-                            Icons.circle_outlined,
-                            color: Colors.grey,
-                          );
-                          Color optionTextColor = Colors.black54;
-
-                          if (timeUp) {
-                            if (isCorrect) {
-                              tileColor = const Color(0xFFD6F4E7);
-                              borderColor = Colors.teal;
-                              leadingIcon = const Icon(
-                                Icons.check_circle,
-                                color: Colors.teal,
-                              );
-                              optionTextColor = Colors.teal;
-                            } else if (isIncorrect) {
-                              tileColor = Theme.of(context,).primaryColor.withValues(alpha: 0.1);
-                              borderColor = Colors.redAccent;
-                              leadingIcon = const Icon(
-                                Icons.cancel,
-                                color: Colors.redAccent,
-                              );
-                              optionTextColor = Colors.redAccent;
-                            }
-                          } else if (!timeUp && isSelected) {
-                            tileColor = Colors.grey.shade200;
-                            borderColor = const Color(0xFF57A2C3);
-                            leadingIcon = const Icon(
-                              Icons.circle,
-                              color: Color(0xFF53BDEB),
-                            );
-                            optionTextColor = Colors.black87;
-                          }
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: tileColor,
-                              border: Border.all(
-                                color: borderColor,
-                                width: isSelected || isCorrect || isIncorrect
-                                    ? 2
-                                    : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              leading: leadingIcon,
-                              title: Text(
-                                question.options[index],
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: optionTextColor,
-                                ),
-                              ),
-                              onTap: answered
-                                  ? null
-                                  : () => setState(() {
-                                      selectedRadio = index;
-                                      timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
-                                      answered = true;
-                                    }),
-                            ),
-                          );
-                        }),
-
-                      /// QuestionType Multiple option builder
-                      if (question.type == QuestionType.multiple)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Options
-                            ...List.generate(question.options.length, (index) {
-                              final isSelected = selectedIndexes.contains(index);
-                              final isCorrect =
-                                  (answered || timeUp) &&
-                                  question.correctAnswer.contains(question.options[index]);
-                              final isIncorrect =
-                                  (answered || timeUp) &&
-                                  isSelected &&
-                                  !question.correctAnswer.contains(question.options[index]);
-                              print("[QuestionType.Multiple Builder] Variables Set for index: $index");
-
-                              // Colors and styles
-                              Color? tileColor = Colors.white;
-                              Color borderColor = Colors.grey.shade300;
-                              Color optionTextColor = Colors.black87;
-
-                              if (answered && timeUp) {
-                                if (isCorrect) {
-                                  tileColor = const Color(0xFFD6F4E7); // green
-                                  borderColor = Colors.teal;
-                                  optionTextColor = Colors.teal;
-                                } else if (isIncorrect) {
-                                  tileColor = const Color(0xFFFBE4DF); // red
-                                  borderColor = Colors.redAccent;
-                                  optionTextColor = Colors.redAccent;
-                                }
-                              } else if (!timeUp && isSelected) {
-                                tileColor = Colors.grey.shade200;
-                                borderColor = const Color(0xFF57A2C3); // blue
-                                optionTextColor = Colors.black87;
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: tileColor,
-                                  border: Border.all(
-                                    color: borderColor,
-                                    width:
-                                        isSelected || isCorrect || isIncorrect
-                                        ? 2
-                                        : 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  leading: Checkbox(
-                                    value: isSelected,
-                                    onChanged: (answered || timeUp)
-                                        ? null
-                                        : (val) {
-                                            setState(() {
-                                              if (val == true) {
-                                                selectedIndexes.add(index);
-                                              } else {
-                                                selectedIndexes.remove(index);
-                                              }
-                                            });
-                                          },
-                                  ),
-                                  title: Text(
-                                    question.options[index],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: optionTextColor,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                            const SizedBox(height: 10),
-                            // Submit Button
-                            if (!answered && !timeUp)
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF53BDEB),
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size.fromHeight(48),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: selectedIndexes.isEmpty
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          answered = true;
-                                          // userAnswer = selectedIndexes.toSet(); // Store user's selected options
-                                          // Optionally record timeTaken if needed
-                                          timeTaken = DateTime.now()
-                                              .difference(questionStartTime!)
-                                              .inMilliseconds;
-                                        });
-                                      },
-                                child: const Text("Submit"),
-                              ),
-                          ],
-                        ),
-
-                      /// QuestionType Open Ended TextField builder
-                      if (question.type == QuestionType.open)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextField(
-                              controller: answerController,
-                              enabled: !answered && !timeUp,
-                              // disable if answered or time's up
-                              maxLines: 3,
-                              decoration: InputDecoration(
-                                hintText: "Type your answer...",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-
-                            // Submit Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF53BDEB),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  minimumSize: const Size(0, 48),
-                                ),
-                                onPressed: (answered || timeUp)
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          answered = true;
-
-                                          // Save time taken
-                                          timeTaken = DateTime.now()
-                                              .difference(questionStartTime!)
-                                              .inMilliseconds;
-                                        });
-                                      },
-                                child: const Text("Submit"),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      /// QuestionType Reorder Listview option builder
-                      if (question.type == QuestionType.reorder)
-                        Column(
-                          children: [
-                            ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: question.options.length,
-                              buildDefaultDragHandles: false,
-                              onReorder: answered || timeUp
-                                  ? (_,__,) {} // still required, but won't be triggered
-                                  : (oldIndex, newIndex) {
-                                      setState(() {
-                                        if (newIndex > oldIndex) newIndex -= 1;
-                                        final item = reorderedOptions.removeAt(
-                                          oldIndex,
-                                        );
-                                        reorderedOptions.insert(newIndex, item);
-                                      });
-                                    },
-                              itemBuilder: (context, index) {
-                                final entry = reorderedOptions[index];
-
-                                // Otherwise, show draggable tile
-                                return ReorderableDragStartListener(
-                                  key: ValueKey(entry.key),
-                                  index: index,
-                                  child: ListTile(
-                                    tileColor: Colors.grey.shade100,
-                                    title: Text(entry.value),
-                                    trailing: timeUp
-                                        ? Text(
-                                            "${question.correctAnswer.indexOf(entry.value) + 1}",
-                                          )
-                                        : Icon(Icons.drag_handle),
-                                  ),
-                                );
-                              },
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF53BDEB),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  minimumSize: const Size(0, 48),
-                                ),
-                                onPressed: (answered || timeUp)
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          answered = true;
-
-                                          // Save time taken
-                                          timeTaken = DateTime.now()
-                                              .difference(questionStartTime!)
-                                              .inMilliseconds;
-                                        });
-                                      },
-                                child: const Text("Submit"),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      /// QuestionType True/False Option builder
-                      if (question.type == QuestionType.trueFalse)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ...List.generate(2, (index) {
-                              final correctAnswerIndex = question.correctAnswer.first.toLowerCase() == 'true' ? 0 : 1;
-                              final isSelected = selectedRadio == index;
-                              final isCorrect = answered && index == correctAnswerIndex;
-                              final isIncorrect = answered && isSelected && !isCorrect;
-
-                              String label = index == 0 ? "False" : "True";
-
-                              Color? tileColor = Colors.white;
-                              Color borderColor = Colors.grey.shade300;
-                              Icon leadingIcon = Icon(
-                                Icons.circle_outlined,
-                                color: Colors.grey,
-                              );
-                              Color optionTextColor = Colors.black54;
-
-                              if (timeUp) {
-                                if (isCorrect) {
-                                  tileColor = const Color(0xFFD6F4E7);
-                                  borderColor = Colors.teal;
-                                  leadingIcon = const Icon(Icons.check_circle, color: Colors.teal);
-                                  optionTextColor = Colors.teal;
-                                } else if (isIncorrect) {
-                                  tileColor = Theme.of(context).primaryColor.withValues(alpha: .1);
-                                  borderColor = Colors.redAccent;
-                                  leadingIcon = const Icon(Icons.cancel, color: Colors.redAccent);
-                                  optionTextColor = Colors.redAccent;
-                                }
-                              } else if (!timeUp && isSelected) {
-                                tileColor = Colors.grey.shade200;
-                                borderColor = const Color(0xFF57A2C3);
-                                leadingIcon = const Icon(Icons.circle, color: Color(0xFF53BDEB));
-                                optionTextColor = Colors.black87;
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: tileColor,
-                                  border: Border.all(
-                                    color: borderColor,
-                                    width: isSelected || isCorrect || isIncorrect ? 2 : 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  leading: leadingIcon,
-                                  title: Text(
-                                    label,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: optionTextColor,
-                                    ),
-                                  ),
-                                  onTap: answered
-                                      ? null
-                                      : () {
-                                    setState(() {
-                                      selectedRadio = index;
-                                      answered = true;
-                                      timeTaken = DateTime.now().difference(questionStartTime!).inMilliseconds;
-                                    });
-                                  },
-                                ),
-                              );
-                            }),
-                          ],
-                        ),
-
-                      //Correct or Incorrect
-                      if (answered && lastAnswerCorrect != null && timeUp)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Row(
-                            children: [
-                              Icon(
-                                lastAnswerCorrect == true
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-                                size: 30,
-                                color: lastAnswerCorrect == true
-                                    ? Colors.teal
-                                    : Colors.redAccent,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                lastAnswerCorrect == true
-                                    ? "Correct!"
-                                    : "Incorrect!",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: lastAnswerCorrect == true
-                                      ? Colors.teal
-                                      : Colors.redAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

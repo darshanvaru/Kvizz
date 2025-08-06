@@ -1,23 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+
 import '../api_endpoints.dart';
 import '../main.dart';
 import '../models/UserModel.dart';
+import '../providers/tab_index_provider.dart';
 import '../providers/user_provider.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  State createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   late final SharedPreferences prefs;
+
   final _name = TextEditingController();
   final _emailController = TextEditingController();
   final _username = TextEditingController();
@@ -26,20 +30,19 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool isLogin = true;
-  bool isLoading = false; // Added loading state
-  String? errorMessage; // Added error message state
+  bool isLoading = false;
+  String? errorMessage;
 
   @override
   void initState() {
-    initializePreferences();
     super.initState();
+    initializePreferences();
   }
 
   void initializePreferences() async {
     prefs = await SharedPreferences.getInstance();
   }
 
-  // Enhanced error handling with user-friendly messages
   String _getErrorMessage(dynamic error) {
     if (error is SocketException) {
       return "No internet connection. Please check your network and try again.";
@@ -55,7 +58,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  // Show error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -78,7 +80,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // Show success message
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -98,23 +99,15 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _submit() async {
-    // Clear previous error message
     setState(() {
       errorMessage = null;
     });
 
-    // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Check required fields
-    if (isLogin) {
-      if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-        _showErrorDialog('Please enter both email and password!');
-        return;
-      }
-    } else {
+    if (!isLogin) {
       if (_name.text.trim().isEmpty ||
           _emailController.text.trim().isEmpty ||
           _username.text.trim().isEmpty ||
@@ -123,15 +116,12 @@ class _AuthScreenState extends State<AuthScreen> {
         _showErrorDialog('Please fill in all fields!');
         return;
       }
-
-      // Check password match
       if (_passwordController.text != _confirmPasswordController.text) {
         _showErrorDialog('Passwords do not match!');
         return;
       }
     }
 
-    // Start loading
     setState(() {
       isLoading = true;
     });
@@ -146,7 +136,6 @@ class _AuthScreenState extends State<AuthScreen> {
       print('Exception: $e');
       _showErrorDialog(_getErrorMessage(e));
     } finally {
-      // Stop loading
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -155,44 +144,41 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _performLogin() async {
-    final Map<String, dynamic> data = {
+  Future _performLogin() async {
+    final Map data = {
       "email": _emailController.text.trim(),
       "password": _passwordController.text.trim(),
     };
-
     try {
-      final response = await http.post(
-        Uri.parse(ApiEndpoints.login),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(data),
-      ).timeout(
-        Duration(seconds: 30), // 30 second timeout
-        onTimeout: () {
-          throw Exception('Connection timeout. Please try again.');
-        },
-      );
-
-      print("Login Status code: ${response.statusCode}");
-      print("Login Response body: '${response.body}'");
+      final response = await http
+          .post(
+            Uri.parse(ApiEndpoints.login),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(
+            Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Connection timeout. Please try again.');
+            },
+          );
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final decoded = jsonDecode(response.body);
         if (decoded["status"] == "success") {
-          // Save JWT
           await prefs.setString("jwt", decoded["token"]);
-          // Parse user model
           final user = UserModel.fromJson(decoded["user"]);
-          // Save to provider
           Provider.of<UserProvider>(context, listen: false).setUser(user);
-
           _showSuccessMessage("Login successful! Welcome back, ${user.name}");
 
-          // Navigate to Home with delay to show success message
           await Future.delayed(Duration(milliseconds: 1500));
+          Provider.of<SelectedIndexProvider>(
+            context,
+            listen: false,
+          ).updateSelectedIndex(0);
           if (mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -211,44 +197,41 @@ class _AuthScreenState extends State<AuthScreen> {
     } on SocketException {
       throw Exception("No internet connection");
     } on http.ClientException {
-      throw Exception("Connection error. Please check your internet connection.");
+      throw Exception(
+        "Connection error. Please check your internet connection.",
+      );
     }
   }
 
-  Future<void> _performSignUp() async {
-    final Map<String, dynamic> data = {
-      "_id": DateTime.now().millisecondsSinceEpoch.toString(),
+  Future _performSignUp() async {
+    final Map data = {
       "name": _name.text.trim(),
       "username": _username.text.trim(),
       "email": _emailController.text.trim(),
       "password": _passwordController.text.trim(),
       "passwordConfirm": _confirmPasswordController.text.trim(),
     };
-
     try {
-      final response = await http.post(
-        Uri.parse(ApiEndpoints.signup),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(data),
-      ).timeout(
-        Duration(seconds: 30),
-        onTimeout: () {
-          throw Exception('Connection timeout. Please try again.');
-        },
-      );
-
-      print("SignUp Status code: ${response.statusCode}");
-      print("SignUp Response body: '${response.body}'");
+      final response = await http
+          .post(
+            Uri.parse(ApiEndpoints.signup),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(data),
+          )
+          .timeout(
+            Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Connection timeout. Please try again.');
+            },
+          );
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final decoded = jsonDecode(response.body);
         if (decoded["status"] == "success") {
           _showSuccessMessage("Account created successfully! Please login.");
-
-          // Switch to login mode
           setState(() {
             isLogin = true;
             _passwordController.clear();
@@ -267,8 +250,143 @@ class _AuthScreenState extends State<AuthScreen> {
     } on SocketException {
       throw Exception("No internet connection");
     } on http.ClientException {
-      throw Exception("Connection error. Please check your internet connection.");
+      throw Exception(
+        "Connection error. Please check your internet connection.",
+      );
     }
+  }
+
+  Widget _buildSignInFields() {
+    return Column(
+      key: const ValueKey('signIn'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _emailController,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            prefixIcon: Icon(Icons.email),
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your email';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _passwordController,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Password',
+            prefixIcon: Icon(Icons.lock),
+            border: OutlineInputBorder(),
+          ),
+          obscureText: true,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your password';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpFields() {
+    return Column(
+      key: const ValueKey('signUp'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _name,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Full Name',
+            prefixIcon: Icon(Icons.person),
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your name';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _username,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Username',
+            prefixIcon: Icon(Icons.alternate_email),
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a username';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _emailController,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            prefixIcon: Icon(Icons.email),
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your email';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _passwordController,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Password',
+            prefixIcon: Icon(Icons.lock),
+            border: OutlineInputBorder(),
+          ),
+          obscureText: true,
+          validator: (value) {
+            if (value == null || value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _confirmPasswordController,
+          enabled: !isLoading,
+          decoration: const InputDecoration(
+            labelText: 'Confirm Password',
+            prefixIcon: Icon(Icons.lock_outline),
+            border: OutlineInputBorder(),
+          ),
+          obscureText: true,
+          validator: (value) {
+            if (value != _passwordController.text) {
+              return 'Passwords do not match';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -285,227 +403,177 @@ class _AuthScreenState extends State<AuthScreen> {
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Card(
-                color: cardColor,
-                elevation: 8,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header with loading indicator
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              isLogin ? 'Welcome Back' : 'Create an Account',
-                              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            if (isLoading) ...[
-                              SizedBox(width: 16),
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Error message display
-                        if (errorMessage != null) ...[
-                          Container(
-                            padding: EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              border: Border.all(color: Colors.red.shade200),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.error_outline, color: Colors.red, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    errorMessage!,
-                                    style: TextStyle(color: Colors.red.shade700),
-                                  ),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: Card(
+                  color: cardColor,
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                isLogin ? 'Welcome Back' : 'Create an Account',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Form fields
-                        if (!isLogin) ...[
-                          TextFormField(
-                            controller: _name,
-                            enabled: !isLoading,
-                            decoration: const InputDecoration(
-                              labelText: 'Full Name',
-                              prefixIcon: Icon(Icons.person),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (!isLogin && (value == null || value.trim().isEmpty)) {
-                                return 'Please enter your name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _username,
-                            enabled: !isLoading,
-                            decoration: const InputDecoration(
-                              labelText: 'Username',
-                              prefixIcon: Icon(Icons.alternate_email),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (!isLogin && (value == null || value.trim().isEmpty)) {
-                                return 'Please enter a username';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        TextFormField(
-                          controller: _emailController,
-                          enabled: !isLoading,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email),
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _passwordController,
-                          enabled: !isLoading,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock),
-                            border: OutlineInputBorder(),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (!isLogin && value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        if (!isLogin) ...[
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            enabled: !isLoading,
-                            decoration: const InputDecoration(
-                              labelText: 'Confirm Password',
-                              prefixIcon: Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(),
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (!isLogin && value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        const SizedBox(height: 8),
-
-                        // Submit button with loading state
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              backgroundColor: primaryColor,
-                            ),
-                            child: isLoading
-                                ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+                              ),
+                              if (isLoading) ...[
+                                SizedBox(width: 16),
                                 SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
                                 ),
-                                SizedBox(width: 12),
-                                Text(
-                                  isLogin ? 'Signing In...' : 'Creating Account...',
-                                  style: TextStyle(fontSize: 16, color: Colors.white),
-                                ),
                               ],
-                            )
-                                : Text(
-                              isLogin ? 'Sign In' : 'Sign Up',
-                              style: const TextStyle(fontSize: 16, color: Colors.white),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          if (errorMessage != null) ...[
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                border: Border.all(color: Colors.red.shade200),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage!,
+                                      style: TextStyle(
+                                        color: Colors.red.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          // Animate the form fields
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            switchInCurve: Curves.easeInOut,
+                            switchOutCurve: Curves.easeInOut,
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.05),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: isLogin
+                                ? _buildSignInFields()
+                                : _buildSignUpFields(),
+                          ),
+                          const SizedBox(height: 24),
+                          // Submit button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: isLoading ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 36,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: primaryColor,
+                              ),
+                              child: isLoading
+                                  ? Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation(
+                                              Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text(
+                                          isLogin
+                                              ? 'Signing In...'
+                                              : 'Creating Account...',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Text(
+                                      isLogin ? 'Sign In' : 'Sign Up',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Toggle button
-                        TextButton(
-                          onPressed: isLoading ? null : () {
-                            setState(() {
-                              isLogin = !isLogin;
-                              errorMessage = null;
-                              // Clear form when switching
-                              _formKey.currentState?.reset();
-                            });
-                          },
-                          child: Text(
-                            isLogin
-                                ? "Don't have an account? Sign Up"
-                                : "Already have an account? Sign In",
-                            style: TextStyle(
-                              color: isLoading ? Colors.grey : primaryColor,
+                          const SizedBox(height: 16),
+                          // Toggle
+                          TextButton(
+                            onPressed: isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      isLogin = !isLogin;
+                                      errorMessage = null;
+                                      _formKey.currentState?.reset();
+                                    });
+                                  },
+                            child: Text(
+                              isLogin
+                                  ? "Don't have an account? Sign Up"
+                                  : "Already have an account? Sign In",
+                              style: TextStyle(
+                                color: isLoading ? Colors.grey : primaryColor,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-
-          // Full screen loading overlay (optional, for critical operations)
+          // Screen-wide loading overlay
           if (isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
@@ -519,13 +587,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         CircularProgressIndicator(),
                         SizedBox(height: 16),
                         Text(
-                          isLogin ? 'Signing you in...' : 'Creating your account...',
+                          isLogin
+                              ? 'Signing you in...'
+                              : 'Creating your account...',
                           style: TextStyle(fontSize: 16),
                         ),
                         SizedBox(height: 8),
                         Text(
                           'Please wait',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     ),

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/screens/waiting_room_screen.dart';
 import 'package:kvizz/services/quiz_service.dart';
+
+import 'package:kvizz/services/socket_service.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/game_session_provider.dart';
+import '../providers/user_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -9,12 +16,14 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final TextEditingController _codeController = TextEditingController();
+  final SocketService _socketService = SocketService();
+  final TextEditingController _gameCodeController = TextEditingController();
   late Future<List<Map<String, dynamic>>?> _activeQuizzesFuture;
 
   @override
   void initState() {
     super.initState();
+    _socketService.connectSocket(context);
     _loadActiveQuizzes();
   }
 
@@ -24,16 +33,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void joinLobby() {
-    final code = _codeController.text.trim();
-    if (code.isEmpty) {
+  void _joinGame(String gameCode) {
+    if (gameCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid code')),
+        SnackBar(content: Text('Please enter a game code')),
+      );
+      return;
+    }
+    // Validate game code format (6-digit number)
+    if (!RegExp(r'^\d+$').hasMatch(gameCode)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid game code. Must be a 6-digit number and only numeric')),
       );
       return;
     }
 
-    print('Join logic for code: $code not implemented');
+    // Get current user info (from your existing user system)
+    final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
+
+    // Join the room via socket
+    _socketService.joinRoom(
+      gameCode: int.tryParse(gameCode) ?? 000000,
+      userId: currentUser?.id,
+      username: currentUser?.name ?? 'Guest User',
+    );
+
+    // Navigate to waiting room
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WaitingRoomScreen(),
+      ),
+    );
   }
 
   @override
@@ -59,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _codeController,
+                    controller: _gameCodeController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: 'Enter lobby code',
@@ -71,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: joinLobby,
+                  onPressed: (){_joinGame(_gameCodeController.text.trim());},
                   child: const Text('Join'),
                 ),
               ],
@@ -120,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           trailing: const Icon(Icons.play_circle_outline),
                           onTap: () {
                             print("Tapped on quiz with code: ${quiz['gameCode']}");
+                            _joinGame(quiz['gameCode'].toString());
                             // TODO: Navigate or join quiz
                           },
                         ),

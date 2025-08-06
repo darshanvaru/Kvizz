@@ -3,7 +3,12 @@ import 'package:kvizz/PrintHelper.dart';
 import 'package:kvizz/models/Quiz.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/ongoing_quiz_screen.dart';
-import 'package:kvizz/services/quiz_service.dart'; // Assuming you have this service
+import 'package:kvizz/screens/waiting_room_screen.dart';
+import 'package:kvizz/services/quiz_service.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/user_provider.dart';
+import '../services/socket_service.dart'; // Assuming you have this service
 
 class QuizDetailScreen extends StatefulWidget {
   final String quizId;
@@ -76,6 +81,25 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
     await _fetchQuizDetails();
   }
 
+  void _hostMultiplayerGame(QuizModel quiz) {
+    print("[From QuizDetailScreen._hostMultiplayerGame] METHOD CALLED");
+    // Connect socket
+    final socketService = SocketService();
+
+    // Create room
+    final currentUser = Provider.of<UserProvider>(
+      context,
+      listen: false,
+    ).currentUser!; // Your existing method
+    socketService.createRoom(quizId: quiz.id, hostId: currentUser.id);
+
+    // Navigate to host lobby
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => WaitingRoomScreen()),
+    );
+  }
+
   void _confirmAndDeleteQuiz() {
     showDialog(
       context: context,
@@ -89,17 +113,20 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // TODO: Implement delete logic using quiz service
               final success = await deleteQuiz(widget.quizId);
-              if(success){
-                print("[From QuizDetailScreen._confirmAndDeleteQuiz] Quiz deleted successfully");
+              if (success) {
+                print(
+                  "[From QuizDetailScreen._confirmAndDeleteQuiz] Quiz deleted successfully",
+                );
                 Navigator.pop(ctx);
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Quiz deleted successfully!")),
                 );
               } else {
-                print("[From QuizDetailScreen._confirmAndDeleteQuiz] Failed to delete quiz");
+                print(
+                  "[From QuizDetailScreen._confirmAndDeleteQuiz] Failed to delete quiz",
+                );
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -121,9 +148,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
 
     if (errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Quiz Details'),
-        ),
+        appBar: AppBar(title: const Text('Quiz Details')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -195,10 +220,12 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
+              //Preview Button
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Implement Preview logic
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("Preview feature coming soon!"),
@@ -214,6 +241,8 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+
+              //Edit Button
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
@@ -242,16 +271,22 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+
+              //Play Button
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            OngoingQuizScreen(questions: quiz!.questions),
-                      ),
-                    );
+                    print("OnPressed triggered of play");
+                    _hostMultiplayerGame(quiz!);
                   },
+                  // onPressed: () {
+                  //   Navigator.of(context).pushReplacement(
+                  //     MaterialPageRoute(
+                  //       builder: (context) =>
+                  //           OngoingQuizScreen(questions: quiz!.questions),
+                  //     ),
+                  //   );
+                  // },
                   icon: const Icon(Icons.play_arrow),
                   label: const Text("Play"),
                   style: ElevatedButton.styleFrom(

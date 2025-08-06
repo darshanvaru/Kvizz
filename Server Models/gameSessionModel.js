@@ -1,169 +1,297 @@
-// game_session_model.dart
-class CurrentQuestion {
-  final String questionId;
-  final DateTime startTime;
-  final DateTime endTime;
-  CurrentQuestion({
-    required this.questionId,
-    required this.startTime,
-    required this.endTime,
+const mongoose = require("mongoose");
+
+const gameSessionSchema = new mongoose.Schema(
+  {
+    quizId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Quiz",
+      required: true,
+    },
+    hostId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    gameCode: {
+      type: Number,
+      required: true,
+      unique: true,
+      min: 100000,
+      max: 999999,
+    },
+    //for socket connection
+    connectionId: String,
+    status: {
+      type: String,
+      enum: ["waiting", "playing", "finished"],
+      default: "waiting",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    participants: [
+      {
+        userId: {
+          type: mongoose.Schema.ObjectId,
+          ref: "User",
+        },
+        username: String,
+        isGuest: Boolean,
+        score: {
+          type: Number,
+          default: 0,
+        },
+        answers: [
+          {
+            questionId: {
+              type: mongoose.Schema.ObjectId,
+              ref: "Question",
+              required: true,
+            },
+            answer: {
+              type: String,
+              required: true,
+            },
+            isCorrect: {
+              type: Boolean,
+              required: true,
+            },
+            timeTaken: {
+              type: Number,
+              required: true,
+            },
+            points: {
+              type: Number,
+              default: 0,
+            },
+          },
+        ],
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    currentQuestion: {
+      questionId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Question",
+      },
+      startTime: Date,
+      endTime: Date,
+    },
+    settings: {
+      maxParticipants: {
+        type: Number,
+        default: 50,
+        min: 2,
+        max: 50,
+      },
+      timePerQuestion: {
+        type: Number,
+        default: 30,
+        min: 10,
+        max: 300,
+      },
+      maxPointsPerQuestion: {
+        type: Number,
+        required: true,
+        default: 100,
+        min: 100,
+        max: 4000,
+      },
+      isPublic: {
+        type: Boolean,
+        default: true,
+      },
+    },
+    results: {
+      leaderboard: [
+        {
+          userId: {
+            type: mongoose.Schema.ObjectId,
+            ref: "User",
+          },
+          username: String,
+          rank: Number,
+          score: Number,
+          correctAnswers: Number,
+          avgResponseTime: Number,
+        },
+      ],
+    },
+    startedAt: Date,
+    finishedAt: Date,
+  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
+
+gameSessionSchema.index({ createdAt: -1 });
+gameSessionSchema.index({ hostId: 1 });
+
+//=> Middlewares
+
+//=> Pre population
+gameSessionSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "quizId",
+    select: "title description category",
+  }).populate({
+    path: "hostId",
+    select: "name photo",
   });
-  factory CurrentQuestion.fromJson(Map<String, dynamic> json) =>
-    CurrentQuestion(
-      questionId: json['questionId'],
-      startTime: DateTime.parse(json['startTime']),
-      endTime: DateTime.parse(json['endTime']),
+
+  next();
+});
+
+//===>Schema Methods for better handling of actions
+
+//=> Add Participant
+gameSessionSchema.methods.addParticipant = function (userId, username) {
+  let isGuest = false;
+
+  let existingParticipant;
+  if (userId)
+    existingParticipant = this.participants.find(
+      (p) => p.userId.toString() === userId.toString(),
     );
-}
 
-class ParticipantAnswer {
-  final String questionId;
-  final String answer;
-  final bool isCorrect;
-  final int timeTaken;
-  final int points;
-  ParticipantAnswer({
-    required this.questionId,
-    required this.answer,
-    required this.isCorrect,
-    required this.timeTaken,
-    required this.points,
-  });
-  factory ParticipantAnswer.fromJson(Map<String, dynamic> json) =>
-    ParticipantAnswer(
-      questionId: json['questionId'],
-      answer: json['answer'],
-      isCorrect: json['isCorrect'],
-      timeTaken: json['timeTaken'],
-      points: json['points'],
+  if (!userId) {
+    userId = null;
+    isGuest = true;
+  } else if (existingParticipant) {
+    throw new Error(
+      "You have already Joined this game try to access that device",
     );
-}
+  }
 
-class Participant {
-  final String? userId;
-  final String username;
-  final bool isGuest;
-  final int score;
-  final List<ParticipantAnswer> answers;
-  Participant({
-    this.userId,
-    required this.username,
-    required this.isGuest,
-    required this.score,
-    required this.answers,
-  });
-  factory Participant.fromJson(Map<String, dynamic> json) => Participant(
-    userId: json['userId']?.toString(),
-    username: json['username'],
-    isGuest: json['isGuest'] ?? false,
-    score: json['score'] ?? 0,
-    answers: (json['answers'] as List<dynamic>?)
-      ?.map((a) => ParticipantAnswer.fromJson(a))
-      .toList() ?? [],
-  );
-}
+  if (this.participants.length >= this.settings.maxParticipants) {
+    throw new Error("Game is full");
+  }
 
-class GameSettings {
-  final int maxParticipants;
-  final int timePerQuestion;
-  final int maxPointsPerQuestion;
-  final bool isPublic;
-  GameSettings({
-    required this.maxParticipants,
-    required this.timePerQuestion,
-    required this.maxPointsPerQuestion,
-    required this.isPublic,
-  });
-  factory GameSettings.fromJson(Map<String, dynamic> json) => GameSettings(
-    maxParticipants: json['maxParticipants'] ?? 50,
-    timePerQuestion: json['timePerQuestion'] ?? 30,
-    maxPointsPerQuestion: json['maxPointsPerQuestion'] ?? 100,
-    isPublic: json['isPublic'] ?? true,
-  );
-}
-
-class LeaderboardEntry {
-  final String? userId;
-  final String username;
-  final int rank;
-  final int score;
-  final int correctAnswers;
-  final double avgResponseTime;
-  LeaderboardEntry({
-    this.userId,
-    required this.username,
-    required this.rank,
-    required this.score,
-    required this.correctAnswers,
-    required this.avgResponseTime,
-  });
-  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>
-    LeaderboardEntry(
-      userId: json['userId']?.toString(),
-      username: json['username'],
-      rank: json['rank'],
-      score: json['score'],
-      correctAnswers: json['correctAnswers'],
-      avgResponseTime: (json['avgResponseTime'] as num).toDouble(),
-    );
-}
-
-class GameSessionModel {
-  final String id;
-  final String quizId;
-  final String hostId;
-  final int gameCode;
-  final String? connectionId;
-  final String status;
-  final bool isActive;
-  final CurrentQuestion? currentQuestion;
-  final List<Participant>? participants;
-  final GameSettings? settings;
-  final List<LeaderboardEntry>? leaderboard;
-  final DateTime? startedAt;
-  final DateTime? finishedAt;
-
-  GameSessionModel({
-    required this.id,
-    required this.quizId,
-    required this.hostId,
-    required this.gameCode,
-    this.connectionId,
-    required this.status,
-    required this.isActive,
-    this.currentQuestion,
-    this.participants,
-    this.settings,
-    this.leaderboard,
-    this.startedAt,
-    this.finishedAt,
+  this.participants.push({
+    userId,
+    username,
+    isGuest,
+    score: 0,
+    answers: [],
+    joinedAt: new Date(),
+    isActive: true,
   });
 
-  factory GameSessionModel.fromJson(Map<String, dynamic> json) => GameSessionModel(
-    id: json['_id'],
-    quizId: json['quizId'],
-    hostId: json['hostId'],
-    gameCode: json['gameCode'],
-    connectionId: json['connectionId'],
-    status: json['status'],
-    isActive: json['isActive'],
-    currentQuestion: json['currentQuestion'] != null
-      ? CurrentQuestion.fromJson(json['currentQuestion'])
-      : null,
-    participants: (json['participants'] as List<dynamic>?)
-      ?.map((p) => Participant.fromJson(p))
-      .toList(),
-    settings: json['settings'] != null
-      ? GameSettings.fromJson(json['settings'])
-      : null,
-    leaderboard: (json['results']?['leaderboard'] as List<dynamic>?)
-      ?.map((l) => LeaderboardEntry.fromJson(l))
-      .toList(),
-    startedAt: json['startedAt'] != null
-      ? DateTime.parse(json['startedAt'])
-      : null,
-    finishedAt: json['finishedAt'] != null
-      ? DateTime.parse(json['finishedAt'])
-      : null,
-  );
-}
+  return this.save();
+};
+
+//=>Remove participants
+gameSessionSchema.methods.removeParticipant = function (userId, username) {
+  const participantIndex = this.participants.findIndex((p) => {
+    if (!userId) return p.username.toString() === username.toString();
+    return p.userId.toString() === userId.toString();
+  });
+  if (participantIndex > -1) {
+    this.participants.splice(participantIndex, 1);
+    return this.save();
+  }
+  return this;
+};
+
+//=> Submit answer of user
+gameSessionSchema.methods.submitAnswer = function (
+  username,
+  questionId,
+  answer,
+  isCorrect,
+  timeTaken,
+) {
+  const participantIndex = this.participants.findIndex((p) => {
+    return p.username.toString() === username.toString();
+  });
+
+  const totalTimePerQuestionInMs = this.settings.timePerQuestion * 1000;
+  const timeLeft = totalTimePerQuestionInMs - timeTaken;
+  const score = isCorrect
+    ? Math.round(
+        (timeLeft / totalTimePerQuestionInMs) *
+          this.settings.maxPointsPerQuestion,
+      )
+    : 0;
+
+  const userSubmittedAnswer = {
+    questionId,
+    answer,
+    isCorrect,
+    timeTaken,
+    points: score,
+  };
+
+  this.participants[participantIndex].answers.push(userSubmittedAnswer);
+  this.participants[participantIndex].score += score;
+  // this.save();
+
+  return this;
+};
+
+//=> Calculate leaderboard
+gameSessionSchema.methods.calculateLeaderboard = function () {
+  const leaderboard = this.participants
+    .map((p) => ({
+      userId: p.userId || null,
+      username: p.username,
+      score: p.score,
+      correctAnswers: p.answers.filter((ans) => ans.isCorrect).length,
+      avgResponseTime:
+        p.answers.reduce((sum, ans) => sum + ans.timeTaken, 0) /
+          p.answers.length || 0,
+    }))
+    .sort((a, b) => {
+      if (a.score === b.score) return b.avgResponseTime - a.avgResponseTime;
+      return a.score - b.score;
+    })
+    .map((ans, index) => {
+      return {
+        ...ans,
+        rank: index + 1,
+      };
+    });
+
+  this.results.leaderboard = leaderboard;
+  if (leaderboard.length > 0) {
+    this.results.winner = leaderboard[0].userId;
+  }
+
+  return this.save();
+};
+
+//=>Get total active participants
+gameSessionSchema.statics.generateGameCode = async function () {
+  // Use current timestamp + random number
+  const now = Date.now();
+  const random = Math.floor(Math.random() * 9999);
+
+  // Take last 2 digits of timestamp + 4-digit random = 6 digits
+  const timeComponent = now.toString().slice(-2);
+  const randomComponent = random.toString().padStart(4, "0");
+  const gameCode = parseInt(timeComponent + randomComponent);
+
+  // Ensure it's in valid range
+  const finalCode = Math.max(100000, Math.min(999999, gameCode));
+
+  return finalCode;
+};
+
+//=> generate connection string
+gameSessionSchema.statics.generateConnectionString = async function () {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  const connectionId = timestamp + random;
+
+  return connectionId;
+};
+
+const GameSession = mongoose.model("GameSession", gameSessionSchema);
+
+module.exports = GameSession;

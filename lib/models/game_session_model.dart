@@ -13,6 +13,11 @@ class QuizCreator {
     id: json['_id'] ?? json['id'],
     name: json['name'],
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+  };
 }
 
 class QuizQuestion {
@@ -37,6 +42,14 @@ class QuizQuestion {
     type: json['type'],
     question: json['question'],
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'options': options,
+    'correctAnswer': correctAnswer,
+    'type': type,
+    'question': question,
+  };
 }
 
 class QuizData {
@@ -65,8 +78,17 @@ class QuizData {
     title: json['title'],
     description: json['description'],
     creator: QuizCreator.fromJson(json['creator']),
-    category: json['category'],
+    category: json['category']??'',
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'questions': questions.map((q) => q.toJson()).toList(),
+    'title': title,
+    'description': description,
+    'creator': creator.toJson(),
+    'category': category,
+  };
 }
 
 class HostData {
@@ -85,6 +107,12 @@ class HostData {
     photo: json['photo'] ?? '',
     name: json['name'],
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'photo': photo,
+    'name': name,
+  };
 }
 
 class CurrentQuestion {
@@ -104,6 +132,12 @@ class CurrentQuestion {
         startTime: DateTime.parse(json['startTime']),
         endTime: DateTime.parse(json['endTime']),
       );
+
+  Map<String, dynamic> toJson() => {
+    'questionId': questionId,
+    'startTime': startTime.toIso8601String(),
+    'endTime': endTime.toIso8601String(),
+  };
 }
 
 class ParticipantAnswer {
@@ -129,6 +163,14 @@ class ParticipantAnswer {
         timeTaken: json['timeTaken'],
         points: json['points'],
       );
+
+  Map<String, dynamic> toJson() => {
+    'questionId': questionId,
+    'answer': answer,
+    'isCorrect': isCorrect,
+    'timeTaken': timeTaken,
+    'points': points,
+  };
 }
 
 class Participant {
@@ -152,19 +194,33 @@ class Participant {
     required this.joinedAt,
   });
 
+  // In game_session_model.dart - Update Participant.fromJson()
   factory Participant.fromJson(Map<String, dynamic> json) => Participant(
-    id: json['_id'] ?? json['id'],
-    userId: json['userId']?.toString(),
-    username: json['username'],
-    isGuest: json['isGuest'] ?? false,
+    id: json['_id'] ?? json['id'] ?? '',
+    userId: json['userId'] != null ? json['userId'].toString() : null,
+    username: json['username'] ?? 'Unknown User',
+    isGuest: json['isGuest'] ?? true, // Default to guest if not specified
     score: json['score'] ?? 0,
     isActive: json['isActive'] ?? true,
     answers: (json['answers'] as List?)
         ?.map((a) => ParticipantAnswer.fromJson(a))
         .toList() ??
         [],
-    joinedAt: DateTime.parse(json['joinedAt']),
+    joinedAt: json['joinedAt'] != null
+        ? DateTime.parse(json['joinedAt'])
+        : DateTime.now(),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'userId': userId,
+    'username': username,
+    'isGuest': isGuest,
+    'score': score,
+    'isActive': isActive,
+    'answers': answers.map((a) => a.toJson()).toList(),
+    'joinedAt': joinedAt.toIso8601String(),
+  };
 }
 
 class GameSettings {
@@ -186,6 +242,13 @@ class GameSettings {
     maxPointsPerQuestion: json['maxPointsPerQuestion'] ?? 100,
     isPublic: json['isPublic'] ?? true,
   );
+
+  Map<String, dynamic> toJson() => {
+    'maxParticipants': maxParticipants,
+    'timePerQuestion': timePerQuestion,
+    'maxPointsPerQuestion': maxPointsPerQuestion,
+    'isPublic': isPublic,
+  };
 }
 
 class LeaderboardEntry {
@@ -209,14 +272,24 @@ class LeaderboardEntry {
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>
       LeaderboardEntry(
-        id: json['_id'] ?? json['id'],
-        userId: json['userId']?.toString(),
-        username: json['username'],
-        rank: json['rank'],
-        score: json['score'],
-        correctAnswers: json['correctAnswers'],
-        avgResponseTime: (json['avgResponseTime'] as num).toDouble(),
+        id: json['_id'] ?? json['id'] ?? '',
+        userId: json['userId'] != null ? json['userId'].toString() : null,
+        username: json['username'] ?? 'Unknown User',
+        rank: json['rank'] ?? 0,
+        score: json['score'] ?? 0,
+        correctAnswers: json['correctAnswers'] ?? 0,
+        avgResponseTime: (json['avgResponseTime'] as num?)?.toDouble() ?? 0.0,
       );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'userId': userId,
+    'username': username,
+    'rank': rank,
+    'score': score,
+    'correctAnswers': correctAnswers,
+    'avgResponseTime': avgResponseTime,
+  };
 }
 
 class GameResults {
@@ -232,6 +305,10 @@ class GameResults {
         .toList() ??
         [],
   );
+
+  Map<String, dynamic> toJson() => {
+    'leaderboard': leaderboard.map((l) => l.toJson()).toList(),
+  };
 }
 
 class GameSessionModel {
@@ -269,19 +346,18 @@ class GameSessionModel {
     required this.updatedAt,
   });
 
+  // In your GameSessionModel.fromJson method, replace it with this:
   factory GameSessionModel.fromJson(Map<String, dynamic> json) =>
       GameSessionModel(
-        id: json['_id'] ?? json['id'],
+        id: json['_id'] ?? json['id'] ?? '',
         quizData: json['quizId'] != null && json['quizId'] is Map
             ? QuizData.fromJson(json['quizId'])
             : null,
-        hostData: json['hostId'] != null && json['hostId'] is Map
-            ? HostData.fromJson(json['hostId'])
-            : null,
-        gameCode: json['gameCode'],
+        hostData: HostData.fromJson(json['hostId']),
+        gameCode: json['gameCode'] ?? 0,
         connectionId: json['connectionId'],
-        status: json['status'],
-        isActive: json['isActive'],
+        status: json['status'] ?? 'waiting',
+        isActive: json['isActive'] ?? true,
         currentQuestion: json['currentQuestion'] != null
             ? CurrentQuestion.fromJson(json['currentQuestion'])
             : null,
@@ -301,32 +377,38 @@ class GameSessionModel {
         finishedAt: json['finishedAt'] != null
             ? DateTime.parse(json['finishedAt'])
             : null,
-        createdAt: DateTime.parse(json['createdAt']),
-        updatedAt: DateTime.parse(json['updatedAt']),
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'])
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'])
+            : DateTime.now(),
       );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'quizId': quizData?.toJson(),
+    'hostId': hostData?.toJson(),
+    'gameCode': gameCode,
+    'connectionId': connectionId,
+    'status': status,
+    'isActive': isActive,
+    'currentQuestion': currentQuestion?.toJson(),
+    'participants': participants.map((p) => p.toJson()).toList(),
+    'settings': settings?.toJson(),
+    'results': results?.toJson(),
+    'startedAt': startedAt?.toIso8601String(),
+    'finishedAt': finishedAt?.toIso8601String(),
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   // Helper methods
   bool get isWaiting => status == 'waiting';
-  bool get isStarted => status == 'started' || status == 'in-progress';
-  bool get isFinished => status == 'finished' || status == 'completed';
+  bool get isStarted => status == 'playing';
+  bool get isFinished => status == 'finished';
 
   int get participantCount => participants.length;
 
   List<LeaderboardEntry> get leaderboard => results?.leaderboard ?? [];
-
-  Participant? getParticipantById(String participantId) {
-    try {
-      return participants.firstWhere((p) => p.id == participantId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Participant? getParticipantByUserId(String userId) {
-    try {
-      return participants.firstWhere((p) => p.userId == userId);
-    } catch (e) {
-      return null;
-    }
-  }
 }

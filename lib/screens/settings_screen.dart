@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/screens/auth_screen.dart';
+import 'package:kvizz/services/socket_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../providers/user_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -56,6 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Settings")),
@@ -73,8 +77,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       backgroundColor: Colors.blue,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    title: const Text("Darshan Varu"),
-                    subtitle: const Text("darshan@example.com"),
+                    title: Text(currentUser?.name ?? "Unknown"),
+                    subtitle: Text(currentUser?.email ?? "Unknown"),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       // TODO: Navigate to Profile Details/Edit screen
@@ -115,6 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         "Logout",
                         "Are you sure you want to logout?",
                         () {
+                          SocketService().manualDisconnect();
                           prefs.setBool('isLoggedIn', false);
                           Navigator.pushAndRemoveUntil(
                             context,
@@ -145,8 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         "Delete Account",
                         "This action is permanent. Are you sure?",
                         () {
-                          // TODO: Add delete account logic here
-                          // Implement delete account logic here
+                          // TODO: Add delete account logic
                           print('Delete account logic not implemented.');
                         },
                       );

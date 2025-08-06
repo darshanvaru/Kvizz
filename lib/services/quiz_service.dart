@@ -130,7 +130,7 @@ Future<List<Map<String, dynamic>>?> getActiveQuizzes() async {
 
       final List<Map<String, dynamic>> activeQuizzes = docs.map<Map<String, dynamic>>((doc) {
         return {
-          'id': doc['quizId']?['_id'] ?? '',
+          'id': doc['quizId']?? '',
           "title": doc['quizId']?['title'] ?? "",
           "description": doc['quizId']?['description'] ?? "",
           "gameCode": doc['gameCode'] ?? 000000,
@@ -211,6 +211,7 @@ Future<List<QuizModel>?> fetchAllQuizzes() async {
 Future<List<QuizModel>?> fetchUserQuizzes(String userId) async {
   try {
     print("[From QuizService.fetchUserQuizzes] Fetching quizzes for user ID: $userId");
+    print("Link: ${ApiEndpoints.quizzesOfUserByUserID(userId)}");
     final response = await http.get(
       Uri.parse(ApiEndpoints.quizzesOfUserByUserID(userId)),
       // headers: {

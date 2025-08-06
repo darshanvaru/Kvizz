@@ -1,5 +1,6 @@
 // game_session_provider.dart
 import 'package:flutter/material.dart';
+import 'package:kvizz/PrintHelper.dart';
 import '../models/game_session_model.dart';
 
 class GameSessionProvider extends ChangeNotifier {
@@ -13,7 +14,6 @@ class GameSessionProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasSession => _gameSession != null;
 
-  // Session state getters
   bool get isWaiting => _gameSession?.isWaiting ?? false;
   bool get isStarted => _gameSession?.isStarted ?? false;
   bool get isFinished => _gameSession?.isFinished ?? false;
@@ -37,13 +37,22 @@ class GameSessionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Update session from JSON (from socket events)
+  // In game_session_provider.dart
   void updateSessionFromJson(Map<String, dynamic> json) {
+    print("In updateSessionFromJson");
     try {
+      printFullResponse('🔍 GameSession JSON input: ${json}');
+
       _gameSession = GameSessionModel.fromJson(json);
+      printFullResponse("✅  ✅  full Game session participants ${_gameSession?.participants.toList().toString()}");
+      print('✅ GameSession: ${_gameSession?.id}, Code: ${_gameSession?.gameCode}');
       _error = null;
+
       notifyListeners();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error parsing session data: $e');
+      printFullResponse('📄 JSON data: $json');
+      print('📍 Stack trace: $stackTrace');
       _error = 'Failed to parse session data: $e';
       notifyListeners();
     }
@@ -69,125 +78,8 @@ class GameSessionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add participant (for real-time updates)
-  void addParticipant(Participant participant) {
-    if (_gameSession != null) {
-      final updatedParticipants = List<Participant>.from(_gameSession!.participants);
-      updatedParticipants.add(participant);
-
-      _gameSession = GameSessionModel(
-        id: _gameSession!.id,
-        quizData: _gameSession!.quizData,
-        hostData: _gameSession!.hostData,
-        gameCode: _gameSession!.gameCode,
-        connectionId: _gameSession!.connectionId,
-        status: _gameSession!.status,
-        isActive: _gameSession!.isActive,
-        currentQuestion: _gameSession!.currentQuestion,
-        participants: updatedParticipants,
-        settings: _gameSession!.settings,
-        results: _gameSession!.results,
-        startedAt: _gameSession!.startedAt,
-        finishedAt: _gameSession!.finishedAt,
-        createdAt: _gameSession!.createdAt,
-        updatedAt: _gameSession!.updatedAt,
-      );
-      notifyListeners();
-    }
-  }
-
-  // Remove participant (for real-time updates)
-  void removeParticipant(String participantId) {
-    if (_gameSession != null) {
-      final updatedParticipants = _gameSession!.participants
-          .where((p) => p.id != participantId)
-          .toList();
-
-      _gameSession = GameSessionModel(
-        id: _gameSession!.id,
-        quizData: _gameSession!.quizData,
-        hostData: _gameSession!.hostData,
-        gameCode: _gameSession!.gameCode,
-        connectionId: _gameSession!.connectionId,
-        status: _gameSession!.status,
-        isActive: _gameSession!.isActive,
-        currentQuestion: _gameSession!.currentQuestion,
-        participants: updatedParticipants,
-        settings: _gameSession!.settings,
-        results: _gameSession!.results,
-        startedAt: _gameSession!.startedAt,
-        finishedAt: _gameSession!.finishedAt,
-        createdAt: _gameSession!.createdAt,
-        updatedAt: _gameSession!.updatedAt,
-      );
-      notifyListeners();
-    }
-  }
-
-  // Update session status
-  void updateStatus(String newStatus) {
-    if (_gameSession != null) {
-      _gameSession = GameSessionModel(
-        id: _gameSession!.id,
-        quizData: _gameSession!.quizData,
-        hostData: _gameSession!.hostData,
-        gameCode: _gameSession!.gameCode,
-        connectionId: _gameSession!.connectionId,
-        status: newStatus,
-        isActive: _gameSession!.isActive,
-        currentQuestion: _gameSession!.currentQuestion,
-        participants: _gameSession!.participants,
-        settings: _gameSession!.settings,
-        results: _gameSession!.results,
-        startedAt: _gameSession!.startedAt,
-        finishedAt: _gameSession!.finishedAt,
-        createdAt: _gameSession!.createdAt,
-        updatedAt: _gameSession!.updatedAt,
-      );
-      notifyListeners();
-    }
-  }
-
-  // Get participant by ID
-  Participant? getParticipant(String participantId) {
-    return _gameSession?.getParticipantById(participantId);
-  }
-
-  // Get participant by user ID
-  Participant? getParticipantByUserId(String userId) {
-    return _gameSession?.getParticipantByUserId(userId);
-  }
-
   // Check if current user is host
   bool isHost(String userId) {
     return _gameSession?.hostData?.id == userId;
-  }
-
-  // Get current question data
-  QuizQuestion? getCurrentQuestionData() {
-    if (_gameSession?.currentQuestion != null && _gameSession?.quizData != null) {
-      final questionId = _gameSession!.currentQuestion!.questionId;
-      try {
-        return _gameSession!.quizData!.questions
-            .firstWhere((q) => q.id == questionId);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  // Get current question index (for UI display)
-  int getCurrentQuestionIndex() {
-    if (_gameSession?.currentQuestion != null && _gameSession?.quizData != null) {
-      final questionId = _gameSession!.currentQuestion!.questionId;
-      try {
-        return _gameSession!.quizData!.questions
-            .indexWhere((q) => q.id == questionId);
-      } catch (e) {
-        return -1;
-      }
-    }
-    return -1;
   }
 }
