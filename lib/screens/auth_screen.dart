@@ -13,7 +13,7 @@ import '../providers/tab_index_provider.dart';
 import '../providers/user_provider.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   State createState() => _AuthScreenState();
