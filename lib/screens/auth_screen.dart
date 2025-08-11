@@ -147,7 +147,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   Future _performLogin() async {
     print("------ Login fucntion");
     final Map data = {
-      "email": _emailController.text.trim(),
+      "email": "${_emailController.text.trim()}@example.com",
       "password": "12345678"
       // "password": _passwordController.text.trim(),
     };
@@ -579,7 +579,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           // Screen-wide loading overlay
           if (isLoading)
             Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: Center(
                 child: Card(
                   child: Padding(
