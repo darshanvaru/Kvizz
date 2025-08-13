@@ -1,6 +1,6 @@
 // question_model.dart
 
-import '../enums/QuestionType.dart';
+import '../enums/enums.dart';
 
 class QuestionModel {
   final String id;

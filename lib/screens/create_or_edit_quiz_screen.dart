@@ -5,7 +5,7 @@ import 'package:kvizz/PrintHelper.dart';
 import '../models/Quiz.dart';
 import '../models/Question.dart';
 
-import '../enums/QuestionType.dart';
+import '../enums/enums.dart';
 import '../providers/user_provider.dart';
 
 import '../services/quiz_service.dart';

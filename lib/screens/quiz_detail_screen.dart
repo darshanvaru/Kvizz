@@ -85,7 +85,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
         questions: quiz.questions,
         timePerQuestion: 15,
         maxPointsPerQuestion: 1,
-        isHost: true,
+        isHost: false,
         gameSessionId: "asdasfadsvadsv",
       ),),
     );

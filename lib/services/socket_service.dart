@@ -250,14 +250,14 @@ class SocketService {
     required int timeTaken,
   }) {
     print('📤 Submitting answer - Question: $questionId, Correct: $isCorrect');
-    _socket.emit('submit-answer', {
-      'gameSessionId': gameSessionId,
-      'username': userId,
-      'questionId': questionId,
-      'answer': answer,
-      'isCorrect': isCorrect,
-      'timeTaken': timeTaken,
-    });
+    // _socket.emit('submit-answer', {
+    //   'gameSessionId': gameSessionId,
+    //   'username': userId,
+    //   'questionId': questionId,
+    //   'answer': answer,
+    //   'isCorrect': isCorrect,
+    //   'timeTaken': timeTaken,
+    // });
   }
 
   void manualDisconnect() {

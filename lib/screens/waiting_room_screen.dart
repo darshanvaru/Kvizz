@@ -230,23 +230,23 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
           }
 
           // Check if game has started and navigate to quiz
-          if (sessionProvider.isStarted) {
-            print("Game has started, navigating to OngoingQuizScreen from waiting screen");
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => OngoingQuizScreen(
-                    questions: sessionProvider.quizData!.questions,
-                    timePerQuestion: sessionProvider.gameSession!.settings!.timePerQuestion,
-                    maxPointsPerQuestion: sessionProvider.gameSession?.settings?.maxPointsPerQuestion ?? 1,
-                    isHost: _isCurrentUserHost(sessionProvider),
-                    gameSessionId: sessionProvider.gameSession!.id,
-                  ),
-                ),
-              );
-            });
-            return _buildGameStartingState();
-          }
+          // if (sessionProvider.isStarted) {
+          //   print("Game has started, navigating to OngoingQuizScreen from waiting screen");
+          //   WidgetsBinding.instance.addPostFrameCallback((_) {
+          //     Navigator.of(context).pushReplacement(
+          //       MaterialPageRoute(
+          //         builder: (context) => OngoingQuizScreen(
+          //           questions: sessionProvider.quizData!.questions,
+          //           timePerQuestion: sessionProvider.gameSession!.settings!.timePerQuestion,
+          //           maxPointsPerQuestion: sessionProvider.gameSession?.settings?.maxPointsPerQuestion ?? 1,
+          //           isHost: _isCurrentUserHost(sessionProvider),
+          //           gameSessionId: sessionProvider.gameSession!.id,
+          //         ),
+          //       ),
+          //     );
+          //   });
+          //   return _buildGameStartingState();
+          // }
 
           // Show waiting room UI
           return _buildWaitingRoomContent(sessionProvider);
