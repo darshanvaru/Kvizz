@@ -1,4 +1,5 @@
 // game_session_model.dart
+import 'package:kvizz/models/Question.dart';
 
 class QuizCreator {
   final String id;
@@ -20,41 +21,9 @@ class QuizCreator {
   };
 }
 
-class QuizQuestion {
-  final String id;
-  final List<String> options;
-  final List<String> correctAnswer;
-  final String type;
-  final String question;
-
-  QuizQuestion({
-    required this.id,
-    required this.options,
-    required this.correctAnswer,
-    required this.type,
-    required this.question,
-  });
-
-  factory QuizQuestion.fromJson(Map<String, dynamic> json) => QuizQuestion(
-    id: json['_id'] ?? json['id'],
-    options: List<String>.from(json['options']),
-    correctAnswer: List<String>.from(json['correctAnswer']),
-    type: json['type'],
-    question: json['question'],
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'options': options,
-    'correctAnswer': correctAnswer,
-    'type': type,
-    'question': question,
-  };
-}
-
 class QuizData {
   final String id;
-  final List<QuizQuestion> questions;
+  final List<QuestionModel> questions;
   final String title;
   final String description;
   final QuizCreator creator;
@@ -72,7 +41,7 @@ class QuizData {
   factory QuizData.fromJson(Map<String, dynamic> json) => QuizData(
     id: json['_id'] ?? json['id'],
     questions: (json['questions'] as List?)
-        ?.map((q) => QuizQuestion.fromJson(q))
+        ?.map((q) => QuestionModel.fromJson(q))
         .toList() ??
         [],
     title: json['title'],

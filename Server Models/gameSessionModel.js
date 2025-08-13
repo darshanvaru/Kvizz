@@ -19,7 +19,6 @@ const gameSessionSchema = new mongoose.Schema(
       min: 100000,
       max: 999999,
     },
-    //for socket connection
     connectionId: String,
     status: {
       type: String,

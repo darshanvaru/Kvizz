@@ -145,7 +145,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   }
 
   Future _performLogin() async {
-    print("------ Login fucntion");
     final Map data = {
       "email": "${_emailController.text.trim()}@example.com",
       "password": "12345678"

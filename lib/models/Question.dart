@@ -1,8 +1,6 @@
 // question_model.dart
 
-enum QuestionType { multiple, single, open, reorder, trueFalse }
-
-enum MediaType { image, audio, video }
+import '../enums/QuestionType.dart';
 
 class QuestionModel {
   final String id;

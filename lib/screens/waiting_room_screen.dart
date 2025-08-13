@@ -1,6 +1,4 @@
 // screens/waiting_room_screen.dart - Updated to show participant join notifications
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:kvizz/providers/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -43,10 +41,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
   }
 
   void _startGame() {
-    final sessionProvider = Provider.of<GameSessionProvider>(
-      context,
-      listen: true,
-    );
+    final sessionProvider = Provider.of<GameSessionProvider>(context,listen: false);
 
     if (sessionProvider.hasSession) {
       _showStartGameDialog();
@@ -56,7 +51,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
   void _showStartGameDialog() {
     final sessionProvider = Provider.of<GameSessionProvider>(
       context,
-      listen: true,
+      listen: false,
     );
 
     showDialog(
@@ -70,13 +65,9 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
             children: [
               Text('Are you sure you want to start the quiz?'),
               SizedBox(height: 8),
-              Text(
-                '• All ${sessionProvider.participantCount} participants will begin immediately',
-              ),
+              Text('• All ${sessionProvider.participantCount} participants will begin immediately'),
               Text('• Quiz: ${sessionProvider.quizData?.title ?? "Unknown"}'),
-              Text(
-                '• Questions: ${sessionProvider.quizData?.questions.length ?? 0}',
-              ),
+              Text('• Questions: ${sessionProvider.quizData?.questions.length ?? 0}'),
             ],
           ),
           actions: [
@@ -102,10 +93,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
   }
 
   void _confirmStartGame() {
-    final sessionProvider = Provider.of<GameSessionProvider>(
-      context,
-      listen: true,
-    );
+    final sessionProvider = Provider.of<GameSessionProvider>(context,listen: false);
 
     if (sessionProvider.hasSession) {
       _socketService.startQuiz(gameSessionId: sessionProvider.gameSession!.id);
@@ -264,12 +252,15 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
 
           // Check if game has started and navigate to quiz
           if (sessionProvider.isStarted) {
+            print("Game has started, navigating to OngoingQuizScreen from waiting screen");
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (context) => OngoingQuizScreen(
-                    questions: [],
-                    isMultiplayer: true,
+                    questions: sessionProvider.quizData!.questions,
+                    timePerQuestion: sessionProvider.gameSession!.settings!.timePerQuestion,
+                    maxPointsPerQuestion: sessionProvider.gameSession?.settings?.maxPointsPerQuestion ?? 1,
+                    isHost: _isCurrentUserHost(sessionProvider),
                     gameSessionId: sessionProvider.gameSession!.id,
                   ),
                 ),
@@ -315,7 +306,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -349,7 +340,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -367,7 +358,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                     duration: Duration(milliseconds: 300),
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.8),
+                      color: Colors.green.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -396,7 +387,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -639,8 +630,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed:
-                        (sessionProvider.participantCount > 0 &&
-                            !sessionProvider.isLoading)
+                        (sessionProvider.participantCount > 0)
                         ? _startGame
                         : null,
                     icon: sessionProvider.isLoading

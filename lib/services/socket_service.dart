@@ -161,7 +161,7 @@ class SocketService {
 
 
       // Ensure provider is available
-      if (_gameSessionProvider == null && context != null) {
+      if (_gameSessionProvider == null) {
         _setupProviderReference(context);
       }
 
@@ -245,7 +245,7 @@ class SocketService {
     required String gameSessionId,
     required String userId,
     required String questionId,
-    required dynamic answer,
+    required List<String> answer,
     required bool isCorrect,
     required int timeTaken,
   }) {

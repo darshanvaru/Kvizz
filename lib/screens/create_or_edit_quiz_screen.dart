@@ -5,6 +5,7 @@ import 'package:kvizz/PrintHelper.dart';
 import '../models/Quiz.dart';
 import '../models/Question.dart';
 
+import '../enums/QuestionType.dart';
 import '../providers/user_provider.dart';
 
 import '../services/quiz_service.dart';
@@ -554,7 +555,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                                   ),
                                   Chip(
                                     label: Text(_questions[index].type.toString().split('.').last),
-                                    backgroundColor: theme.primaryColor.withOpacity(0.1),
+                                    backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
                                   ),
                                 ],
                               ),
