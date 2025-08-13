@@ -16,29 +16,8 @@ class WaitingRoomScreen extends StatefulWidget {
 class _WaitingRoomScreenState extends State<WaitingRoomScreen>
     with SingleTickerProviderStateMixin {
   final SocketService _socketService = SocketService();
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
   int _previousParticipantCount = 0;
   String _lastJoinedParticipant = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(_animationController);
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   void _startGame() {
     final sessionProvider = Provider.of<GameSessionProvider>(context,listen: false);
