@@ -92,7 +92,8 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
         _correctAnswerIndex! < widget.question.options.length &&
         widget.question.options[_correctAnswerIndex!].isNotEmpty) {
       final correctText = widget.question.options[_correctAnswerIndex!];
-      widget.question.correctAnswer = [correctText];
+      // widget.question.correctAnswer = [correctText];
+      widget.question.correctAnswer = [_correctAnswerIndex!.toString()];
     } else {
       widget.question.correctAnswer = [];
     }

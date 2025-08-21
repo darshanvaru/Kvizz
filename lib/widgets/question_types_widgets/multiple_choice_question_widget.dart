@@ -94,12 +94,20 @@ class _MultipleChoiceQuestionWidgetState
 
   void _updateModel() {
     widget.question.question = _questionController.text.trim();
-    widget.question.options =
-        _optionControllers.map((c) => c.text.trim()).toList();
+    widget.question.options = _optionControllers.map((c) => c.text.trim()).toList();
     // FIXED: Update correct answers only if they exist in current options
-    widget.question.correctAnswer = _correctAnswerValues
-        .where((ans) => widget.question.options.contains(ans) && ans.isNotEmpty)
-        .toList();
+    // Save indices of correct answers as strings
+    List<String> correctIndices = [];
+    for (int i = 0; i < widget.question.options.length; i++) {
+      final value = widget.question.options[i];
+      if (_correctAnswerValues.contains(value) && value.isNotEmpty) {
+        correctIndices.add(i.toString());
+      }
+    }
+    widget.question.correctAnswer = correctIndices;
+    // widget.question.correctAnswer = _correctAnswerValues
+    //     .where((ans) => widget.question.options.contains(ans) && ans.isNotEmpty)
+    //     .toList();
   }
 
   // FIXED: Added method to handle option text changes

@@ -66,14 +66,17 @@ class _ReorderableQuestionWidgetState
 
   void _updateModel() {
     widget.question.question = _questionController.text.trim();
-    // FIXED: Get current values from controllers
+
+    // Get current values from controllers
     List<String> currentOptions = _optionControllers
         .map((controller) => controller.text.trim())
         .toList();
 
     widget.question.options = currentOptions;
-    // FIXED: Set correct answer to current order (this represents the correct sequence)
-    widget.question.correctAnswer = List.from(currentOptions);
+
+    // Save the current order as indices (as strings)
+    widget.question.correctAnswer = List.generate(currentOptions.length, (index) => index.toString());
+    // widget.question.correctAnswer = List.from(currentOptions);
   }
 
   @override

@@ -55,7 +55,13 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
   void _updateModel() {
     widget.question.question = _questionController.text.trim();
     widget.question.options = ['True', 'False']; // Always set these options
-    widget.question.correctAnswer = [_correctAnswer]; // Store as List
+    // Store index string instead of text for correct answer
+    if (_correctAnswer.toLowerCase() == 'true') {
+      widget.question.correctAnswer = ['0'];
+    } else {
+      widget.question.correctAnswer = ['1'];
+    }
+    // widget.question.correctAnswer = [_correctAnswer]; // Store as List
   }
 
   @override

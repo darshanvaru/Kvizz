@@ -178,7 +178,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
           }
           break;
         case QuestionType.trueFalse:
-          if (!(q.correctAnswer.first == 'True' || q.correctAnswer.first == 'False')) {
+          if (!(q.correctAnswer.first == '0' || q.correctAnswer.first == '1')) {
             return _showError('True/False question "${q.question}" needs valid answer.');
           }
           break;
@@ -188,10 +188,15 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
     print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...3");
     for (var q in _questions) {
       if (q.type == QuestionType.reorder) {
+        List<String> tempCorrectAnswer = [...q.options];
+
         q.options.shuffle();
-        while (q.options.join() == q.correctAnswer.join()) {
-          q.options.shuffle();
+
+        List<String> tempCorrectAnswerIndex = [];
+        for (var val in tempCorrectAnswer) {
+          tempCorrectAnswerIndex.add("${q.options.indexOf(val)}");
         }
+        q.correctAnswer = [...tempCorrectAnswerIndex];
       }
     }
 
