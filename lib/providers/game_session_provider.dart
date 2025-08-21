@@ -38,13 +38,12 @@ class GameSessionProvider extends ChangeNotifier {
   }
 
   // In game_session_provider.dart
-  void updateSessionFromJson(Map<String, dynamic> json) {
-    print("In updateSessionFromJson");
+  void updateSessionFromJson(Map<String, dynamic> json, String from) {
+    print("In updateSessionFromJson from $from socket listener ");
     try {
-      printFullResponse('🔍 GameSession JSON input: ${json}');
+      printFullResponse('🔍 GameSession JSON input from $from: $json');
 
       _gameSession = GameSessionModel.fromJson(json);
-      printFullResponse("✅  ✅  full Game session participants ${_gameSession?.participants.toList().toString()}");
       print('✅ GameSession: ${_gameSession?.id}, Code: ${_gameSession?.gameCode}');
       _error = null;
 
@@ -72,14 +71,27 @@ class GameSessionProvider extends ChangeNotifier {
 
   // Clear session (when leaving/disconnecting)
   void clearSession() {
-    _gameSession = null;
+    // _gameSession = null;
+    //Empty session dummy data
+    _gameSession = GameSessionModel(
+      id: '',
+      quizData: null,
+      hostData: null,
+      gameCode: 0,
+      connectionId: null,
+      status: 'previousFinished',
+      isActive: false,
+      currentQuestion: null,
+      participants: [],
+      settings: null,
+      results: null,
+      startedAt: null,
+      finishedAt: null,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
     _error = null;
     _isLoading = false;
     notifyListeners();
-  }
-
-  // Check if current user is host
-  bool isHost(String userId) {
-    return _gameSession?.hostData?.id == userId;
   }
 }

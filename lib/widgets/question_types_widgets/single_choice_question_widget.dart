@@ -16,8 +16,7 @@ class SingleChoiceQuestionWidget extends StatefulWidget {
       _SingleChoiceQuestionWidgetState();
 }
 
-class _SingleChoiceQuestionWidgetState
-    extends State<SingleChoiceQuestionWidget> {
+class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget> {
   final TextEditingController _questionController = TextEditingController();
   List<TextEditingController> _optionControllers = [];
   int? _correctAnswerIndex;

@@ -166,7 +166,7 @@ class Participant {
   // In game_session_model.dart - Update Participant.fromJson()
   factory Participant.fromJson(Map<String, dynamic> json) => Participant(
     id: json['_id'] ?? json['id'] ?? '',
-    userId: json['userId'] != null ? json['userId'].toString() : null,
+    userId: json['userId']?.toString(),
     username: json['username'] ?? 'Unknown User',
     isGuest: json['isGuest'] ?? true, // Default to guest if not specified
     score: json['score'] ?? 0,
@@ -242,7 +242,7 @@ class LeaderboardEntry {
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>
       LeaderboardEntry(
         id: json['_id'] ?? json['id'] ?? '',
-        userId: json['userId'] != null ? json['userId'].toString() : null,
+        userId: json['userId']?.toString(),
         username: json['username'] ?? 'Unknown User',
         rank: json['rank'] ?? 0,
         score: json['score'] ?? 0,

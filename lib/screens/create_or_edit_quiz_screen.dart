@@ -433,7 +433,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
 
                       // Difficulty Selection
                       DropdownButtonFormField<String>(
-                        value: _selectedDifficulty,
+                        initialValue: _selectedDifficulty,
                         decoration: const InputDecoration(
                           labelText: "Difficulty",
                           border: OutlineInputBorder(),

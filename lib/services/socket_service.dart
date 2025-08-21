@@ -1,6 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kvizz/PrintHelper.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_session_provider.dart';
@@ -9,12 +9,12 @@ class SocketService {
   static final SocketService _instance = SocketService._internal();
   factory SocketService() => _instance;
 
-  late IO.Socket _socket;
+  late io.Socket _socket;
   bool _isConnected = false;
   GameSessionProvider? _gameSessionProvider;
   bool _listenersRegistered = false;
 
-  IO.Socket get socket => _socket;
+  io.Socket get socket => _socket;
 
   bool get isConnected => _isConnected && _socket.connected;
 
@@ -27,9 +27,9 @@ class SocketService {
     }
 
     print('🔌 Connecting to socket... URL: ${dotenv.env['Socket_URL']}');
-    _socket = IO.io(
+    _socket = io.io(
       dotenv.env['Socket_URL'],
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .disableAutoConnect()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -82,40 +82,40 @@ class SocketService {
 
     // GAME SESSION EVENTS
     _socket.on('game-created', (data) {
-      print('🎮 GAME CREATED from game-created listener');
+      print('🎮 GAME CREATED from game-created socket listener');
       printFullResponse('🔍 Data received: $data');
-      _handleSessionUpdate(data, 'Game room created successfully', context);
+      _handleSessionUpdate(data, 'Game room created successfully', context, "game-created");
     });
 
     _socket.on('participant-joined', (data) {
       print('👥 PARTICIPANT JOINED');
       printFullResponse('🔍 Data received: $data');
-      _handleSessionUpdate(data, 'New participant joined', context);
+      _handleSessionUpdate(data, 'New participant joined', context, "participant-joined");
     });
 
     _socket.on('participant-left', (data) {
       print('👋 PARTICIPANT LEFT');
-      _handleSessionUpdate(data, 'Participant left the game', context);
+      _handleSessionUpdate(data, 'Participant left the game', context, "participant-left");
     });
 
     _socket.on('game-started', (data) {
       print('🚀 GAME STARTED');
-      _handleSessionUpdate(data, 'Quiz has started', context);
+      _handleSessionUpdate(data, 'Quiz has started', context, "game-started");
     });
 
     _socket.on('live-scores-updated', (data) {
       print('📊 LIVE SCORES UPDATED');
-      _handleSessionUpdate(data, 'Scores updated', context);
+      _handleSessionUpdate(data, 'Scores updated', context, "live-scores-updated");
     });
 
     _socket.on('final-leaderboard', (data) {
       print('🏆 FINAL LEADERBOARD');
-      _handleSessionUpdate(data, 'Quiz completed with final results', context);
+      _handleSessionUpdate(data, 'Quiz completed with final results', context, "final-leaderboard");
     });
 
     _socket.on('load-questions', (data) {
       print('📝 QUESTIONS LOADED');
-      _handleSessionUpdate(data, 'Quiz questions loaded', context);
+      _handleSessionUpdate(data, 'Quiz questions loaded', context, "load-questions");
     });
 
     // Error events
@@ -129,7 +129,7 @@ class SocketService {
   }
 
   // FIXED: Complete implementation of _handleSessionUpdate
-  void _handleSessionUpdate(dynamic data, String message, BuildContext context) {
+  void _handleSessionUpdate(dynamic data, String message, BuildContext context, String from) {
     print('🔄 Processing session update: $message');
     print('🔍 Data type: ${data.runtimeType}');
     print('🔍 Data: $data');
@@ -166,7 +166,7 @@ class SocketService {
       }
 
       // Update provider
-      _gameSessionProvider!.updateSessionFromJson(sessionData);
+      _gameSessionProvider!.updateSessionFromJson(sessionData, from);
       print('✅ $message');
       print('✅ Provider has session: ${_gameSessionProvider?.hasSession}');
     } catch (e, stackTrace) {
@@ -234,6 +234,7 @@ class SocketService {
   void stopQuiz(String gameSessionId) {
     print('📤 Stopping quiz - Session: $gameSessionId');
     _socket.emit('stop-quiz', {'gameSessionId': gameSessionId});
+    print("Stop Emitted");
   }
 
   void getQuestions({required String gameSessionId}) {
@@ -250,14 +251,14 @@ class SocketService {
     required int timeTaken,
   }) {
     print('📤 Submitting answer - Question: $questionId, Correct: $isCorrect');
-    // _socket.emit('submit-answer', {
-    //   'gameSessionId': gameSessionId,
-    //   'username': userId,
-    //   'questionId': questionId,
-    //   'answer': answer,
-    //   'isCorrect': isCorrect,
-    //   'timeTaken': timeTaken,
-    // });
+    _socket.emit('submit-answer', {
+      'gameSessionId': gameSessionId,
+      'username': userId,
+      'questionId': questionId,
+      'answers': answer,
+      'isCorrect': isCorrect,
+      'timeTaken': timeTaken,
+    });
   }
 
   void manualDisconnect() {

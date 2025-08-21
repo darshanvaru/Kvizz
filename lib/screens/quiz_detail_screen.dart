@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:kvizz/PrintHelper.dart';
 import 'package:kvizz/models/Quiz.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
-import 'package:kvizz/screens/ongoing_quiz_screen.dart';
+// import 'package:kvizz/screens/ongoing_quiz_screen.dart';
+import 'package:kvizz/screens/waiting_room_screen.dart';
 import 'package:kvizz/services/quiz_service.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/user_provider.dart';
+import '../services/socket_service.dart';
 
 class QuizDetailScreen extends StatefulWidget {
   final String quizId;
@@ -79,33 +84,32 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
   void _hostMultiplayerGame(QuizModel quiz) {
     print("[From QuizDetailScreen._hostMultiplayerGame] METHOD CALLED");
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => OngoingQuizScreen(
-        questions: quiz.questions,
-        timePerQuestion: 15,
-        maxPointsPerQuestion: 1,
-        isHost: false,
-        gameSessionId: "asdasfadsvadsv",
-      ),),
-    );
-
-    //
-    // // Connect socket
-    // final socketService = SocketService();
-    //
-    // // Create room
-    // final currentUser = Provider.of<UserProvider>(
-    //   context,
-    //   listen: false,
-    // ).currentUser!; // Your existing method
-    // socketService.createRoom(quizId: quiz.id, hostId: currentUser.id);
-    //
-    // // Navigate to host lobby
     // Navigator.push(
     //   context,
-    //   MaterialPageRoute(builder: (context) => WaitingRoomScreen()),
+    //   MaterialPageRoute(builder: (context) => OngoingQuizScreen(
+    //     questions: quiz.questions,
+    //     timePerQuestion: 15,
+    //     maxPointsPerQuestion: 1,
+    //     isHost: false,
+    //     gameSessionId: "asdasfadsvadsv",
+    //   ),),
     // );
+
+    // Connect socket
+    final socketService = SocketService();
+
+    // Create room
+    final currentUser = Provider.of<UserProvider>(
+      context,
+      listen: false,
+    ).currentUser!; // Your existing method
+    socketService.createRoom(quizId: quiz.id, hostId: currentUser.id);
+
+    // Navigate to host lobby
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => WaitingRoomScreen()),
+    );
   }
 
   void _confirmAndDeleteQuiz() {
@@ -283,8 +287,9 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
               //Play Button
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async{
                     print("OnPressed triggered of play");
+                    // await Future.delayed(Duration(seconds: 2));
                     _hostMultiplayerGame(quiz!);
                   },
                   // onPressed: () {

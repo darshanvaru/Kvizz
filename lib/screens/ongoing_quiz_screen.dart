@@ -35,7 +35,7 @@ class OngoingQuizScreen extends StatefulWidget {
 class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProviderStateMixin {
   late final List<QuestionModel> questions;
 
-  int currentIndex = 0;
+  int currentQuestionIndex = 0;
   int score = 0;
   bool? lastAnswerCorrect;
   bool answered = false;
@@ -52,6 +52,8 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
   Timer? timer;
   late int timeLeft;
+
+  bool isFirstTime = true;
 
   @override
   void initState() {
@@ -78,7 +80,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
       timer!.cancel();
     }
     _startTimer();
-    final question = questions[currentIndex];
+    final question = questions[currentQuestionIndex];
     if (question.type == QuestionType.reorder) {
       reorderedOptions = question.options
           .asMap()
@@ -109,7 +111,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
   /// Check the question type and performs calculations accordingly
   void submitAnswer() {
-    final question = questions[currentIndex];
+    final question = questions[currentQuestionIndex];
     bool isCorrect = false;
     int pointsAwarded = 0;
     int maxPointPerQuestion = widget.maxPointsPerQuestion;
@@ -179,7 +181,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
     print("SocketService().submitAnswer called with: ");
     print("GameSessionId: ${widget.gameSessionId}");
     print("Time Taken: $timeTaken");
-    print("Question ID: ${questions[currentIndex].id}");
+    print("Question ID: ${questions[currentQuestionIndex].id}");
     print("Answer: $answerList");
     print("Is Correct: $isCorrect");
     print("User ID: ${Provider.of<UserProvider>(context, listen: false).currentUser!.id}");
@@ -188,7 +190,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
     SocketService().submitAnswer(
       gameSessionId: widget.gameSessionId,
       timeTaken: timeTaken,
-      questionId: questions[currentIndex].id,
+      questionId: questions[currentQuestionIndex].id,
       answer: answerList,
       isCorrect: isCorrect,
       userId: Provider.of<UserProvider>(context, listen: false).currentUser!.id,
@@ -196,7 +198,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
     //TODO: Future Trivia screen
     Future.delayed(const Duration(seconds: 5), () {
-      currentIndex++;
+      currentQuestionIndex++;
       _prepareQuestion();
     });
 
@@ -209,8 +211,8 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
   /// Increments the index and calls PrepareQuestion()
   void nextQuestion() {
-    setState(() => currentIndex++);
-    if (currentIndex < questions.length) {
+    setState(() => currentQuestionIndex++);
+    if (currentQuestionIndex < questions.length) {
       _prepareQuestion();
     }
   }
@@ -230,18 +232,23 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
             builder: (context, gameSessionProvider, child) {
 
               // If the game session is finished, show the leaderboard
-              if (gameSessionProvider.isFinished) {
+              if ((gameSessionProvider.isFinished && isFirstTime == true) || currentQuestionIndex >= questions.length) {
                 timer?.cancel();
+                print("-------Before StopQuiz called inside ongoingScreen!");
+                SocketService().stopQuiz(gameSessionProvider.gameSession!.id);
+                isFirstTime = false;
+                print("-------After StopQuiz called inside ongoingScreen!");
                 return leaderBoardBuilder(gameSessionProvider.leaderboard);
               }
 
-              // Check if the game session is finished or if the current index exceeds the questions length
-              if (currentIndex >= questions.length) {
-                timer?.cancel();
-                return tempLeaderBoard();
-              }
+              // // Check if the game session is finished or if the current index exceeds the questions length
+              // if (currentIndex >= questions.length) {
+              //   timer?.cancel();
+              //   return tempLeaderBoard();
+              // }
 
-              final question = questions[currentIndex];
+              final question = questions[currentQuestionIndex];
+
               //main quiz screen
               return SafeArea(
                 child: SingleChildScrollView(
@@ -264,7 +271,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                 ),
                               ),
                               FractionallySizedBox(
-                                widthFactor: (currentIndex + 1) / questions.length,
+                                widthFactor: (currentQuestionIndex + 1) / questions.length,
                                 child: Container(
                                   height: 8,
                                   decoration: BoxDecoration(
@@ -297,7 +304,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                         width: 36,
                                         height: 36,
                                         child: CircularProgressIndicator(
-                                          value: timeLeft / 10,
+                                          value: timeLeft / widget.timePerQuestion,
                                           backgroundColor: Colors.grey.shade200,
                                           valueColor: AlwaysStoppedAnimation<Color>(
                                             Color(0xff53BDEB),
@@ -365,7 +372,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
                                   // Question Number/Total questions
                                   Text(
-                                    "${currentIndex + 1}/${questions.length}",
+                                    "${currentQuestionIndex + 1}/${questions.length}",
                                     style: const TextStyle(
                                       color: Colors.black54,
                                       fontSize: 16,
@@ -833,19 +840,23 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                           title: const Text("Stop Quiz"),
                                           content: const Text("Are you sure you want to stop the quiz?"),
                                           actions: [
+                                            //Cancle Button
                                             TextButton(
                                               onPressed: () {
                                                 Navigator.of(context).pop();
                                               },
                                               child: const Text("Cancel"),
                                             ),
+
+                                            //Stop Button
                                             ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.redAccent,
                                                 foregroundColor: Colors.white,
                                               ),
                                               onPressed: (){
-                                                //TODO: Implement stop quiz logic
+                                                print("Stop Pressed");
+                                                SocketService().stopQuiz(gameSessionProvider.gameSession!.id);
                                               },
                                               child: const Text("Confirm"),
                                             ),

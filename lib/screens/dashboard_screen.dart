@@ -5,7 +5,6 @@ import 'package:kvizz/services/quiz_service.dart';
 import 'package:kvizz/services/socket_service.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/game_session_provider.dart';
 import '../providers/user_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -71,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dashboard"),
+        title: const Text("Join Lobby"),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
