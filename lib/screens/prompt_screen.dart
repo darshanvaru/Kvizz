@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import '../providers/tab_index_provider.dart';
 
 class PromptScreen extends StatefulWidget {
-  const PromptScreen({Key? key}) : super(key: key);
+  const PromptScreen({super.key});
 
   @override
   State<PromptScreen> createState() => _PromptScreenState();
