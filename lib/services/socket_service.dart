@@ -83,13 +83,11 @@ class SocketService {
     // GAME SESSION EVENTS
     _socket.on('game-created', (data) {
       print('🎮 GAME CREATED from game-created socket listener');
-      printFullResponse('🔍 Data received: $data');
       _handleSessionUpdate(data, 'Game room created successfully', context, "game-created");
     });
 
     _socket.on('participant-joined', (data) {
       print('👥 PARTICIPANT JOINED');
-      printFullResponse('🔍 Data received: $data');
       _handleSessionUpdate(data, 'New participant joined', context, "participant-joined");
     });
 
@@ -131,8 +129,7 @@ class SocketService {
   // FIXED: Complete implementation of _handleSessionUpdate
   void _handleSessionUpdate(dynamic data, String message, BuildContext context, String from) {
     print('🔄 Processing session update: $message');
-    print('🔍 Data type: ${data.runtimeType}');
-    print('🔍 Data: $data');
+    printFullResponse('🔍 Data Received from socket: $data');
 
     if (data == null) {
       print('❌ Received null session data');
@@ -153,27 +150,14 @@ class SocketService {
 
       print('✅ Session data validated');
       printFullResponse("✅ Full Session data: $sessionData");
-      print('🔍 Session ID: ${sessionData['_id'] ?? sessionData['id']}');
-      print('🔍 Game Code: ${sessionData['gameCode']}');
-      print('🔍 Status: ${sessionData['status']}');
-      print('🔍 Participants: ${(sessionData['participants'] as List?)?.length ?? 0}');
-
-
-
-      // Ensure provider is available
-      if (_gameSessionProvider == null) {
-        _setupProviderReference(context);
-      }
+      print("Updating GameSessionProvider with received socket date, is _gameSessionProvider null: ${_gameSessionProvider == null}");
 
       // Update provider
       _gameSessionProvider!.updateSessionFromJson(sessionData, from);
-      print('✅ $message');
-      print('✅ Provider has session: ${_gameSessionProvider?.hasSession}');
+      print('✅ Provider Updated, is _gameSessionProvider null: ${_gameSessionProvider?.hasSession}');
     } catch (e, stackTrace) {
       print('❌ Failed to process session update: $e');
-      print(
-        '📍 Stack trace: ${stackTrace.toString().split('\n').take(5).join('\n')}',
-      );
+      print('📍 Stack trace: ${stackTrace.toString().split('\n').take(5).join('\n')}',);
       _updateProviderError('Failed to update session: $e');
     }
   }
@@ -244,7 +228,7 @@ class SocketService {
 
   void submitAnswer({
     required String gameSessionId,
-    required String userId,
+    required String username,
     required String questionId,
     required List<String> answer,
     required bool isCorrect,
@@ -253,7 +237,7 @@ class SocketService {
     print('📤 Submitting answer - Question: $questionId, Correct: $isCorrect');
     _socket.emit('submit-answer', {
       'gameSessionId': gameSessionId,
-      'username': userId,
+      'username': username,
       'questionId': questionId,
       'answers': answer,
       'isCorrect': isCorrect,

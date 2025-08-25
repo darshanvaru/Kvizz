@@ -9,11 +9,13 @@ import '../services/socket_service.dart';
 import 'ongoing_quiz_screen.dart';
 
 class WaitingRoomScreen extends StatefulWidget {
+  const WaitingRoomScreen({super.key});
+
   @override
-  _WaitingRoomScreenState createState() => _WaitingRoomScreenState();
+  WaitingRoomScreenState createState() => WaitingRoomScreenState();
 }
 
-class _WaitingRoomScreenState extends State<WaitingRoomScreen>
+class WaitingRoomScreenState extends State<WaitingRoomScreen>
     with SingleTickerProviderStateMixin {
   final SocketService _socketService = SocketService();
   int _previousParticipantCount = 0;
@@ -140,7 +142,8 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                       MaterialPageRoute(
                         builder: (context) => OngoingQuizScreen(
                           questions: sessionProvider.quizData!.questions,
-                          timePerQuestion: sessionProvider.gameSession?.settings?.timePerQuestion ?? 10,
+                          timePerQuestion: 10,
+                          // timePerQuestion: sessionProvider.gameSession?.settings?.timePerQuestion ?? 10,
                           maxPointsPerQuestion: sessionProvider.gameSession?.settings?.maxPointsPerQuestion ?? 1,
                           isHost: _isCurrentUserHost(sessionProvider),
                           gameSessionId: sessionProvider.gameSession!.id,
@@ -355,32 +358,37 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
       _socketService.startQuiz(gameSessionId: sessionProvider.gameSession!.id);
 
       // Show loading state
-      sessionProvider.setLoading(true);
+      // sessionProvider.setLoading(true);
     }
   }
 
   void _leaveGame(BuildContext context) {
     print("In _leaveGame");
     final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
-    print("[from waiting_room_screen._leave] Is host: ${_isCurrentUserHost(sessionProvider)}");
 
     if (sessionProvider.hasSession) {
       final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
 
       if (_isCurrentUserHost(sessionProvider)) {
+        print("Calling stop-quiz for Host ${Provider.of<UserProvider>(context, listen: false).currentUser?.username ?? "Unknown User"} from waiting_room");
         _socketService.stopQuiz(sessionProvider.gameSession!.id);
       } else {
+        print("Calling leave-quiz for Participant ${Provider.of<UserProvider>(context, listen: false).currentUser?.username ?? "Unknown User"} from waiting_room");
         _socketService.leaveQuiz(
           gameSessionId: sessionProvider.gameSession!.id,
-          username: currentUser?.name,
+          username: currentUser?.username,
         );
       }
       print(
         "[waiting_room_screen._leave] Leaving game session: ${sessionProvider.gameSession!.id}, ${currentUser?.id}, ${currentUser?.name}",
       );
 
-        Navigator.of(context).pop();
-      sessionProvider.clearSession();
+      Navigator.of(context).pop();
+      // sessionProvider.clearSession();
+    }else{
+      print("In leaveQuiz, leave Button pressed but no session available -> navigating to homescreen");
+      Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 
@@ -391,6 +399,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
     print(
       "[Checking host] Current User ID: ${currentUser.id}, Host ID: ${sessionProvider.hostData?.id}",
     );
+    print("Is Host: ${sessionProvider.hostData?.id == currentUser.id}");
     return sessionProvider.hostData?.id == currentUser.id;
   }
 
@@ -731,20 +740,9 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                         (sessionProvider.participantCount > 0)
                         ? _startGame
                         : null,
-                    icon: sessionProvider.isLoading
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : Icon(Icons.play_arrow),
+                    icon: Icon(Icons.play_arrow),
                     label: Text(
-                      sessionProvider.isLoading ? 'Starting...' : 'Start Quiz',
+                      'Start Quiz',
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -758,9 +756,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen>
                 ),
                 SizedBox(width: 12),
                 OutlinedButton.icon(
-                  onPressed: sessionProvider.isLoading
-                      ? null
-                      : () {
+                  onPressed: () {
                           _leaveGame(context);
                         },
                   icon: Icon(Icons.close),
