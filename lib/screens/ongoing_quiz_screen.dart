@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kvizz/models/Question.dart';
 import 'package:kvizz/providers/game_session_provider.dart';
 import 'package:kvizz/providers/user_provider.dart';
@@ -10,7 +11,7 @@ import 'package:collection/collection.dart';
 
 import '../enums/enums.dart';
 import '../models/game_session_model.dart';
-import '../providers/tab_index_provider.dart';
+// import '../providers/tab_index_provider.dart';
 
 class OngoingQuizScreen extends StatefulWidget {
   final List<QuestionModel> questions;
@@ -119,30 +120,27 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
     switch (question.type) {
 
-    /// QuestionType Single Option
       case QuestionType.single:
-        isCorrect =
-            question.options[selectedRadio ?? 0] ==
-                question.correctAnswer.first;
+        isCorrect = selectedRadio != null &&
+            selectedRadio.toString() == question.correctAnswer.first;
         pointsAwarded = isCorrect ? maxPointPerQuestion : 0;
         answerList = [
           if (selectedRadio != null) question.options[selectedRadio!] else ""
         ];
         break;
 
-    /// QuestionType Multiple Option
       case QuestionType.multiple:
-        isCorrect =
-            selectedIndexes.every(
-                  (index) =>
-                  question.correctAnswer.contains(question.options[index]),
-            ) &&
-                selectedIndexes.length == question.correctAnswer.length;
+        Set<String> selectedIndicesStr =
+        selectedIndexes.map((i) => i.toString()).toSet();
+        Set<String> correctIndicesSet = question.correctAnswer.toSet();
+
+        isCorrect = selectedIndicesStr.length == correctIndicesSet.length &&
+            selectedIndicesStr.containsAll(correctIndicesSet);
+
         pointsAwarded = isCorrect ? maxPointPerQuestion : 0;
         answerList = selectedIndexes.map((i) => question.options[i]).toList();
         break;
 
-    /// QuestionType Open Ended
       case QuestionType.open:
         final answer = answerController.text.trim();
         isCorrect =
@@ -152,20 +150,21 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
         answerList = ans.isNotEmpty ? [ans] : [];
         break;
 
-    /// QuestionType Reorder
       case QuestionType.reorder:
         List<String> userOrder = reorderedOptions.map((e) => e.value).toList();
+        List<String> options = question.options;
+        List<String> userOrderIndices = userOrder
+            .map((optionText) => options.indexOf(optionText).toString())
+            .toList();
         List<String> correctOrder = question.correctAnswer;
-
-        isCorrect = const ListEquality().equals(userOrder, correctOrder);
+        isCorrect = const ListEquality().equals(userOrderIndices, correctOrder);
         pointsAwarded = isCorrect ? maxPointPerQuestion : 0;
-        answerList = reorderedOptions.map((e) => e.value).toList();
+        answerList = userOrder;
         break;
 
-    /// QuestionType True/False
       case QuestionType.trueFalse:
-        String selectedLabel = selectedRadio == 0 ? "true" : "false";
-        isCorrect = selectedLabel == question.correctAnswer.first.toLowerCase();
+        String selectedLabel = selectedRadio == 0 ? "0" : "1";
+        isCorrect = selectedLabel == question.correctAnswer.first;
         pointsAwarded = isCorrect ? maxPointPerQuestion : 0;
         answerList = [selectedLabel];
         break;
@@ -175,26 +174,25 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
     print("-------------------------------");
     print("Question Type: ${question.type}");
     print("Question: ${question.question}");
-    print("Correct Answer: ${question.type == QuestionType.reorder
-        ? question.correctAnswer.join(' → ')
-        :  question.correctAnswer.first}");
     print("SocketService().submitAnswer called with: ");
     print("GameSessionId: ${widget.gameSessionId}");
     print("Time Taken: $timeTaken");
     print("Question ID: ${questions[currentQuestionIndex].id}");
     print("Answer: $answerList");
     print("Is Correct: $isCorrect");
-    print("User ID: ${Provider.of<UserProvider>(context, listen: false).currentUser!.id}");
+    print("User Name: ${Provider.of<UserProvider>(context, listen: false).currentUser!.username}");
     print("-------------------------------");
 
-    SocketService().submitAnswer(
-      gameSessionId: widget.gameSessionId,
-      timeTaken: timeTaken,
-      questionId: questions[currentQuestionIndex].id,
-      answer: answerList,
-      isCorrect: isCorrect,
-      userId: Provider.of<UserProvider>(context, listen: false).currentUser!.id,
-    );
+    if(!widget.isHost) {
+      SocketService().submitAnswer(
+        gameSessionId: widget.gameSessionId,
+        timeTaken: timeTaken,
+        questionId: questions[currentQuestionIndex].id,
+        answer: answerList,
+        isCorrect: isCorrect,
+        username: Provider.of<UserProvider>(context, listen: false).currentUser?.username ?? "unknown host",
+      );
+    }
 
     //TODO: Future Trivia screen
     Future.delayed(const Duration(seconds: 5), () {
@@ -231,21 +229,19 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
         body: Consumer<GameSessionProvider>(
             builder: (context, gameSessionProvider, child) {
 
-              // If the game session is finished, show the leaderboard
-              if ((gameSessionProvider.isFinished && isFirstTime == true) || currentQuestionIndex >= questions.length) {
-                timer?.cancel();
-                print("-------Before StopQuiz called inside ongoingScreen!");
-                SocketService().stopQuiz(gameSessionProvider.gameSession!.id);
-                isFirstTime = false;
-                print("-------After StopQuiz called inside ongoingScreen!");
-                return leaderBoardBuilder(gameSessionProvider.leaderboard);
+              // If game session is finished, show leaderboard
+              if (gameSessionProvider.isFinished || currentQuestionIndex >= questions.length) {
+                  timer?.cancel();
+                  if(widget.isHost && isFirstTime) {
+                    print("-------Before StopQuiz called inside ongoingScreen!");
+                    SocketService().stopQuiz(gameSessionProvider.gameSession!.id);
+                    print("-------After StopQuiz called inside ongoingScreen!");
+                    isFirstTime = false;
+                  } else {
+                    print("----[ongoingScreen] Not first time");
+                  }
+                  return leaderBoardBuilder(gameSessionProvider.leaderboard);
               }
-
-              // // Check if the game session is finished or if the current index exceeds the questions length
-              // if (currentIndex >= questions.length) {
-              //   timer?.cancel();
-              //   return tempLeaderBoard();
-              // }
 
               final question = questions[currentQuestionIndex];
 
@@ -288,10 +284,11 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ElevatedButton(
-                              onPressed: _prepareQuestion,
-                              child: Text("Reset"),
-                            ),
+                            // stop button
+                            // ElevatedButton(
+                            //   onPressed: _prepareQuestion,
+                            //   child: Text("Reset"),
+                            // ),
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Row(
@@ -349,12 +346,13 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              //Question Number/Total questions heading
+
+                              //Question Card Header
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
 
-                                  //Question Type heading
+                                  //Question Type
                                   Text(
                                     question.type == QuestionType.single
                                         ? "Single Choice Question"
@@ -364,7 +362,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                         ? "Reorder Question"
                                         : "Multiple Choice Question",
                                     style: const TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 23,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black87,
                                     ),
@@ -399,7 +397,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                               if (question.type == QuestionType.single)
                                 ...List.generate(question.options.length, (index) {
                                   final isSelected = selectedRadio == index;
-                                  final isCorrect = question.options[index] == question.correctAnswer.first;
+                                  final isCorrect = question.options[index] == question.options[int.parse(question.correctAnswer.first)];
                                   final isIncorrect = answered && isSelected && !isCorrect;
 
                                   Color? tileColor = Colors.white;
@@ -460,7 +458,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                           color: optionTextColor,
                                         ),
                                       ),
-                                      onTap: answered
+                                      onTap: widget.isHost || answered
                                           ? null
                                           : () => setState(() {
                                         selectedRadio = index;
@@ -482,15 +480,13 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                       final isSelected = selectedIndexes.contains(index);
                                       final isCorrect =
                                           (answered || timeUp) &&
-                                              question.correctAnswer.contains(
-                                                question.options[index],
-                                              );
+                                              question.correctAnswer.contains(index.toString());
+
                                       final isIncorrect =
                                           (answered || timeUp) &&
                                               isSelected &&
-                                              !question.correctAnswer.contains(
-                                                question.options[index],
-                                              );
+                                              !question.correctAnswer.contains(index.toString());
+
 
                                       // Colors and styles
                                       Color? tileColor = Colors.white;
@@ -527,7 +523,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                         child: ListTile(
                                           leading: Checkbox(
                                             value: isSelected,
-                                            onChanged: (answered || timeUp)
+                                            onChanged: widget.isHost || answered || timeUp
                                                 ? null
                                                 : (val) {
                                               setState(() {
@@ -552,7 +548,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                     const SizedBox(height: 10),
 
                                     // Submit Button
-                                    if (!answered && !timeUp)
+                                    if (!answered && !timeUp && !widget.isHost)
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(0xFF53BDEB),
@@ -584,7 +580,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                   children: [
                                     TextField(
                                       controller: answerController,
-                                      enabled: !answered && !timeUp,
+                                      enabled: !answered && !timeUp && !widget.isHost,
                                       maxLines: 3,
                                       decoration: InputDecoration(
                                         hintText: "Type your answer...",
@@ -595,33 +591,34 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                         fillColor: Colors.grey.shade100,
                                       ),
                                     ),
-                                    const SizedBox(height: 10),
-
-                                    // Submit Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF53BDEB),
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                    if(!widget.isHost)...{
+                                      const SizedBox(height: 10),
+                                      // Submit Button
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF53BDEB),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            minimumSize: const Size(0, 48),
                                           ),
-                                          minimumSize: const Size(0, 48),
+                                          onPressed: (answered || timeUp)
+                                              ? null
+                                              : () {
+                                            setState(() {
+                                              answered = true;
+                                              timeTaken = DateTime
+                                                  .now()
+                                                  .difference(
+                                                  questionStartTime!)
+                                                  .inMilliseconds;
+                                              });
+                                            },
+                                            child: const Text("Submit"),
+                                          ),
                                         ),
-                                        onPressed: (answered || timeUp)
-                                            ? null
-                                            : () {
-                                          setState(() {
-                                            answered = true;
-                                            timeTaken = DateTime.now()
-                                                .difference(questionStartTime!)
-                                                .inMilliseconds;
-                                          });
-                                        },
-                                        child: const Text("Submit"),
-                                      ),
-                                    ),
+                                      }
                                   ],
                                 ),
 
@@ -634,20 +631,28 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                       physics: NeverScrollableScrollPhysics(),
                                       itemCount: question.options.length,
                                       buildDefaultDragHandles: false,
-                                      onReorder: answered || timeUp
+                                      // Disallow reordering if user is host
+                                      onReorder: (answered || timeUp || widget.isHost)
                                           ? (_,__) {}
                                           : (oldIndex, newIndex) {
                                         setState(() {
                                           if (newIndex > oldIndex) newIndex -= 1;
-                                          final item = reorderedOptions.removeAt(
-                                            oldIndex,
-                                          );
+                                          final item = reorderedOptions.removeAt(oldIndex);
                                           reorderedOptions.insert(newIndex, item);
                                         });
                                       },
                                       itemBuilder: (context, index) {
                                         final entry = reorderedOptions[index];
 
+                                        // Show non-draggable tile if user is host
+                                        if (widget.isHost) {
+                                          return ListTile(
+                                            key: ValueKey(entry.key),
+                                            tileColor: Colors.grey.shade100,
+                                            title: Text(entry.value),
+                                            trailing: Icon(Icons.drag_handle, color: Colors.grey.shade300),
+                                          );
+                                        }
                                         // Otherwise, show draggable tile
                                         return ReorderableDragStartListener(
                                           key: ValueKey(entry.key),
@@ -655,40 +660,36 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                           child: ListTile(
                                             tileColor: Colors.grey.shade100,
                                             title: Text(entry.value),
-                                            trailing: timeUp
-                                                ? Text("${question.correctAnswer.indexOf(entry.value) + 1}")
-                                                : Icon(Icons.drag_handle),
+                                            trailing: Icon(Icons.drag_handle),
                                           ),
                                         );
                                       },
                                     ),
 
-                                    // Submit Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF53BDEB),
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                    // Submit Button: only show if user is NOT host
+                                    if (!widget.isHost)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF53BDEB),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            minimumSize: const Size(0, 48),
                                           ),
-                                          minimumSize: const Size(0, 48),
+                                          onPressed: (answered || timeUp) ? null : () {
+                                            setState(() {
+                                              answered = true;
+                                              timeTaken = DateTime.now()
+                                                  .difference(questionStartTime!)
+                                                  .inMilliseconds;
+                                            });
+                                          },
+                                          child: const Text("Submit"),
                                         ),
-                                        onPressed: (answered || timeUp)
-                                            ? null
-                                            : () {
-                                          setState(() {
-                                            answered = true;
-
-                                            timeTaken = DateTime.now()
-                                                .difference(questionStartTime!)
-                                                .inMilliseconds;
-                                          });
-                                        },
-                                        child: const Text("Submit"),
                                       ),
-                                    ),
                                   ],
                                 ),
 
@@ -698,18 +699,15 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     ...List.generate(2, (index) {
-                                      final correctAnswerIndex =
-                                      question.correctAnswer.first.toLowerCase() ==
-                                          'true'
-                                          ? 0
-                                          : 1;
+                                      // final correctAnswerIndex =
+                                      // question.correctAnswer.first.toLowerCase() ==
+                                      //     'true'
+                                      //     ? 0
+                                      //     : 1;
                                       final isSelected = selectedRadio == index;
-                                      final isCorrect =
-                                          answered && index == correctAnswerIndex;
-                                      final isIncorrect =
-                                          answered && isSelected && !isCorrect;
-
-                                      String label = index == 0 ? "False" : "True";
+                                      final isCorrect = answered && index == int.parse(question.correctAnswer.first);
+                                      final isIncorrect = answered && isSelected && !isCorrect;
+                                      String label = index == 0 ? "True" : "False";
 
                                       Color? tileColor = Colors.white;
                                       Color borderColor = Colors.grey.shade300;
@@ -771,7 +769,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                               color: optionTextColor,
                                             ),
                                           ),
-                                          onTap: answered
+                                          onTap: widget.isHost || answered
                                               ? null
                                               : () {
                                             setState(() {
@@ -788,6 +786,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                   ],
                                 ),
 
+                              if(!widget.isHost)
                               //Correct or Incorrect
                               if (answered && lastAnswerCorrect != null && timeUp)
                                 Padding(
@@ -856,6 +855,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                               ),
                                               onPressed: (){
                                                 print("Stop Pressed");
+                                                print("Calling stopQuiz from ongoing_room");
                                                 SocketService().stopQuiz(gameSessionProvider.gameSession!.id);
                                               },
                                               child: const Text("Confirm"),
@@ -880,53 +880,79 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
     );
   }
 
-  // temporary Quiz completed screen
-  Widget tempLeaderBoard(){
-    return Scaffold(
-      appBar: AppBar(title: const Text("Quiz Completed")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "🎉 Final Score: $score / ${questions.length}",
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-
-                // Then update the index
-                Provider.of<SelectedIndexProvider>(
-                  context,
-                  listen: false,
-                ).updateSelectedIndex(0);
-              },
-              icon: const Icon(Icons.home),
-              label: const Text("Return Home"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Leaderboard builder
   Widget leaderBoardBuilder(List<LeaderboardEntry> leaderboard) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Leaderboard")),
+      appBar: AppBar(
+        title: const Text("🏆 Leaderboard"),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.deepPurple,
+      ),
       body: ListView.builder(
         itemCount: leaderboard.length,
         itemBuilder: (context, index) {
           final participant = leaderboard[index];
-          return ListTile(
-            leading: Text(participant.rank.toString()),
-            title: Text(participant.username),
-            trailing: Text("${participant.score} points"),
+
+          Color tileColor;
+          switch (participant.rank) {
+            case 1:
+              tileColor = Colors.amber.shade200; // Gold
+              break;
+            case 2:
+              tileColor = Colors.grey.shade300; // Silver
+              break;
+            case 3:
+              tileColor = Colors.brown.shade200; // Bronze
+              break;
+            default:
+              tileColor = Colors.white;
+          }
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: tileColor,
+            elevation: 3,
+            child: ListTile(
+              leading: CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.deepPurple,
+                child: Text(
+                  participant.rank.toString(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              title: Text(
+                participant.username,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              subtitle: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 16, color: Colors.green),
+                  const SizedBox(width: 4),
+                  Text("Correct: ${participant.correctAnswers}"),
+                  const SizedBox(width: 10),
+                  Icon(Icons.timer, size: 16, color: Colors.blue),
+                  const SizedBox(width: 4),
+                  Text("${participant.avgResponseTime.toStringAsFixed(1)}s"),
+                ],
+              ),
+              trailing: Text(
+                "${participant.score} pts",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.deepPurple,
+                ),
+              ),
+            ),
           );
         },
       ),
