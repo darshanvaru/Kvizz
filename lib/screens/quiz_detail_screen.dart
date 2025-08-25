@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kvizz/PrintHelper.dart';
 import 'package:kvizz/models/Quiz.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
+import 'package:kvizz/screens/quiz_preview_screen.dart';
 // import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 import 'package:kvizz/screens/waiting_room_screen.dart';
 import 'package:kvizz/services/quiz_service.dart';
@@ -237,7 +238,13 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Implement Preview logic
-
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (_) =>
+                    //         QuizPreviewScreen(questions: quiz?.questions?? []),
+                    //   ),
+                    // );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("Preview feature coming soon!"),
