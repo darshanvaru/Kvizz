@@ -77,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       backgroundColor: Colors.blue,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    title: Text(currentUser?.name ?? "Unknown"),
+                    title: Text(currentUser?.username ?? "Unknown"),
                     subtitle: Text(currentUser?.email ?? "Unknown"),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {

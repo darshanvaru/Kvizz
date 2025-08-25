@@ -91,7 +91,6 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
     if (_correctAnswerIndex != null &&
         _correctAnswerIndex! < widget.question.options.length &&
         widget.question.options[_correctAnswerIndex!].isNotEmpty) {
-      final correctText = widget.question.options[_correctAnswerIndex!];
       // widget.question.correctAnswer = [correctText];
       widget.question.correctAnswer = [_correctAnswerIndex!.toString()];
     } else {
@@ -148,7 +147,6 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
                 value: index,
                 groupValue: _correctAnswerIndex,
                 onChanged: (val) {
-                  // FIXED: Don't allow empty options to be selected as correct
                   if (_optionControllers[index].text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please enter option text first')),
