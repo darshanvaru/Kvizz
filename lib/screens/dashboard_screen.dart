@@ -54,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _socketService.joinRoom(
       gameCode: int.tryParse(gameCode) ?? 000000,
       userId: currentUser?.id,
-      username: currentUser?.name ?? 'Guest User',
+      username: currentUser?.username ?? 'Guest User',
     );
 
     // Navigate to waiting room
@@ -146,12 +146,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         elevation: 2,
                         child: ListTile(
                           title: Text(quiz['title']),
-                          subtitle: Text(quiz['description']),
+                          subtitle: Text("${quiz['gameCode']} - ${quiz['description']}"),
                           trailing: const Icon(Icons.play_circle_outline),
                           onTap: () {
                             print("Tapped on quiz with code: ${quiz['gameCode']}");
                             _joinGame(quiz['gameCode'].toString());
-                            // TODO: Navigate or join quiz
                           },
                         ),
                       );

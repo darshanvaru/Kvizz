@@ -5,10 +5,10 @@ class PromptInputCard extends StatelessWidget {
   final VoidCallback onGeneratePressed;
 
   const PromptInputCard({
-    Key? key,
+    super.key,
     required this.controller,
     required this.onGeneratePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
