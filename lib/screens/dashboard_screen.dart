@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       MaterialPageRoute(
         builder: (context) => WaitingRoomScreen(),
       ),
-    );
+    ).then((_) => _loadActiveQuizzes);
   }
 
   @override
