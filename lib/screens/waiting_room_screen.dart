@@ -10,21 +10,21 @@ import 'ongoing_quiz_screen.dart';
 
 class WaitingRoomScreen extends StatefulWidget {
   const WaitingRoomScreen({super.key});
-
   @override
   WaitingRoomScreenState createState() => WaitingRoomScreenState();
 }
 
-class WaitingRoomScreenState extends State<WaitingRoomScreen>
-    with SingleTickerProviderStateMixin {
+class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerProviderStateMixin {
   final SocketService _socketService = SocketService();
+
   int _previousParticipantCount = 0;
   String _lastJoinedParticipant = '';
+  // List _previousParticipants = [];
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,  // This is important if supported, to block system pop.
+      canPop: false,
       onPopInvokedWithResult: (bool didPop, _) async {
         if (!didPop) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -38,7 +38,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
-              print("Leave button pressed");
               _leaveGame(context);
             },
           ),
@@ -47,9 +46,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
               builder: (context, sessionProvider, child) {
                 return IconButton(
                   icon: Icon(Icons.share),
-                  onPressed: sessionProvider.hasSession
-                      ? () => _shareGameCode(sessionProvider.gameCode)
-                      : null,
+                  onPressed: sessionProvider.hasSession ? () => _shareGameCode(sessionProvider.gameCode) : null,
                 );
               },
             ),
@@ -59,7 +56,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
           future: Future.delayed(const Duration(seconds: 2)),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              // Temporary screen for 2 seconds
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -76,32 +72,88 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
                 ),
               );
             }
-
-            // After 2 sec → show your full Consumer logic
+            // Show main waiting room UI with participant-change handling
             return Consumer<GameSessionProvider>(
               builder: (context, sessionProvider, child) {
-                final gameSession = sessionProvider.gameSession;
-                debugPrint("[from waiting screen build] GamesSessionNull: ${gameSession == null}");
+                // final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
+                // final participants = sessionProvider.participants;
+                // final previousParticipants = _previousParticipants;
+                //
+                // // --- PARTICIPANT REMOVAL DETECTION AND FEEDBACK ---
+                // // If user was removed (not present in participant list anymore)
+                // if (currentUser != null &&
+                //     sessionProvider.hasSession &&
+                //     previousParticipants.isNotEmpty &&
+                //     !participants.any((p) => p.userId == currentUser.id)
+                // ) {
+                //   WidgetsBinding.instance.addPostFrameCallback((_) {
+                //     Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+                //     Navigator.of(context).popUntil((route) => route.isFirst);
+                //     showDialog(
+                //       context: context,
+                //       barrierDismissible: false,
+                //       builder: (context) => AlertDialog(
+                //         title: Text('Removed'),
+                //         content: Text('You were removed by host'),
+                //         actions: [
+                //           ElevatedButton(
+                //             onPressed: () {},
+                //             // onPressed: () => Navigator.of(context).pop(),
+                //             child: Text('OK'),
+                //           ),
+                //         ],
+                //       ),
+                //     );
+                //   });
+                // }
+                //
+                // // For other participants, show a notification if someone is removed
+                // if (sessionProvider.hasSession &&
+                //     previousParticipants.isNotEmpty &&
+                //     participants.length < previousParticipants.length
+                // ) {
+                //   // Find removed users
+                //   final removed = previousParticipants.where((old) =>
+                //   !participants.any((p) => p.userId == old.userId)).toList();
+                //   if (removed.isNotEmpty) {
+                //     WidgetsBinding.instance.addPostFrameCallback((_) {
+                //       ScaffoldMessenger.of(context).showSnackBar(
+                //         SnackBar(
+                //           content: Row(
+                //             children: [
+                //               Icon(Icons.person_remove, color: Colors.white, size: 20),
+                //               SizedBox(width: 8),
+                //               Text('${removed.first.username} was removed by host!'),
+                //             ],
+                //           ),
+                //           backgroundColor: Colors.red,
+                //           duration: Duration(seconds: 2),
+                //           behavior: SnackBarBehavior.floating,
+                //         ),
+                //       );
+                //     });
+                //   }
+                // }
 
-                // Check for participant count changes and show notification (Snackbar)
+                // Participant join notification
                 if (sessionProvider.hasSession &&
-                    sessionProvider.participantCount > _previousParticipantCount) {
+                    sessionProvider.participantCount > _previousParticipantCount
+                ) {
                   // Find the new participant
                   if (sessionProvider.participants.isNotEmpty) {
                     final latestParticipant = sessionProvider.participants.last;
                     if (latestParticipant.username != _lastJoinedParticipant) {
                       _lastJoinedParticipant = latestParticipant.username;
-
-                      // Show notification after build
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _showParticipantJoinedNotification(
-                          latestParticipant.username,
-                        );
+                        _showParticipantJoinedNotification(latestParticipant.username);
                       });
                     }
                   }
                 }
+
+                // Update previous states AFTER all checks
                 _previousParticipantCount = sessionProvider.participantCount;
+                // _previousParticipants = List.from(sessionProvider.participants);
 
                 if (sessionProvider.error != null) {
                   return _buildErrorState(sessionProvider);
@@ -127,23 +179,20 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
 
                 if (sessionProvider.isFinished) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    print("SessionProvider marked game as \"isFinished\", navigating to dashboard");
                     _leaveGame(context);
-                    Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
+                    Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   });
                   return _buildGameStartingState();
                 }
 
                 if (sessionProvider.isStarted) {
-                  print("Game has started, navigating to OngoingQuizScreen from waiting screen");
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => OngoingQuizScreen(
                           questions: sessionProvider.quizData!.questions,
-                          timePerQuestion: 10,
-                          // timePerQuestion: sessionProvider.gameSession?.settings?.timePerQuestion ?? 10,
+                          timePerQuestion: 10, // sessionProvider.gameSession?.settings?.timePerQuestion ?? 10,
                           maxPointsPerQuestion: sessionProvider.gameSession?.settings?.maxPointsPerQuestion ?? 1,
                           isHost: _isCurrentUserHost(sessionProvider),
                           gameSessionId: sessionProvider.gameSession!.id,
@@ -180,227 +229,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
         ),
       );
     }
-  }
-
-  Widget _buildWaitingRoomContent(GameSessionProvider sessionProvider) {
-    final isHost = _isCurrentUserHost(sessionProvider);
-
-    return Column(
-      children: [
-        // Game info header with real-time updates
-        _buildGameInfoHeader(sessionProvider),
-
-        // Participants section
-        Expanded(child: _buildParticipantsList(sessionProvider)),
-
-        // Bottom controls
-        _buildBottomControls(sessionProvider, isHost),
-      ],
-    );
-  }
-
-  Widget _buildErrorState(GameSessionProvider sessionProvider) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
-            SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(color: Colors.red.shade700),
-            ),
-            SizedBox(height: 8),
-            Text(
-              sessionProvider.error ?? 'Unknown error occurred',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                // sessionProvider.clearSession();
-                Navigator.of(context).pop();
-              },
-              icon: Icon(Icons.arrow_back),
-              label: Text('Go Back'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGameStartingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.rocket_launch, size: 64, color: Colors.green),
-          SizedBox(height: 16),
-          Text(
-            'Quiz Starting!',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text('Get ready...'),
-          SizedBox(height: 16),
-          CircularProgressIndicator(color: Colors.green),
-        ],
-      ),
-    );
-  }
-
-  void _shareGameCode(String gameCode) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Share Game Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Share this code with others to join:'),
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                gameCode,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _startGame() {
-    final sessionProvider = Provider.of<GameSessionProvider>(context,listen: false);
-
-    if (sessionProvider.hasSession) {
-      _showStartGameDialog();
-    }
-  }
-
-  void _showStartGameDialog() {
-    final sessionProvider = Provider.of<GameSessionProvider>(
-      context,
-      listen: false,
-    );
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Start Quiz'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Are you sure you want to start the quiz?'),
-              SizedBox(height: 8),
-              Text('• All ${sessionProvider.participantCount} participants will begin immediately'),
-              Text('• Quiz: ${sessionProvider.quizData?.title ?? "Unknown"}'),
-              Text('• Questions: ${sessionProvider.quizData?.questions.length ?? 0}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _confirmStartGame();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('Start Quiz'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _confirmStartGame() {
-    final sessionProvider = Provider.of<GameSessionProvider>(context,listen: false);
-
-    if (sessionProvider.hasSession) {
-      _socketService.startQuiz(gameSessionId: sessionProvider.gameSession!.id);
-
-      // Show loading state
-      // sessionProvider.setLoading(true);
-    }
-  }
-
-  void _leaveGame(BuildContext context) {
-    print("In _leaveGame");
-    final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
-
-    if (sessionProvider.hasSession) {
-      final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
-
-      if (_isCurrentUserHost(sessionProvider)) {
-        print("Calling stop-quiz for Host ${Provider.of<UserProvider>(context, listen: false).currentUser?.username ?? "Unknown User"} from waiting_room");
-        _socketService.stopQuiz(sessionProvider.gameSession!.id);
-      } else {
-        print("Calling leave-quiz for Participant ${Provider.of<UserProvider>(context, listen: false).currentUser?.username ?? "Unknown User"} from waiting_room");
-        _socketService.leaveQuiz(
-          gameSessionId: sessionProvider.gameSession!.id,
-          username: currentUser?.username,
-        );
-      }
-      print(
-        "[waiting_room_screen._leave] Leaving game session: ${sessionProvider.gameSession!.id}, ${currentUser?.id}, ${currentUser?.name}",
-      );
-
-      Navigator.of(context).pop();
-      // sessionProvider.clearSession();
-    }else{
-      print("In leaveQuiz, leave Button pressed but no session available -> navigating to homescreen");
-      Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(0);
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    }
-  }
-
-  bool _isCurrentUserHost(GameSessionProvider sessionProvider) {
-    final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
-    if (currentUser == null || !sessionProvider.hasSession) return false;
-
-    print(
-      "[Checking host] Current User ID: ${currentUser.id}, Host ID: ${sessionProvider.hostData?.id}",
-    );
-    print("Is Host: ${sessionProvider.hostData?.id == currentUser.id}");
-    return sessionProvider.hostData?.id == currentUser.id;
   }
 
   Widget _buildGameInfoHeader(GameSessionProvider sessionProvider) {
@@ -463,7 +291,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
                     ),
                   ),
                   SizedBox(height: 8),
-                  // Real-time participant counter
                   AnimatedContainer(
                     duration: Duration(milliseconds: 300),
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -491,7 +318,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
               ),
             ],
           ),
-
           if (sessionProvider.quizData != null) ...[
             SizedBox(height: 16),
             Container(
@@ -549,25 +375,19 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
             children: [
               Text(
                 'Participants',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               AnimatedContainer(
                 duration: Duration(milliseconds: 300),
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: sessionProvider.participantCount > 0
-                      ? Colors.green.shade100
-                      : Colors.grey.shade100,
+                  color: sessionProvider.participantCount > 0 ? Colors.green.shade100 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
                   '${sessionProvider.participantCount}',
                   style: TextStyle(
-                    color: sessionProvider.participantCount > 0
-                        ? Colors.green.shade800
-                        : Colors.grey.shade600,
+                    color: sessionProvider.participantCount > 0 ? Colors.green.shade800 : Colors.grey.shade600,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -575,121 +395,69 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
             ],
           ),
           SizedBox(height: 12),
-
           Expanded(
             child: sessionProvider.participants.isEmpty
                 ? _buildEmptyParticipantsState()
                 : ListView.builder(
-                    itemCount: sessionProvider.participants.length,
-                    itemBuilder: (context, index) {
-                      print("Index: $index");
-                      print(
-                        "participant name: ${sessionProvider.participants[index].username}",
+              itemCount: sessionProvider.participants.length,
+              itemBuilder: (context, index) {
+                final participant = sessionProvider.participants[index];
+                return GestureDetector(
+                  onTap: () {
+                    if (_isCurrentUserHost(sessionProvider)) {
+                      _socketService.leaveQuiz(
+                        gameSessionId: sessionProvider.gameSession!.id,
+                        username: sessionProvider.participants[index].username,
                       );
-                      if (index >= sessionProvider.participants.length) {
-                        return SizedBox.shrink();
-                      }
-
-                      final participant = sessionProvider.participants[index];
-                      final isHost =
-                          sessionProvider.hostData?.id == participant.userId;
-
-                      return GestureDetector(
-                        onTap: () {
-                          print(
-                            "Tapped on participant: ${participant.username}",
-                          );
-                          if (isHost) {
-                            _socketService.leaveQuiz(
-                              gameSessionId: sessionProvider.gameSession!.id,
-                              username:
-                                  sessionProvider.participants[index].username,
-                            );
-                          }
-                        },
-                        child: Card(
-                          margin: EdgeInsets.only(bottom: 8),
-                          elevation: 2,
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isHost
-                                  ? Colors.amber.shade300
-                                  : Colors.blue.shade300,
+                    }
+                  },
+                  child: Card(
+                    margin: EdgeInsets.only(bottom: 8),
+                    elevation: 2,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.shade300,
+                        child: Text(
+                          participant.username[0].toUpperCase(),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Text(
+                            participant.username,
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (participant.isGuest)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               child: Text(
-                                participant.username[0].toUpperCase(),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                'Guest',
+                                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                               ),
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  participant.username,
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                if (isHost) ...[
-                                  SizedBox(width: 8),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.shade100,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'HOST',
-                                      style: TextStyle(
-                                        color: Colors.amber.shade800,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (participant.isGuest)
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'Guest',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                SizedBox(width: 8),
-                                Icon(
-                                  participant.isActive
-                                      ? Icons.circle
-                                      : Icons.circle_outlined,
-                                  color: participant.isActive
-                                      ? Colors.green
-                                      : Colors.grey,
-                                  size: 12,
-                                ),
-                              ],
-                            ),
+                          SizedBox(width: 8),
+                          Icon(
+                            participant.isActive ? Icons.circle : Icons.circle_outlined,
+                            color: participant.isActive ? Colors.green : Colors.grey,
+                            size: 12,
                           ),
-                        ),
-                      );
-                    },
+                        ],
+                      ),
+                    ),
                   ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -703,24 +471,196 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
         children: [
           Icon(Icons.people_outline, size: 64, color: Colors.grey.shade400),
           SizedBox(height: 16),
-          Text(
-            'Waiting for participants...',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-          ),
+          Text('Waiting for participants...', style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
           SizedBox(height: 8),
-          Text(
-            'Share the game code with others to join',
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          Text('Share the game code with others to join', style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaitingRoomContent(GameSessionProvider sessionProvider) {
+    final isHost = _isCurrentUserHost(sessionProvider);
+    return Column(
+      children: [
+        _buildGameInfoHeader(sessionProvider),
+        Expanded(child: _buildParticipantsList(sessionProvider)),
+        _buildBottomControls(sessionProvider, isHost),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(GameSessionProvider sessionProvider) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
+            SizedBox(height: 16),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.red.shade700),
+            ),
+            SizedBox(height: 8),
+            Text(
+              sessionProvider.error ?? 'Unknown error occurred',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              icon: Icon(Icons.arrow_back),
+              label: Text('Go Back'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameStartingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.rocket_launch, size: 64, color: Colors.green),
+          SizedBox(height: 16),
+          Text('Quiz Starting!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              )),
+          SizedBox(height: 8),
+          Text('Get ready...'),
+          SizedBox(height: 16),
+          CircularProgressIndicator(color: Colors.green),
+        ],
+      ),
+    );
+  }
+
+  void _shareGameCode(String gameCode) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Share Game Code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Share this code with others to join:'),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                gameCode,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBottomControls(GameSessionProvider sessionProvider, bool isHost) {
-    print(
-      "Participant Count: ${sessionProvider.participantCount} && IsLoading: ${sessionProvider.isLoading}",
+  void _startGame() {
+    final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
+    if (sessionProvider.hasSession) {
+      _showStartGameDialog();
+    }
+  }
+
+  void _showStartGameDialog() {
+    final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Start Quiz'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Are you sure you want to start the quiz?'),
+              SizedBox(height: 8),
+              Text('• All ${sessionProvider.participantCount} participants will begin immediately'),
+              Text('• Quiz: ${sessionProvider.quizData?.title ?? "Unknown"}'),
+              Text('• Questions: ${sessionProvider.quizData?.questions.length ?? 0}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _confirmStartGame();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Start Quiz'),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  void _confirmStartGame() {
+    final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
+    if (sessionProvider.hasSession) {
+      _socketService.startQuiz(gameSessionId: sessionProvider.gameSession!.id);
+    }
+  }
+
+  void _leaveGame(BuildContext context) {
+    final sessionProvider = Provider.of<GameSessionProvider>(context, listen: false);
+    if (sessionProvider.hasSession) {
+      final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
+      if (_isCurrentUserHost(sessionProvider)) {
+        _socketService.stopQuiz(sessionProvider.gameSession!.id);
+      } else {
+        _socketService.leaveQuiz(
+          gameSessionId: sessionProvider.gameSession!.id,
+          username: currentUser?.username,
+        );
+      }
+      Navigator.of(context).pop();
+    } else {
+      Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
+  bool _isCurrentUserHost(GameSessionProvider sessionProvider) {
+    final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
+    if (currentUser == null || !sessionProvider.hasSession) return false;
+    return sessionProvider.hostData?.id == currentUser.id;
+  }
+
+  Widget _buildBottomControls(GameSessionProvider sessionProvider, bool isHost) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -731,42 +671,32 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isHost) ...[
-            // Host controls
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed:
-                        (sessionProvider.participantCount > 0)
-                        ? _startGame
-                        : null,
+                    onPressed: (sessionProvider.participantCount > 0) ? _startGame : null,
                     icon: Icon(Icons.play_arrow),
-                    label: Text(
-                      'Start Quiz',
-                    ),
+                    label: Text('Start Quiz'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
                 SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: () {
-                          _leaveGame(context);
-                        },
+                    _leaveGame(context);
+                  },
                   icon: Icon(Icons.close),
                   label: Text('Cancel'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
@@ -780,7 +710,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
                 ),
               ),
           ] else ...[
-            // Participant controls
             Row(
               children: [
                 Expanded(
@@ -797,10 +726,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
                         SizedBox(width: 12),
                         Text(
                           'Waiting for host to start the quiz...',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -815,9 +741,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen>
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
