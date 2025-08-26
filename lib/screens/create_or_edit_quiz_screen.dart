@@ -186,17 +186,22 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
     }
 
     print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...3");
-    for (var q in _questions) {
-      if (q.type == QuestionType.reorder) {
-        List<String> tempCorrectAnswer = [...q.options];
 
-        q.options.shuffle();
 
-        List<String> tempCorrectAnswerIndex = [];
-        for (var val in tempCorrectAnswer) {
-          tempCorrectAnswerIndex.add("${q.options.indexOf(val)}");
+    if (!_isEditMode) {
+      for (var q in _questions) {
+        if (q.type == QuestionType.reorder) {
+          print("Shuffling options of reorder question: ${q.question}");
+          List<String> tempCorrectAnswer = [...q.options];
+
+          q.options.shuffle();
+
+          List<String> tempCorrectAnswerIndex = [];
+          for (var val in tempCorrectAnswer) {
+            tempCorrectAnswerIndex.add("${q.options.indexOf(val)}");
+          }
+          q.correctAnswer = [...tempCorrectAnswerIndex];
         }
-        q.correctAnswer = [...tempCorrectAnswerIndex];
       }
     }
 
