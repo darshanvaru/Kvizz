@@ -180,7 +180,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           _showSuccessMessage("Login successful! Welcome back, ${user.name}");
 
           await Future.delayed(Duration(milliseconds: 1500));
-          Provider.of<SelectedIndexProvider>(context,listen: false).updateSelectedIndex(0);
+          Provider.of<TabIndexProvider>(context,listen: false).updateSelectedIndex(0);
           if (mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -431,16 +431,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (isLoading) ...[
-                                SizedBox(width: 16),
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                           const SizedBox(height: 24),
