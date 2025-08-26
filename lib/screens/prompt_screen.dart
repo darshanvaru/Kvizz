@@ -70,7 +70,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
               label: "My Quiz",
               onPressed: () {
                 Navigator.of(context).popUntil((route) => route.isFirst);
-                Provider.of<SelectedIndexProvider>(context, listen: false).updateSelectedIndex(1);
+                Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(1);
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
             ),

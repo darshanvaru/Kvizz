@@ -150,7 +150,7 @@ class SocketService {
 
       print('✅ Session data validated');
       printFullResponse("✅ Full Session data: $sessionData");
-      print("Updating GameSessionProvider with received socket date, is _gameSessionProvider null: ${_gameSessionProvider == null}");
+      print("Updating GameSessionProvider with received socket data, is _gameSessionProvider null: ${_gameSessionProvider == null}");
 
       // Update provider
       _gameSessionProvider!.updateSessionFromJson(sessionData, from);

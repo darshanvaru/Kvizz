@@ -238,16 +238,11 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Implement Preview logic
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (_) =>
-                    //         QuizPreviewScreen(questions: quiz?.questions?? []),
-                    //   ),
-                    // );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Preview feature coming soon!"),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PreviewQuizScreen(questions: quiz?.questions?? []),
                       ),
                     );
                   },
