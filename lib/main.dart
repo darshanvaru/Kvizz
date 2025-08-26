@@ -22,7 +22,7 @@ void main() async{
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => SelectedIndexProvider()),
+        ChangeNotifierProvider(create: (_) => TabIndexProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GameSessionProvider()),
       ],
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndexProvider = Provider.of<SelectedIndexProvider>(context);
+    final selectedIndexProvider = Provider.of<TabIndexProvider>(context);
     final selectedIndex = selectedIndexProvider.selectedIndex;
 
     return Scaffold(
