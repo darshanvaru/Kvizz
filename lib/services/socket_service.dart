@@ -11,6 +11,8 @@ class SocketService {
 
   late io.Socket _socket;
   bool _isConnected = false;
+
+  // if null error persist, Setting GameSessionProvider as late and replacing all null  with empty GameSessionProvider
   GameSessionProvider? _gameSessionProvider;
   bool _listenersRegistered = false;
 
