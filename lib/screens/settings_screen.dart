@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:kvizz/screens/auth_screen.dart';
+import 'package:kvizz/screens/profile_page_screen.dart';
 import 'package:kvizz/services/socket_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
@@ -59,7 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
+    final currentUser = Provider.of<UserProvider>(context, listen: true).currentUser;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Settings")),
@@ -73,18 +75,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Card(
                   margin: const EdgeInsets.all(12),
                   child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.person, color: Colors.white),
+                    leading: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: SvgPicture.network(
+                          currentUser!.photo!,
+                          placeholderBuilder: (context) => const CircularProgressIndicator(),
+                          height: 80.0,
+                          width: 50.0,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
-                    title: Text(currentUser?.username ?? "Unknown"),
-                    subtitle: Text(currentUser?.email ?? "Unknown"),
+                    title: Text(currentUser.name),
+                    subtitle: Text(currentUser.email),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       // TODO: Navigate to Profile Details/Edit screen
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Placeholder()),
+                        MaterialPageRoute(builder: (_) => ProfileScreen()),
                       );
                     },
                   ),
@@ -109,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Logout Button - Changed to secondary color
+                // Logout Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -121,11 +134,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         () {
                           SocketService().manualDisconnect();
                           prefs.setBool('isLoggedIn', false);
+                          prefs.setString('jwt', "");
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => const AuthScreen()), (route) => false,
                           );
-                          print('Logout logic not implemented.');
                         },
                       );
                     },
@@ -140,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Delete Account Button - Changed to surface with error text
+                // Delete Account Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
