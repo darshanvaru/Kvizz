@@ -1,25 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+
 import '../models/UserModel.dart';
 import '../providers/user_provider.dart';
+import '../services/user_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  UserModel? user;
+  bool _isUpdating = false;
+  bool _loading = true;
+  bool isEditing = false;
+  String? _error;
+
+  late TextEditingController _nameController;
+  late TextEditingController _mobileController;
+  late TextEditingController _usernameController;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final fetchedUser = await UserService.fetchUserProfile();
+      print('DEBUG: Loaded user name: ${fetchedUser.name}');
+      print('DEBUG: Loaded user username: ${fetchedUser.username}');
+      print('DEBUG: Loaded user photo: ${fetchedUser.photo}');
+
+      Provider.of<UserProvider>(context, listen: false).setUser(fetchedUser);
+
+      _nameController = TextEditingController(text: fetchedUser.name ?? '');
+      _mobileController = TextEditingController(text: fetchedUser.mobile ?? '');
+      _usernameController = TextEditingController(text: fetchedUser.username ?? '');
+
+      setState(() {
+        user = fetchedUser;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      print('DEBUG: Exception caught in _loadUserData(): $e');
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _usernameController.dispose();
+    _mobileController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = Provider.of<UserProvider>(context).currentUser;
+
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: Center(child: Text('Error: $_error')),
+      );
+    }
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Profile')),
+        appBar: AppBar(title: const Text('Profile')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.person_off, size: 80, color: Colors.grey),
-              SizedBox(height: 16),
+              const Icon(Icons.person_off, size: 80, color: Colors.grey),
+              const SizedBox(height: 16),
               Text('No user data available', style: theme.textTheme.titleMedium),
             ],
           ),
@@ -31,10 +110,8 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: theme.colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          // Custom App Bar with Profile Picture
           SliverAppBar(
             expandedHeight: 200,
-            floating: false,
             pinned: true,
             backgroundColor: theme.colorScheme.primary,
             flexibleSpace: FlexibleSpaceBar(
@@ -45,29 +122,29 @@ class ProfileScreen extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withValues(alpha: 0.8),
+                      theme.colorScheme.primary.withOpacity(0.8),
                     ],
                   ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: 40),
-                    _buildProfileAvatar(user, theme),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 40),
+                    _buildProfileAvatar(user!, theme),
+                    const SizedBox(height: 12),
                     Text(
-                      user.name,
+                      user!.name ?? 'No name',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (user.username != null) ...[
-                      SizedBox(height: 4),
+                    if (user!.username != null) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        '@${user.username}',
+                        '@${user!.username}',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                     ],
@@ -76,49 +153,44 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // Profile Content
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Quick Stats Cards
-                  if (user.stats != null) _buildQuickStats(user.stats!, theme),
-                  SizedBox(height: 20),
-
-                  // Personal Information Section
-                  _buildSectionTitle('Personal Information', theme),
-                  SizedBox(height: 12),
-                  _buildPersonalInfoCard(user, theme),
-                  SizedBox(height: 20),
-
-                  // Account Information Section
+                  if (user!.stats != null) _buildQuickStats(user!.stats!, theme),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      _buildSectionTitle('Personal Information', theme),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => setState(() => isEditing = !isEditing),
+                        icon: Icon(isEditing ? Icons.cancel : Icons.edit),
+                        label: Text(isEditing ? "Cancel" : "Edit"),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  isEditing
+                      ? _buildEditablePersonalInfoCard(user!, theme)
+                      : _buildPersonalInfoCard(user!, theme),
+                  const SizedBox(height: 20),
                   _buildSectionTitle('Account Information', theme),
-                  SizedBox(height: 12),
-                  _buildAccountInfoCard(user, theme),
-                  SizedBox(height: 20),
-
-                  // Quiz Activity Section
+                  const SizedBox(height: 12),
+                  _buildAccountInfoCard(user!, theme),
+                  const SizedBox(height: 20),
                   _buildSectionTitle('Quiz Activity', theme),
-                  SizedBox(height: 12),
-                  _buildQuizActivityCard(user, theme),
-                  SizedBox(height: 20),
-
-                  // Settings Section
-                  if (user.settings != null) ...[
-                    _buildSectionTitle('Preferences', theme),
-                    SizedBox(height: 12),
-                    _buildSettingsCard(user.settings!, theme),
-                    SizedBox(height: 20),
-                  ],
-
-                  // Account Status Section
-                  _buildSectionTitle('Account Status', theme),
-                  SizedBox(height: 12),
-                  _buildAccountStatusCard(user, theme),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 12),
+                  _buildQuizActivityCard(user!, theme),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -131,30 +203,22 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileAvatar(UserModel user, ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+            color: Colors.black.withOpacity(0.2),
+            offset: const Offset(0, 4),
           ),
         ],
+        shape: BoxShape.circle,
       ),
-      child: CircleAvatar(
-        radius: 50,
-        backgroundColor: Colors.white,
-        backgroundImage: user.photo != null ? NetworkImage(user.photo!) : null,
-        child: user.photo == null
-            ? Text(
-          user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
-        )
-            : null,
+      child: ClipOval(
+        child: SvgPicture.network(
+          user.photo ?? '',
+          placeholderBuilder: (context) => const CircularProgressIndicator(),
+          height: 100.0,
+          width: 100.0,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
@@ -171,7 +235,7 @@ class ProfileScreen extends StatelessWidget {
             theme,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
             'Total Score',
@@ -181,7 +245,7 @@ class ProfileScreen extends StatelessWidget {
             theme,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
             'Average Score',
@@ -197,29 +261,29 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color, ThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             value,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -227,11 +291,11 @@ class ProfileScreen extends StatelessWidget {
               color: color,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             title,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+              color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -249,6 +313,139 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildEditablePersonalInfoCard(UserModel user, ThemeData theme) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Name field
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+                textInputAction: TextInputAction.next,
+                validator: (val) => (val == null || val.trim().isEmpty) ? 'Name cannot be empty' : null,
+              ),
+              const SizedBox(height: 10),
+
+              // Username field
+              TextFormField(
+                controller: _usernameController,
+                decoration: const InputDecoration(labelText: 'Username'),
+                textInputAction: TextInputAction.next,
+                validator: (val) => (val == null || val.trim().isEmpty) ? 'Username cannot be empty' : null,
+              ),
+              const SizedBox(height: 10),
+
+              // Email field : Disabled with initialValue set
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Email (Cannot be edited)'),
+                enabled: false,
+                initialValue: user.email ?? '',
+                // enableInteractiveSelection: false,
+              ),
+              const SizedBox(height: 10),
+
+              // Mobile Number field
+              TextFormField(
+                controller: _mobileController,
+                decoration: const InputDecoration(labelText: 'Mobile Number'),
+                keyboardType: TextInputType.phone,
+                validator: (val) =>
+                  (val == null || val.trim().isEmpty || val.length > 10 || val.length < 10)
+                    ? 'Enter correct mobile number'
+                    : null,
+              ),
+              const SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const SizedBox(height: 10),
+
+                  //Cancel button
+                  ElevatedButton.icon(
+                    onPressed: _isUpdating ? null : () => setState(() => isEditing = !isEditing),
+                    icon: const Icon(Icons.cancel, size: 20),
+                    label: const FittedBox(child: Text("Cancel")),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  //Submit Button
+                  ElevatedButton.icon(
+                    onPressed: _isUpdating ? null : () async {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        setState(() {
+                          _isUpdating = true;  // Start loading
+                        });
+                        try {
+                          Map<String, dynamic> fieldsToUpdate = {
+                            "name": _nameController.text,
+                            "username": _usernameController.text,
+                            "mobile": _mobileController.text,
+                          };
+                          final updatedUser = await UserService.updateUserProfile(fieldsToUpdate);
+                          Provider.of<UserProvider>(context, listen: false).setUser(updatedUser);
+                          setState(() {
+                            _loadUserData();
+                            user = updatedUser;
+                            isEditing = false;
+                          });
+                        } catch (e) {
+                          // Optionally, show error message to user here
+                          print("Update error: $e");
+                        } finally {
+                          setState(() {
+                            _isUpdating = false;  // Stop loading
+                          });
+                        }
+                      }
+                    },
+                    icon: _isUpdating
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                        : const Icon(Icons.send, size: 20),
+                    label: _isUpdating
+                        ? const Text("Updating...")
+                        : const FittedBox(child: Text("Submit")),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      padding: const EdgeInsets.symmetric(horizontal: 20,  vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPersonalInfoCard(UserModel user, ThemeData theme) {
     return Card(
       elevation: 2,
@@ -257,15 +454,15 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildInfoRow(Icons.person, 'Full Name', user.name, theme),
+            _buildInfoRow(Icons.person, 'Full Name', user.name ?? '', theme),
             if (user.username != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildInfoRow(Icons.alternate_email, 'Username', user.username!, theme),
             ],
-            SizedBox(height: 16),
-            _buildInfoRow(Icons.email, 'Email', user.email, theme),
+            const SizedBox(height: 16),
+            _buildInfoRow(Icons.email, 'Email', user.email ?? '', theme),
             if (user.mobile != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildInfoRow(Icons.phone, 'Mobile', user.mobile!, theme),
             ],
           ],
@@ -285,17 +482,13 @@ class ProfileScreen extends StatelessWidget {
             _buildInfoRow(
               Icons.calendar_today,
               'Member Since',
-              _formatDate(user.createdAt),
+              user.createdAt != null ? _formatDate(user.createdAt!) : 'N/A',
               theme,
             ),
             if (user.passwordChangedAt != null) ...[
-              SizedBox(height: 16),
-              _buildInfoRow(
-                Icons.lock_reset,
-                'Password Changed',
-                _formatDate(user.passwordChangedAt!),
-                theme,
-              ),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.lock_reset, 'Password Changed',
+                  _formatDate(user.passwordChangedAt!), theme),
             ],
           ],
         ),
@@ -312,133 +505,10 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildInfoRow(
-              Icons.quiz,
-              'Owned Quizzes',
-              user.ownedQuizzes?.length.toString() ?? '0',
-              theme,
-            ),
-            SizedBox(height: 16),
+                Icons.quiz, 'Owned Quizzes', (user.ownedQuizzes?.length ?? 0).toString(), theme),
+            const SizedBox(height: 16),
             _buildInfoRow(
-              Icons.play_circle,
-              'Played Quizzes',
-              user.playedQuiz?.length.toString() ?? '0',
-              theme,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsCard(UserSettings settings, ThemeData theme) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    settings.darkMode ? Icons.dark_mode : Icons.light_mode,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Theme Preference',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        settings.darkMode ? 'Dark Mode' : 'Light Mode',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccountStatusCard(UserModel user, ThemeData theme) {
-    bool isActive = user.active ?? true;
-    bool isDeleted = user.deletedAt != null;
-
-    Color statusColor = isDeleted ? Colors.red : (isActive ? Colors.green : Colors.orange);
-    String statusText = isDeleted ? 'Deleted' : (isActive ? 'Active' : 'Inactive');
-    IconData statusIcon = isDeleted ? Icons.delete : (isActive ? Icons.check_circle : Icons.pause_circle);
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(statusIcon, color: statusColor, size: 20),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Account Status',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        statusText,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (isDeleted) ...[
-              SizedBox(height: 16),
-              _buildInfoRow(
-                Icons.delete_forever,
-                'Deleted On',
-                _formatDate(user.deletedAt!),
-                theme,
-              ),
-            ],
+                Icons.play_circle, 'Played Quizzes', (user.playedQuiz?.length ?? 0).toString(), theme),
           ],
         ),
       ),
@@ -449,14 +519,14 @@ class ProfileScreen extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: theme.colorScheme.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: theme.colorScheme.primary, size: 20),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,11 +537,11 @@ class ProfileScreen extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                 ),
               ),
             ],
