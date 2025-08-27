@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:kvizz/api_endpoints.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../PrintHelper.dart';
 import '../models/Quiz.dart';
@@ -12,6 +13,8 @@ import '../models/Quiz.dart';
 // To create a new quiz
 Future<QuizModel?> createQuiz(QuizModel quiz) async {
   final String body = jsonEncode(quiz.toJson(forApi: true));
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
 
   printFullResponse('[QuizService.createQuiz] Body → $body');
 
@@ -20,7 +23,7 @@ Future<QuizModel?> createQuiz(QuizModel quiz) async {
       Uri.parse(ApiEndpoints.saveQuiz),
       headers: {
         'Content-Type': 'application/json',
-        // 'Authorization': 'Bearer ${await TokenStorageService.getToken()}',
+        'Authorization': 'Bearer $token',
       },
       body: body,
     );
@@ -50,6 +53,8 @@ Future<QuizModel?> createQuiz(QuizModel quiz) async {
 // To create a new quiz
 Future<QuizModel?> updateQuiz(QuizModel quiz) async {
   final String body = jsonEncode(quiz.toJson());
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
 
   printFullResponse('[QuizService.updateQuiz] Body → $body');
 
@@ -58,7 +63,7 @@ Future<QuizModel?> updateQuiz(QuizModel quiz) async {
       Uri.parse(ApiEndpoints.updateQuiz),
       headers: {
         'Content-Type': 'application/json',
-        // 'Authorization': 'Bearer ${await TokenStorageService.getToken()}',
+        'Authorization': 'Bearer $token',
       },
       body: body,
     );
@@ -88,14 +93,16 @@ Future<QuizModel?> updateQuiz(QuizModel quiz) async {
 //Delete quiz by quizId
 Future<bool> deleteQuiz(String quizId) async {
   if (quizId.isEmpty) return false;
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
 
   try {
     final response = await http.delete(
       Uri.parse(ApiEndpoints.deleteQuiz(quizId)),
-      // headers: {
-      //   'Authorization': 'Bearer ${await TokenStorageService.getToken()}',
-      //   'Content-Type': 'application/json',
-      // },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
     debugPrint('[QuizService.deleteQuiz] HTTP ${response.statusCode}');
 
@@ -114,11 +121,14 @@ Future<bool> deleteQuiz(String quizId) async {
 
 // Fetch active quizzes from the server
 Future<List<Map<String, dynamic>>?> getActiveQuizzes() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
+
   try {
     final response = await http.get(
       Uri.parse(ApiEndpoints.activeQuizzes),
       headers: {
-        // 'Authorization': 'Bearer ${await TokenStorageService.getToken()}',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
@@ -153,13 +163,16 @@ Future<List<Map<String, dynamic>>?> getActiveQuizzes() async {
 Future<QuizModel?> fetchQuizById(String quizId) async {
   if(quizId == '') return null;
   print("[From QuizService.fetchQuizById] Fetching quiz with ID: $quizId");
+
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
   try {
     final response = await http.get(
       Uri.parse(ApiEndpoints.quizByQuizId(quizId)),
-      // headers: {
-      //   'Authorization': 'Bearer ${await TokenStorageService.getToken()}',
-      //   'Content-Type': 'application/json',
-      // },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {
@@ -183,9 +196,15 @@ Future<QuizModel?> fetchQuizById(String quizId) async {
 
 // Fetch all public quizzes
 Future<List<QuizModel>?> fetchAllQuizzes() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt') ?? '';
   try {
     final response = await http.get(
       Uri.parse(ApiEndpoints.publicQuizzes),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {
@@ -210,14 +229,19 @@ Future<List<QuizModel>?> fetchAllQuizzes() async {
 // Fetch all use quiz by user ID
 Future<List<QuizModel>?> fetchUserQuizzes(String userId) async {
   try {
+
     print("[From QuizService.fetchUserQuizzes] Fetching quizzes for user ID: $userId");
     print("Link: ${ApiEndpoints.quizzesOfUserByUserID(userId)}");
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt') ?? '';
+
     final response = await http.get(
       Uri.parse(ApiEndpoints.quizzesOfUserByUserID(userId)),
-      // headers: {
-      //   'Authorization': 'Bearer ${prefs.getString('jwt') ?? ''}',
-      //   'Content-Type': 'application/json',
-      // },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {

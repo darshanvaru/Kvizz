@@ -3,6 +3,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiEndpoints {
   static final String baseUrl = dotenv.env['API_URL']!;
 
+  // ------------------------ User ------------------------
+  static String get getMe => '$baseUrl/users/me';
+  static String get updateMe => '$baseUrl/users/update-info';
+
   // ------------------------ AUTH ------------------------
   static String get login => '$baseUrl/users/login';
   static String get signup => '$baseUrl/users/signup';
