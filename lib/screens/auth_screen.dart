@@ -11,6 +11,7 @@ import '../main.dart';
 import '../models/UserModel.dart';
 import '../providers/tab_index_provider.dart';
 import '../providers/user_provider.dart';
+import '../services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -127,6 +128,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     });
 
     try {
+      print("IsLogin: $isLogin");
       if (isLogin) {
         await _performLogin();
       } else {
@@ -144,117 +146,72 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future _performLogin() async {
-    final Map data = {
-      "email": "${_emailController.text.trim()}@example.com",
-      "password": "12345678"
-      // "password": _passwordController.text.trim(),
-    };
+  Future<void> _performLogin() async {
+    final email = "${_emailController.text.trim()}@example.com";
+    final password = "12345678";
+    //final email = _emailController.text.trim();
+    //final password = _passwordController.text.trim();
+
+    print("----------------------");
+    print("Link: ${Uri.parse(ApiEndpoints.login)}");
+    print("Id: $email");
+    print("Password: $password");
+    print("----------------------");
+
     try {
-      print("----------------------");
-      print("Link: ${Uri.parse(ApiEndpoints.login)}");
-      print("Id: ${data["email"]}");
-      print("Password: ${data["password"]}");
-      print("----------------------");
-
-      final response = await http.post(
-            Uri.parse(ApiEndpoints.login),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(data),
-          ).timeout(
-            Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('Connection timeout. Please try again.');
-            },
-          );
-
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final decoded = jsonDecode(response.body);
-        if (decoded["status"] == "success") {
-          await prefs.setString("jwt", decoded["token"]);
-          final user = UserModel.fromJson(decoded["user"]);
-          Provider.of<UserProvider>(context, listen: false).setUser(user);
-          _showSuccessMessage("Login successful! Welcome back, ${user.name}");
-
-          await Future.delayed(Duration(milliseconds: 1500));
-          Provider.of<TabIndexProvider>(context,listen: false).updateSelectedIndex(0);
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          }
-        } else {
-          throw Exception(decoded["message"] ?? "Login failed");
-        }
-      } else if (response.statusCode == 401) {
-        throw Exception("Invalid email or password");
-      } else if (response.statusCode >= 500) {
-        throw Exception("Server error. Please try again later.");
-      } else {
-        throw Exception("Login failed. Please try again.");
-      }
-    } on SocketException {
-      throw Exception("No internet connection");
-    } on http.ClientException {
-      throw Exception(
-        "Connection error. Please check your internet connection.",
+      final user = await AuthService.login(
+        context: context,
+        email: email,
+        password: password,
       );
+
+      _showSuccessMessage("Login successful! Welcome back, ${user.name}");
+
+      await Future.delayed(const Duration(milliseconds: 1500));
+      Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      print("Login Error: $e");
     }
   }
 
-  Future _performSignUp() async {
-    final Map data = {
-      "name": _name.text.trim(),
-      "username": _username.text.trim(),
-      "email": _emailController.text.trim(),
-      "password": _passwordController.text.trim(),
-      "passwordConfirm": _confirmPasswordController.text.trim(),
-    };
-    try {
-      final response = await http
-          .post(
-            Uri.parse(ApiEndpoints.signup),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(data),
-          )
-          .timeout(
-            Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('Connection timeout. Please try again.');
-            },
-          );
+  Future<void> _performSignUp() async {
+    final name = _name.text.trim();
+    final username = _username.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final passwordConfirm = _confirmPasswordController.text.trim();
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final decoded = jsonDecode(response.body);
-        if (decoded["status"] == "success") {
-          _showSuccessMessage("Account created successfully! Please login.");
-          setState(() {
-            isLogin = true;
-            _passwordController.clear();
-            _confirmPasswordController.clear();
-          });
-        } else {
-          throw Exception(decoded["message"] ?? "Registration failed");
-        }
-      } else if (response.statusCode == 409) {
-        throw Exception("Email or username already exists");
-      } else if (response.statusCode >= 500) {
-        throw Exception("Server error. Please try again later.");
-      } else {
-        throw Exception("Registration failed. Please try again.");
-      }
-    } on SocketException {
-      throw Exception("No internet connection");
-    } on http.ClientException {
-      throw Exception(
-        "Connection error. Please check your internet connection.",
+    print("----------------------");
+    print("Link: ${Uri.parse(ApiEndpoints.signup)}");
+    print("Name: $name");
+    print("Username: $username");
+    print("Email: $email");
+    print("Password: $password");
+    print("Password Confirm: $passwordConfirm");
+    print("----------------------");
+
+    try {
+      await AuthService.signup(
+        name: name,
+        username: username,
+        email: email,
+        password: password,
+        passwordConfirm: passwordConfirm,
       );
+
+      _showSuccessMessage("Account created successfully! Please login.");
+      setState(() {
+        isLogin = true;
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+      });
+    } catch (e) {
+      print("Signup Error: $e");
     }
   }
 
