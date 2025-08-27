@@ -16,10 +16,9 @@ class SocketService {
   GameSessionProvider? _gameSessionProvider;
   bool _listenersRegistered = false;
 
+  //getters
   io.Socket get socket => _socket;
-
   bool get isConnected => _isConnected && _socket.connected;
-
   SocketService._internal();
 
   void connectSocket(BuildContext context) {
@@ -128,53 +127,7 @@ class SocketService {
     print('✅ All socket listeners registered');
   }
 
-  // FIXED: Complete implementation of _handleSessionUpdate
-  void _handleSessionUpdate(dynamic data, String message, BuildContext context, String from) {
-    print('🔄 Processing session update: $message');
-    printFullResponse('🔍 Data Received from socket: $data');
-
-    if (data == null) {
-      print('❌ Received null session data');
-      _updateProviderError('Received empty data from server');
-      return;
-    }
-
-    try {
-      // Convert to proper Map format
-      Map<String, dynamic> sessionData;
-      if (data is Map<String, dynamic>) {
-        sessionData = data;
-      } else if (data is Map) {
-        sessionData = Map<String, dynamic>.from(data);
-      } else {
-        throw Exception('Invalid data format: ${data.runtimeType}');
-      }
-
-      print('✅ Session data validated');
-      printFullResponse("✅ Full Session data: $sessionData");
-      print("Updating GameSessionProvider with received socket data, is _gameSessionProvider null: ${_gameSessionProvider == null}");
-
-      // Update provider
-      _gameSessionProvider!.updateSessionFromJson(sessionData, from);
-      print('✅ Provider Updated, is _gameSessionProvider null: ${_gameSessionProvider?.hasSession}');
-    } catch (e, stackTrace) {
-      print('❌ Failed to process session update: $e');
-      print('📍 Stack trace: ${stackTrace.toString().split('\n').take(5).join('\n')}',);
-      _updateProviderError('Failed to update session: $e');
-    }
-  }
-
-  void _updateProviderError(String error) {
-    print("❌ Updating provider with error: $error");
-    _gameSessionProvider?.setError(error);
-  }
-
-  void _cleanupOnDisconnect() {
-    _gameSessionProvider = null;
-    _listenersRegistered = false;
-  }
-
-  // SOCKET EMISSIONS
+  // SOCKET that are emitted by client
   void createRoom({required String quizId, required String hostId}) {
     print('📤 Creating room - Quiz: $quizId, Host: $hostId');
 
@@ -228,6 +181,52 @@ class SocketService {
     _socket.emit('get-questions', {'gameSessionId': gameSessionId});
   }
 
+  // Helper methods
+  void _handleSessionUpdate(dynamic data, String message, BuildContext context, String from) {
+    print('🔄 Processing session update: $message');
+    printFullResponse('🔍 Data Received from socket: $data');
+
+    if (data == null) {
+      print('❌ Received null session data');
+      _updateProviderError('Received empty data from server');
+      return;
+    }
+
+    try {
+      // Convert to proper Map format
+      Map<String, dynamic> sessionData;
+      if (data is Map<String, dynamic>) {
+        sessionData = data;
+      } else if (data is Map) {
+        sessionData = Map<String, dynamic>.from(data);
+      } else {
+        throw Exception('Invalid data format: ${data.runtimeType}');
+      }
+
+      print('✅ Session data validated');
+      printFullResponse("✅ Full Session data: $sessionData");
+      print("Updating GameSessionProvider with received socket data, is _gameSessionProvider null: ${_gameSessionProvider == null}");
+
+      // Update provider
+      _gameSessionProvider!.updateSessionFromJson(sessionData, from);
+      print('✅ Provider Updated, is _gameSessionProvider null: ${_gameSessionProvider == null}');
+    } catch (e, stackTrace) {
+      print('❌ Failed to process session update: $e');
+      print('📍 Stack trace: ${stackTrace.toString().split('\n').take(5).join('\n')}',);
+      _updateProviderError('Failed to update session: $e');
+    }
+  }
+
+  void _updateProviderError(String error) {
+    print("❌ Updating provider with error: $error");
+    _gameSessionProvider?.setError(error);
+  }
+
+  void _cleanupOnDisconnect() {
+    _gameSessionProvider = null;
+    _listenersRegistered = false;
+  }
+
   void submitAnswer({
     required String gameSessionId,
     required String username,
@@ -272,10 +271,6 @@ class SocketService {
     _listenersRegistered = false;
     _isConnected = false;
     print('✅ SocketService disposed completely');
-  }
-
-  void refreshProviderReference(BuildContext context) {
-    _setupProviderReference(context);
   }
 
   void emitEvent(String event, dynamic data) {
