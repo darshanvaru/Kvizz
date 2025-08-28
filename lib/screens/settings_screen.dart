@@ -18,7 +18,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late final prefs;
+  late final SharedPreferences prefs;
 
   @override
   void initState() {
@@ -28,7 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void initializePreferences() async {
     prefs = await SharedPreferences.getInstance();
-    print("----------Preference initialized in SettingsScreen, isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
+    debugPrint("----------Preference initialized in SettingsScreen, isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
   }
 
   void _showConfirmationDialog(
@@ -65,164 +65,212 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentUser = Provider.of<UserProvider>(context, listen: true).currentUser;
 
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: ListView(
-              children: [
-                // Profile Tab
-                Card(
-                  margin: const EdgeInsets.all(12),
-                  child: ListTile(
-                    leading: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.black26,
-                        shape: BoxShape.circle,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: ListView(
+                children: [
+
+                  // Profile Tab
+                  Card(
+                    margin: const EdgeInsets.all(12),
+                    child: ListTile(
+                      leading: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.black26,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: SvgPicture.network(
+                            currentUser!.photo!,
+                            placeholderBuilder: (context) =>
+                            const CircularProgressIndicator(),
+                            height: 80.0,
+                            width: 50.0,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
-                      child: ClipOval(
-                        child: SvgPicture.network(
-                          currentUser!.photo!,
-                          placeholderBuilder: (context) =>
-                          const CircularProgressIndicator(),
-                          height: 80.0,
-                          width: 50.0,
-                          fit: BoxFit.contain,
+                      title: Text(currentUser.name),
+                      subtitle: Text(currentUser.email),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        // Navigate to Profile Details/Edit screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: const Text(
+                      'General Settings',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Theme Switch
+                  Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: ListTile(
+                      leading: const Icon(Icons.brightness_6, color: Colors.blueAccent),
+                      title: const Text("Select Theme"),
+                      trailing: Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: DropdownButton<ThemeMode>(
+                          value: themeProvider.themeMode,
+                          isExpanded: false,
+                          borderRadius: BorderRadius.circular(12),
+                          dropdownColor: Theme.of(context).cardColor,
+                          items: const [
+                            DropdownMenuItem(
+                              value: ThemeMode.system,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Text("System"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: ThemeMode.light,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Text("Light"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: ThemeMode.dark,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Text("Dark"),
+                              ),
+                            ),
+                          ],
+                          underline: const SizedBox(),
+                          onChanged: (ThemeMode? mode) {
+                            themeProvider.toggleTheme(mode ?? ThemeMode.light);
+                          },
                         ),
                       ),
                     ),
-                    title: Text(currentUser.name),
-                    subtitle: Text(currentUser.email),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      // Navigate to Profile Details/Edit screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ProfileScreen()),
-                      );
-                    },
                   ),
-                ),
-                const Divider(),
 
-                // Theme Switch
-                SwitchListTile(
-                  title: const Text("Dark Mode"),
-                  secondary: const Icon(Icons.dark_mode),
-                  value: themeProvider.isDark,
-                  onChanged: (value) {
-                    themeProvider.toggleTheme(value);
-                  },
-                ),
-
-                // Update Password Button
-                Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    leading: const Icon(Icons.update, color: Colors.blueAccent),
-                    title: const Text("Update Password"),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      // TODO: Add forgot password logic or navigation
-                      final jwtToken = prefs.getString('jwt') ?? '';
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => UpdatePasswordScreen(jwtToken: jwtToken,))
-                      );
-                    },
-                  ),
-                ),
-
-                // Forgot Password Button
-                Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
-                    title: const Text("Forget Password"),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      // TODO: Add forgot password logic or navigation
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                      // );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-              ],
-            ),
-          ),
-
-          // Bottom Buttons
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Logout Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _showConfirmationDialog(
-                        context,
-                        "Logout",
-                        "Are you sure you want to logout?",
-                            () {
-                          SocketService().manualDisconnect();
-                          prefs.setBool('isLoggedIn', false);
-                          prefs.setString('jwt', "");
-                          // Provider.of<TabIndexProvider>(context, listen: false).resetIndex();
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const AuthScreen()),
-                                (route) => false,
-                          );
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                  // Update Password Button
+                  Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: ListTile(
+                      leading: const Icon(Icons.update, color: Colors.blueAccent),
+                      title: const Text("Update Password"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        final jwtToken = prefs.getString('jwt') ?? '';
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => UpdatePasswordScreen(jwtToken: jwtToken,))
+                        );
+                      },
                     ),
-                    child: const Text("Logout"),
                   ),
-                ),
-                const SizedBox(height: 10),
 
-                // Delete Account Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _showConfirmationDialog(
-                        context,
-                        "Delete Account",
-                        "This action is permanent. Are you sure?",
-                            () {
-                          // TODO: Add delete account logic
-                          print('Delete account logic not implemented.');
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      Theme.of(context).colorScheme.surface,
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.error,
-                        width: 2,
+                  // Forgot Password Button
+                  Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: ListTile(
+                      leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
+                      title: const Text("Forget Password"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        // TODO: Add forgot password logic or navigation
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                        // );
+                        debugPrint('Forget Password logic not implemented.');
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
+
+            // Bottom Buttons
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _showConfirmationDialog(
+                          context,
+                          "Logout",
+                          "Are you sure you want to logout?",
+                              () {
+                            SocketService().manualDisconnect();
+                            prefs.setBool('isLoggedIn', false);
+                            prefs.setString('jwt', "");
+                            // Provider.of<TabIndexProvider>(context, listen: false).resetIndex();
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const AuthScreen()),
+                                  (route) => false,
+                            );
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        Theme.of(context).colorScheme.secondary,
+                        foregroundColor: Theme.of(context).colorScheme.onSecondary,
                       ),
+                      child: const Text("Logout"),
                     ),
-                    child: const Text("Delete Account"),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+
+                  // Delete Account Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _showConfirmationDialog(
+                          context,
+                          "Delete Account",
+                          "This action is permanent. Are you sure?",
+                              () {
+                            // TODO: Add delete account logic
+                            debugPrint('Delete account logic not implemented.');
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                          width: 2,
+                        ),
+                      ),
+                      child: const Text("Delete Account"),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 

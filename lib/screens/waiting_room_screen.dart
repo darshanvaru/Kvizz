@@ -661,11 +661,17 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
   }
 
   Widget _buildBottomControls(GameSessionProvider sessionProvider, bool isHost) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        color: colorScheme.surfaceContainerHighest, // replacing Colors.grey.shade50
+        border: Border(
+          top: BorderSide(color: colorScheme.outline), // replacing Colors.grey.shade300
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -676,26 +682,26 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: (sessionProvider.participantCount > 0) ? _startGame : null,
-                    icon: Icon(Icons.play_arrow),
-                    label: Text('Start Quiz'),
+                    icon: Icon(Icons.play_arrow, color: colorScheme.onPrimary),
+                    label: Text('Start Quiz', style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: colorScheme.primary, // replacing Colors.green
+                      foregroundColor: colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: () {
                     _leaveGame(context);
                   },
-                  icon: Icon(Icons.close),
-                  label: Text('Cancel'),
+                  icon: Icon(Icons.close, color: colorScheme.error),
+                  label: Text('Cancel', style: textTheme.labelLarge?.copyWith(color: colorScheme.error)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    foregroundColor: colorScheme.error, // replacing Colors.red
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
@@ -703,10 +709,10 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
             ),
             if (sessionProvider.participantCount == 0)
               Padding(
-                padding: EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Need at least 1 participant to start',
-                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.errorContainer), // replacing Colors.orange.shade700
                 ),
               ),
           ] else ...[
@@ -714,19 +720,22 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
               children: [
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.primary),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
                           'Waiting for host to start the quiz...',
-                          style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ), // replacing Colors.grey.shade700
                         ),
                       ],
                     ),
@@ -736,11 +745,11 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                   onPressed: () {
                     _leaveGame(context);
                   },
-                  icon: Icon(Icons.exit_to_app),
-                  label: Text('Leave'),
+                  icon: Icon(Icons.exit_to_app, color: colorScheme.error),
+                  label: Text('Leave', style: textTheme.labelLarge?.copyWith(color: colorScheme.error)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    foregroundColor: colorScheme.error, // replacing Colors.red
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
