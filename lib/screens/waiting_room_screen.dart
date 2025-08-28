@@ -180,7 +180,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                 if (sessionProvider.isFinished) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _leaveGame(context);
-                    Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+                    Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   });
                   return _buildGameStartingState();
@@ -649,7 +649,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
       }
       Navigator.of(context).pop();
     } else {
-      Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
