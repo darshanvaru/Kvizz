@@ -5,12 +5,10 @@ import '../models/game_session_model.dart';
 
 class GameSessionProvider extends ChangeNotifier {
   GameSessionModel? _gameSession;
-  bool _isLoading = false;
   String? _error;
 
   // Getters
   GameSessionModel? get gameSession => _gameSession;
-  bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasSession => _gameSession != null;
 
@@ -32,24 +30,18 @@ class GameSessionProvider extends ChangeNotifier {
 
   // In game_session_provider.dart
   void updateSessionFromJson(Map<String, dynamic> json, String from) {
-    print("In updateSessionFromJson from $from socket listener ");
+    print("In gameSessionProvider.updateSessionFromJson() from $from socket listener ");
     try {
       _gameSession = GameSessionModel.fromJson(json);
       _error = null;
       notifyListeners();
     } catch (e, stackTrace) {
-      print('❌ Error parsing session data: $e');
+      print('❌ Error parsing session data from $from: $e');
       printFullResponse('📄 data: $json');
       print('📍 Stack trace: $stackTrace');
       _error = 'Failed to parse session data: $e';
       notifyListeners();
     }
-  }
-
-  // Set loading state
-  void setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
   }
 
   // Set error

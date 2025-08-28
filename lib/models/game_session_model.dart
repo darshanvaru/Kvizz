@@ -47,7 +47,7 @@ class QuizData {
     title: json['title'],
     description: json['description'],
     creator: QuizCreator.fromJson(json['creator']),
-    category: json['category']??'',
+    category: json['category']??'Unknown',
   );
 
   Map<String, dynamic> toJson() => {
