@@ -10,10 +10,10 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  ProfileScreenState createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   UserModel? user;
   bool _isUpdating = false;
   bool _loading = true;
@@ -38,20 +38,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     try {
       final fetchedUser = await UserService.fetchUserProfile();
-      print('DEBUG: Loaded user name: ${fetchedUser.name}');
-      print('DEBUG: Loaded user username: ${fetchedUser.username}');
-      print('DEBUG: Loaded user photo: ${fetchedUser.photo}');
-      Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
+      
+      debugPrint('DEBUG: Loaded user name: ${fetchedUser.name}');
+      debugPrint('DEBUG: Loaded user username: ${fetchedUser.username}');
+      debugPrint('DEBUG: Loaded user photo: ${fetchedUser.photo}');
+      
+      if(mounted) {
+        Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
+      }
+      
       _nameController = TextEditingController(text: fetchedUser.name);
       _mobileController = TextEditingController(text: fetchedUser.mobile);
       _usernameController = TextEditingController(text: fetchedUser.username);
+      
       setState(() {
         user = fetchedUser;
         _loading = false;
         _error = null;
       });
     } catch (e) {
-      print('DEBUG: Exception caught in _loadUserData(): $e');
+      debugPrint('DEBUG: Exception caught in _loadUserData(): $e');
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -372,6 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
+                  
                   // Submit Button
                   ElevatedButton.icon(
                     onPressed: _isUpdating
@@ -381,21 +388,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() {
                           _isUpdating = true; // Start loading
                         });
+                        
                         try {
                           Map<String, dynamic> fieldsToUpdate = {
                             "name": _nameController.text,
                             "username": _usernameController.text,
                             "mobile": _mobileController.text,
                           };
+                          
                           final updatedUser = await UserService.updateUserProfile(fieldsToUpdate);
-                          Provider.of<UserProvider>(context, listen: false).setCurrentUser(updatedUser);
-                          setState(() {
-                            _loadUserData();
-                            user = updatedUser;
-                            isEditing = false;
-                          });
+                          
+                          if(mounted) {
+                            Provider
+                                .of<UserProvider>(context, listen: false)
+                                .setCurrentUser(updatedUser);
+                            setState(() {
+                              _loadUserData();
+                              user = updatedUser;
+                              isEditing = false;
+                            });
+                          }
                         } catch (e) {
-                          print("Update error: $e");
+                          debugPrint("Update error: $e");
                         } finally {
                           setState(() {
                             _isUpdating = false; // Stop loading
