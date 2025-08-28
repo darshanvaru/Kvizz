@@ -27,8 +27,7 @@ class AuthService {
     };
 
     try {
-      final response = await http
-          .post(
+      final response = await http.post(
         Uri.parse(ApiEndpoints.login),
         headers: {
           'Content-Type': 'application/json',
@@ -36,8 +35,7 @@ class AuthService {
           if (token.isNotEmpty) 'Authorization': 'Bearer $token',
         },
         body: jsonEncode(data),
-      )
-          .timeout(
+      ).timeout(
         const Duration(seconds: 30),
         onTimeout: () => throw Exception('Connection timeout. Please try again.'),
       );
@@ -48,7 +46,7 @@ class AuthService {
           await prefs.setString("jwt", decoded["token"]);
 
           final user = UserModel.fromJson(decoded["user"]);
-          Provider.of<UserProvider>(context, listen: false).setUser(user);
+          Provider.of<UserProvider>(context, listen: false).setCurrentUser(user);
 
           return user;
         } else {

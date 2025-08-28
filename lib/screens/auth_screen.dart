@@ -168,7 +168,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       _showSuccessMessage("Login successful! Welcome back, ${user.name}");
 
       await Future.delayed(const Duration(milliseconds: 1500));
-      Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
