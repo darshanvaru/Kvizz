@@ -43,8 +43,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Kwizz',
-      // theme: quizAppTheme,
+      title: 'Kvizz',
       themeMode: themeProvider.themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
