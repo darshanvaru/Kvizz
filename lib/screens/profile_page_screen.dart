@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('DEBUG: Loaded user username: ${fetchedUser.username}');
       print('DEBUG: Loaded user photo: ${fetchedUser.photo}');
 
-      Provider.of<UserProvider>(context, listen: false).setUser(fetchedUser);
+      Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
 
       _nameController = TextEditingController(text: fetchedUser.name ?? '');
       _mobileController = TextEditingController(text: fetchedUser.mobile ?? '');
@@ -399,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             "mobile": _mobileController.text,
                           };
                           final updatedUser = await UserService.updateUserProfile(fieldsToUpdate);
-                          Provider.of<UserProvider>(context, listen: false).setUser(updatedUser);
+                          Provider.of<UserProvider>(context, listen: false).setCurrentUser(updatedUser);
                           setState(() {
                             _loadUserData();
                             user = updatedUser;

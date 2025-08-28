@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kvizz/screens/auth_screen.dart';
 import 'package:kvizz/screens/profile_page_screen.dart';
+import 'package:kvizz/screens/update_password_screen.dart';
 import 'package:kvizz/services/socket_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
@@ -64,7 +65,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentUser = Provider.of<UserProvider>(context, listen: true).currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -76,14 +76,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   margin: const EdgeInsets.all(12),
                   child: ListTile(
                     leading: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.black26,
                         shape: BoxShape.circle,
                       ),
                       child: ClipOval(
                         child: SvgPicture.network(
                           currentUser!.photo!,
-                          placeholderBuilder: (context) => const CircularProgressIndicator(),
+                          placeholderBuilder: (context) =>
+                          const CircularProgressIndicator(),
                           height: 80.0,
                           width: 50.0,
                           fit: BoxFit.contain,
@@ -94,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: Text(currentUser.email),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
-                      // TODO: Navigate to Profile Details/Edit screen
+                      // Navigate to Profile Details/Edit screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => ProfileScreen()),
@@ -113,6 +114,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     themeProvider.toggleTheme(value);
                   },
                 ),
+
+                // Update Password Button
+                Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    leading: const Icon(Icons.update, color: Colors.blueAccent),
+                    title: const Text("Update Password"),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      // TODO: Add forgot password logic or navigation
+                      final jwtToken = prefs.getString('jwt') ?? '';
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => UpdatePasswordScreen(jwtToken: jwtToken,))
+                      );
+                    },
+                  ),
+                ),
+
+                // Forgot Password Button
+                Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
+                    title: const Text("Forget Password"),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      // TODO: Add forgot password logic or navigation
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                      // );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -131,22 +168,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         context,
                         "Logout",
                         "Are you sure you want to logout?",
-                        () {
+                            () {
                           SocketService().manualDisconnect();
                           prefs.setBool('isLoggedIn', false);
                           prefs.setString('jwt', "");
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (context) => const AuthScreen()), (route) => false,
+                            MaterialPageRoute(
+                                builder: (context) => const AuthScreen()),
+                                (route) => false,
                           );
                         },
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(
-                        context,
-                      ).colorScheme.onSecondary,
+                      backgroundColor:
+                      Theme.of(context).colorScheme.secondary,
+                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
                     ),
                     child: const Text("Logout"),
                   ),
@@ -162,14 +200,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         context,
                         "Delete Account",
                         "This action is permanent. Are you sure?",
-                        () {
+                            () {
                           // TODO: Add delete account logic
                           print('Delete account logic not implemented.');
                         },
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      backgroundColor:
+                      Theme.of(context).colorScheme.surface,
                       foregroundColor: Theme.of(context).colorScheme.error,
                       side: BorderSide(
                         color: Theme.of(context).colorScheme.error,
@@ -185,5 +224,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+
   }
 }
