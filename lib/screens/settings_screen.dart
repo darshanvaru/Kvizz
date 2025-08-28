@@ -172,6 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           SocketService().manualDisconnect();
                           prefs.setBool('isLoggedIn', false);
                           prefs.setString('jwt', "");
+                          // Provider.of<TabIndexProvider>(context, listen: false).resetIndex();
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(

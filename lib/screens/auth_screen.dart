@@ -1,16 +1,12 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 import '../api_endpoints.dart';
 import '../main.dart';
-import '../models/UserModel.dart';
 import '../providers/tab_index_provider.dart';
-import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -47,11 +43,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   String _getErrorMessage(dynamic error) {
     if (error is SocketException) {
       return "No internet connection. Please check your network and try again.";
-    } else if (error.toString().contains('timeout') ||
-        error.toString().contains('TimeoutException')) {
+    } else if (error.toString().contains('timeout') || error.toString().contains('TimeoutException')) {
       return "Connection timeout. Please check your internet connection and try again.";
     } else if (error.toString().contains('Connection refused')) {
       return "Unable to connect to server. Please try again later.";
+    } else if (error.toString().contains('Invalid email or password')) {
+      return "Invalid email or password. Please try again";
     } else if (error.toString().contains('FormatException')) {
       return "Server response error. Please try again.";
     } else {
@@ -128,14 +125,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     });
 
     try {
-      print("IsLogin: $isLogin");
+      debugPrint("IsLogin: $isLogin");
       if (isLogin) {
         await _performLogin();
       } else {
         await _performSignUp();
       }
     } catch (e) {
-      print('Exception: $e');
+      debugPrint('Exception: $e');
       _showErrorDialog(_getErrorMessage(e));
     } finally {
       if (mounted) {
@@ -152,11 +149,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     //final email = _emailController.text.trim();
     //final password = _passwordController.text.trim();
 
-    print("----------------------");
-    print("Link: ${Uri.parse(ApiEndpoints.login)}");
-    print("Id: $email");
-    print("Password: $password");
-    print("----------------------");
+    debugPrint("----------------------");
+    debugPrint("Link: ${Uri.parse(ApiEndpoints.login)}");
+    debugPrint("Id: $email");
+    debugPrint("Password: $password");
+    debugPrint("----------------------");
 
     try {
       final user = await AuthService.login(
@@ -168,14 +165,15 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       _showSuccessMessage("Login successful! Welcome back, ${user.name}");
 
       await Future.delayed(const Duration(milliseconds: 1500));
-      Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
+        Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
       }
     } catch (e) {
-      print("Login Error: $e");
+      debugPrint("Login Error: $e");
+      _showErrorDialog(_getErrorMessage(e));
     }
   }
 
@@ -186,14 +184,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     final password = _passwordController.text.trim();
     final passwordConfirm = _confirmPasswordController.text.trim();
 
-    print("----------------------");
-    print("Link: ${Uri.parse(ApiEndpoints.signup)}");
-    print("Name: $name");
-    print("Username: $username");
-    print("Email: $email");
-    print("Password: $password");
-    print("Password Confirm: $passwordConfirm");
-    print("----------------------");
+    debugPrint("----------------------");
+    debugPrint("Link: ${Uri.parse(ApiEndpoints.signup)}");
+    debugPrint("Name: $name");
+    debugPrint("Username: $username");
+    debugPrint("Email: $email");
+    debugPrint("Password: $password");
+    debugPrint("Password Confirm: $passwordConfirm");
+    debugPrint("----------------------");
 
     try {
       await AuthService.signup(
@@ -211,7 +209,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         _confirmPasswordController.clear();
       });
     } catch (e) {
-      print("Signup Error: $e");
+      debugPrint("Signup Error: $e");
+      _showErrorDialog(_getErrorMessage(e));
     }
   }
 

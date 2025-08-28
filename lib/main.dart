@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndexProvider = Provider.of<TabIndexProvider>(context);
+    final selectedIndexProvider = Provider.of<TabIndexProvider>(context, listen: true);
     final selectedIndex = selectedIndexProvider.selectedIndex;
 
     return Scaffold(
