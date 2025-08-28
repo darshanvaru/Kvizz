@@ -23,7 +23,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _mobileController;
   late TextEditingController _usernameController;
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -32,24 +31,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
+  Future _loadUserData() async {
     setState(() {
       _loading = true;
       _error = null;
     });
-
     try {
       final fetchedUser = await UserService.fetchUserProfile();
       print('DEBUG: Loaded user name: ${fetchedUser.name}');
       print('DEBUG: Loaded user username: ${fetchedUser.username}');
       print('DEBUG: Loaded user photo: ${fetchedUser.photo}');
-
       Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
-
-      _nameController = TextEditingController(text: fetchedUser.name ?? '');
-      _mobileController = TextEditingController(text: fetchedUser.mobile ?? '');
-      _usernameController = TextEditingController(text: fetchedUser.username ?? '');
-
+      _nameController = TextEditingController(text: fetchedUser.name);
+      _mobileController = TextEditingController(text: fetchedUser.mobile);
+      _usernameController = TextEditingController(text: fetchedUser.username);
       setState(() {
         user = fetchedUser;
         _loading = false;
@@ -86,7 +81,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Profile')),
-        body: Center(child: Text('Error: $_error')),
+        body: Center(child: Text('Error: $_error',
+          style: theme.textTheme.bodyMedium,
+        )),
       );
     }
 
@@ -97,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.person_off, size: 80, color: Colors.grey),
+              Icon(Icons.person_off, size: 80, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
               Text('No user data available', style: theme.textTheme.titleMedium),
             ],
@@ -107,13 +104,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 230,
             pinned: true,
-            backgroundColor: theme.colorScheme.primary,
+            iconTheme: IconThemeData(color: Colors.black),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -122,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withOpacity(0.8),
+                      theme.colorScheme.primary.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -133,10 +130,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildProfileAvatar(user!, theme),
                     const SizedBox(height: 12),
                     Text(
-                      user!.name ?? 'No name',
+                      user!.name,
                       style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                     if (user!.username != null) ...[
@@ -144,7 +141,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Text(
                         '@${user!.username}',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ],
@@ -179,9 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  isEditing
-                      ? _buildEditablePersonalInfoCard(user!, theme)
-                      : _buildPersonalInfoCard(user!, theme),
+                  isEditing ? _buildEditablePersonalInfoCard(user!, theme) : _buildPersonalInfoCard(user!, theme),
                   const SizedBox(height: 20),
                   _buildSectionTitle('Account Information', theme),
                   const SizedBox(height: 12),
@@ -205,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             offset: const Offset(0, 4),
           ),
         ],
@@ -231,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Games Played',
             stats.gamesPlayed.toString(),
             Icons.quiz,
-            Colors.blue,
+            theme.colorScheme.secondary,
             theme,
           ),
         ),
@@ -260,48 +256,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return SizedBox(
+      height: 152,
+      child: Card(
+        // color: theme.cardColor,
+        elevation: 4,  // adjust elevation for shadow effect
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    )
+    ;
   }
 
   Widget _buildSectionTitle(String title, ThemeData theme) {
@@ -331,7 +327,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 validator: (val) => (val == null || val.trim().isEmpty) ? 'Name cannot be empty' : null,
               ),
               const SizedBox(height: 10),
-
               // Username field
               TextFormField(
                 controller: _usernameController,
@@ -340,41 +335,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 validator: (val) => (val == null || val.trim().isEmpty) ? 'Username cannot be empty' : null,
               ),
               const SizedBox(height: 10),
-
-              // Email field : Disabled with initialValue set
+              // Email field; Disabled with initialValue set
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Email (Cannot be edited)'),
                 enabled: false,
-                initialValue: user.email ?? '',
-                // enableInteractiveSelection: false,
+                initialValue: user.email,
               ),
               const SizedBox(height: 10),
-
               // Mobile Number field
               TextFormField(
                 controller: _mobileController,
                 decoration: const InputDecoration(labelText: 'Mobile Number'),
                 keyboardType: TextInputType.phone,
-                validator: (val) =>
-                  (val == null || val.trim().isEmpty || val.length > 10 || val.length < 10)
+                validator: (val) => (val == null || val.trim().isEmpty || val.length != 10)
                     ? 'Enter correct mobile number'
                     : null,
               ),
               const SizedBox(height: 10),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   const SizedBox(height: 10),
-
-                  //Cancel button
+                  // Cancel button
                   ElevatedButton.icon(
                     onPressed: _isUpdating ? null : () => setState(() => isEditing = !isEditing),
                     icon: const Icon(Icons.cancel, size: 20),
                     label: const FittedBox(child: Text("Cancel")),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       elevation: 4,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -382,15 +371,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 10),
-
-                  //Submit Button
+                  // Submit Button
                   ElevatedButton.icon(
-                    onPressed: _isUpdating ? null : () async {
+                    onPressed: _isUpdating
+                        ? null
+                        : () async {
                       if (_formKey.currentState?.validate() ?? false) {
                         setState(() {
-                          _isUpdating = true;  // Start loading
+                          _isUpdating = true; // Start loading
                         });
                         try {
                           Map<String, dynamic> fieldsToUpdate = {
@@ -406,36 +395,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             isEditing = false;
                           });
                         } catch (e) {
-                          // Optionally, show error message to user here
                           print("Update error: $e");
                         } finally {
                           setState(() {
-                            _isUpdating = false;  // Stop loading
+                            _isUpdating = false; // Stop loading
                           });
                         }
                       }
                     },
                     icon: _isUpdating
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.send, size: 20),
-                    label: _isUpdating
-                        ? const Text("Updating...")
-                        : const FittedBox(child: Text("Submit")),
+                    label: _isUpdating ? const Text("Updating...") : const FittedBox(child: Text("Submit")),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       elevation: 4,
-                      padding: const EdgeInsets.symmetric(horizontal: 20,  vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 10),
                 ],
               ),
@@ -454,13 +435,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildInfoRow(Icons.person, 'Full Name', user.name ?? '', theme),
+            _buildInfoRow(Icons.person, 'Full Name', user.name, theme),
             if (user.username != null) ...[
               const SizedBox(height: 16),
               _buildInfoRow(Icons.alternate_email, 'Username', user.username!, theme),
             ],
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.email, 'Email', user.email ?? '', theme),
+            _buildInfoRow(Icons.email, 'Email', user.email, theme),
             if (user.mobile != null) ...[
               const SizedBox(height: 16),
               _buildInfoRow(Icons.phone, 'Mobile', user.mobile!, theme),
@@ -482,13 +463,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoRow(
               Icons.calendar_today,
               'Member Since',
-              user.createdAt != null ? _formatDate(user.createdAt!) : 'N/A',
+              _formatDate(user.createdAt),
               theme,
             ),
             if (user.passwordChangedAt != null) ...[
               const SizedBox(height: 16),
-              _buildInfoRow(Icons.lock_reset, 'Password Changed',
-                  _formatDate(user.passwordChangedAt!), theme),
+              _buildInfoRow(Icons.lock_reset, 'Password Changed', _formatDate(user.passwordChangedAt!), theme),
             ],
           ],
         ),
@@ -504,11 +484,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildInfoRow(
-                Icons.quiz, 'Owned Quizzes', (user.ownedQuizzes?.length ?? 0).toString(), theme),
+            _buildInfoRow(Icons.quiz, 'Owned Quizzes', (user.ownedQuizzes?.length ?? 0).toString(), theme),
             const SizedBox(height: 16),
-            _buildInfoRow(
-                Icons.play_circle, 'Played Quizzes', (user.playedQuiz?.length ?? 0).toString(), theme),
+            _buildInfoRow(Icons.play_circle, 'Played Quizzes', (user.playedQuiz?.length ?? 0).toString(), theme),
           ],
         ),
       ),
@@ -521,7 +499,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: theme.colorScheme.primary, size: 20),
@@ -541,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 value,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ],
