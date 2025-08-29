@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:kvizz/services/user_service.dart';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UpdatePasswordScreen extends StatefulWidget {
-  final String jwtToken;
-  const UpdatePasswordScreen({Key? key, required this.jwtToken}) : super(key: key);
 
   @override
   State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
@@ -26,44 +25,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
   String? _errorText;
 
-  Future<String?> updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
-    final url = Uri.parse('https://kvizz.khush.pro/api/v1/users/update-password');
-    var body = jsonEncode({
-      'currentPassword': currentPassword,
-      'newPassword': newPassword,
-      'newPasswordConfirm': confirmPassword,
-    });
-    print(jsonEncode(body));
-
-    try {
-      final response = await http.patch(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'authorization': 'Bearer ${widget.jwtToken}',
-        },
-        body: body,
-      );
-
-      print('API response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded["status"] == "success") {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString("jwt", decoded["token"]);
-        }
-
-        return null; // success
-      } else {
-        var resJson = jsonDecode(response.body);
-        return resJson['message'] ?? 'Unknown error occurred';
-      }
-    } catch (e) {
-      return 'Failed to update password: $e';
-    }
-  }
-
   void handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -72,7 +33,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       _errorText = null;
     });
 
-    var errorMessage = await updatePassword(
+    var errorMessage = await UserService.updateMyPassword(
       currentPwdController.text.trim(),
       newPwdController.text.trim(),
       confirmPwdController.text.trim(),
