@@ -56,4 +56,45 @@ class UserService {
       throw Exception('Failed to update profile: ${response.body}');
     }
   }
+
+  // Update user password
+  static Future<String?> updateMyPassword(String currentPassword, String newPassword, String confirmPassword) async {
+    late final SharedPreferences prefs;
+    prefs = await SharedPreferences.getInstance();
+
+    var body = jsonEncode({
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+      'newPasswordConfirm': confirmPassword,
+    });
+    print(jsonEncode(body));
+
+    try {
+      final response = await http.patch(
+        Uri.parse(ApiEndpoints.updateMyPassword),
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': 'Bearer ${prefs.getString('jwt') ?? ''}',
+        },
+        body: body,
+      );
+
+      print('API response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded["status"] == "success") {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString("jwt", decoded["token"]);
+        }
+
+        return null; // success
+      } else {
+        var resJson = jsonDecode(response.body);
+        return resJson['message'] ?? 'Unknown error occurred';
+      }
+    } catch (e) {
+      return 'Failed to update password: $e';
+    }
+  }
 }
