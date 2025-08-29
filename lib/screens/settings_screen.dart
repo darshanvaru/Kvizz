@@ -170,9 +170,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: const Text("Update Password"),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        final jwtToken = prefs.getString('jwt') ?? '';
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => UpdatePasswordScreen(jwtToken: jwtToken,))
+                          MaterialPageRoute(builder: (_) => UpdatePasswordScreen())
                         );
                       },
                     ),
