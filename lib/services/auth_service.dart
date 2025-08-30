@@ -13,11 +13,7 @@ import '../api_endpoints.dart';
 class AuthService {
 
   // Login function
-  static Future<UserModel> login({
-    required BuildContext context,
-    required String email,
-    required String password,
-  }) async {
+  static Future<UserModel> login({required BuildContext context, required String email, required String password}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt') ?? '';
 

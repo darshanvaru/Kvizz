@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ListView(
                 children: [
 
-                  // Profile Tab
+                  // Profile Tab (Need Photo, Name, Username)
                   Card(
                     margin: const EdgeInsets.all(12),
                     child: ListTile(
@@ -106,8 +106,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 20),
+
+                  //General Settings
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                     child: const Text(

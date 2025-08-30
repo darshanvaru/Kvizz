@@ -41,6 +41,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
+    //TODO: AutoLogin
+    // jwt.isEmpty() ? AuthScreen :
+    // autoLogin? HomeScreen : AuthScreen
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kvizz',
