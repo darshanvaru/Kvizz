@@ -57,16 +57,14 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData.dark(),
             home: Consumer<Auth>(
               builder: (context, auth, child) {
-                return auth.isAuth
-                    ? const HomeScreen()
-                    : FutureBuilder<UserModel?>(
+                return FutureBuilder<UserModel?>(
                   future: auth.tryAutoLogin(),
                   builder: (ctx, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return SplashScreen();
                     } else {
                       if (snapshot.hasData && snapshot.data != null) {
-                        Provider.of<UserProvider>(ctx, listen: false).setCurrentUser(snapshot.data!);
+                        Provider.of<UserProvider>(ctx, listen: false).setCurrentUserWithoutNotifying(snapshot.data!);
                         return HomeScreen();
                       } else {
                         return AuthScreen();

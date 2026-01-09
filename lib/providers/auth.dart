@@ -42,7 +42,6 @@ class Auth extends ChangeNotifier {
 
     _token = extractedUserData['token'];
     _expiryDate = expiryDate;
-    notifyListeners();
 
     try {
       final fetchedUser = await UserService.fetchUserProfile();

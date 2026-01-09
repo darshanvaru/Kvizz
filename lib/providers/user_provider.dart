@@ -11,4 +11,8 @@ class UserProvider with ChangeNotifier {
     _currentUser = user;
     notifyListeners();
   }
+
+  void setCurrentUserWithoutNotifying(UserModel user) {
+    _currentUser = user;
+  }
 }
