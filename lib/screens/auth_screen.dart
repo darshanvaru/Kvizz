@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/providers/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 import '../api_endpoints.dart';
+import '../providers/auth_provider.dart';
 import '../providers/tab_index_provider.dart';
 import '../utils/status_message_widgets.dart';
 
@@ -33,10 +33,19 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     initializePreferences();
   }
 
+  @override
+  void dispose() {
+    _name.dispose();
+    _emailController.dispose();
+    _username.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   void initializePreferences() async {
     prefs = await SharedPreferences.getInstance();
   }
-
 
   /// General Errors
   // No internet connection
@@ -104,10 +113,10 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       if (isLogin) {
         await _login();
       } else {
-        await signUp();
+        await _signUp();
       }
     } catch (e) {
-      debugPrint('Exception: $e');
+      debugPrint('Exception from AuthScreen: $e');
       showErrorDialog(message: _getErrorMessage(e), context: context);
     } finally {
       if (mounted) {
@@ -131,21 +140,23 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     debugPrint("----------------------");
 
     try {
-      final user = await Provider.of<Auth>(context, listen: false).login(
+      final user = await context.read<AuthProvider>().login(
         context: context,
         email: email,
         password: password,
       );
 
+      print("Login Success");
       showSuccessMessage(message: "Login successful! Welcome back, ${user.name}", context: context);
       Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
     } catch (e) {
+      print("Login Failure");
       debugPrint("Login Error: $e");
       throw Exception(e);
     }
   }
 
-  Future<void> signUp() async {
+  Future<void> _signUp() async {
     final name = _name.text.trim();
     final username = _username.text.trim();
     final email = _emailController.text.trim();
@@ -162,7 +173,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     debugPrint("----------------------");
 
     try {
-      await Provider.of<Auth>(context, listen: false).signup(
+      await context.read<AuthProvider>().signup(
           name: name,
           username: username,
           email: email,
@@ -491,15 +502,5 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _emailController.dispose();
-    _username.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 }
