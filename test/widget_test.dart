@@ -11,16 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kvizz/main.dart';
 import 'package:provider/provider.dart';
 import 'package:kvizz/providers/theme_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => ThemeProvider(),
-        child: MyApp(isLoggedIn: prefs.getBool("isLoggedIn") ?? false),
+        child: MyApp(),
       ),
     );
 
