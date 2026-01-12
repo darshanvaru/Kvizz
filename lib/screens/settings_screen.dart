@@ -4,7 +4,7 @@ import 'package:kvizz/screens/profile_page_screen.dart';
 import 'package:kvizz/screens/update_password_screen.dart';
 import 'package:kvizz/services/socket_service.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth.dart';
+import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,14 +25,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     initializePreferences();
-    _loadUserData();
+    if(Provider.of<UserProvider>(context, listen: false).currentUser == null) {
+      _loadUserData();
+    }
     super.initState();
   }
 
   Future _loadUserData() async {
     setState(() => isLoading = true);
     try {
-      final fetchedUser = await UserService.fetchUserProfile();
+      final fetchedUser = await UserService().fetchUserProfile();
 
       debugPrint('DEBUG: Loaded user name: ${fetchedUser.name}');
       debugPrint('DEBUG: Loaded user username: ${fetchedUser.username}');
@@ -243,7 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             SocketService().manualDisconnect();
                             prefs.setBool('isLoggedIn', false);
                             prefs.setString('jwt', "");
-                            Provider.of<Auth>(context, listen: false).logout();
+                            Provider.of<AuthProvider>(context, listen: false).logout();
                             // Navigator.pushAndRemoveUntil(
                             //   context,
                             //   MaterialPageRoute(

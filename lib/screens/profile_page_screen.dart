@@ -28,7 +28,9 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    if(Provider.of<UserProvider>(context, listen: false).currentUser == null) {
+      _loadUserData();
+    }
   }
 
   Future _loadUserData() async {
@@ -37,7 +39,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       _error = null;
     });
     try {
-      final fetchedUser = await UserService.fetchUserProfile();
+      final fetchedUser = await UserService().fetchUserProfile();
       
       debugPrint('DEBUG: Loaded user name: ${fetchedUser.name}');
       debugPrint('DEBUG: Loaded user username: ${fetchedUser.username}');
@@ -396,12 +398,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                             "mobile": _mobileController.text,
                           };
                           
-                          final updatedUser = await UserService.updateUserProfile(fieldsToUpdate);
+                          final updatedUser = await UserService().updateUserProfile(fieldsToUpdate);
                           
                           if(mounted) {
-                            Provider
-                                .of<UserProvider>(context, listen: false)
-                                .setCurrentUser(updatedUser);
+                            Provider.of<UserProvider>(context, listen: false).setCurrentUser(updatedUser);
                             setState(() {
                               _loadUserData();
                               user = updatedUser;
