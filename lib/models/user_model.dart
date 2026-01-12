@@ -56,6 +56,28 @@ class UserModel {
         ? UserSettings.fromJson(json['settings'])
         : null,
   );
+
+  @override
+  String toString() {
+    return '''
+      UserModel {
+        id: $id
+        name: $name
+        username: $username
+        email: $email
+        mobile: $mobile
+        photo: $photo
+        createdAt: $createdAt
+        passwordChangedAt: $passwordChangedAt
+        active: $active
+        deletedAt: $deletedAt
+        stats: $stats
+        ownedQuizzes: $ownedQuizzes
+        playedQuiz: $playedQuiz
+        settings: $settings
+      }''';
+  }
+
 }
 
 class UserStats {

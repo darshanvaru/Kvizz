@@ -31,7 +31,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       _errorText = null;
     });
 
-    var errorMessage = await UserService.updateMyPassword(
+    var errorMessage = await UserService().updateMyPassword(
       currentPwdController.text.trim(),
       newPwdController.text.trim(),
       confirmPwdController.text.trim(),
