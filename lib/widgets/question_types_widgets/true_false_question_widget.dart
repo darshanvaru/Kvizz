@@ -25,7 +25,6 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
     super.initState();
     _questionController = TextEditingController(text: widget.question.question);
 
-    // FIXED: Better initialization logic for correct answer
     if (widget.question.correctAnswer.isNotEmpty) {
       String answer = widget.question.correctAnswer.first.toLowerCase();
       if (answer == 'true' || answer == '1') {
@@ -33,13 +32,12 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
       } else if (answer == 'false' || answer == '0') {
         _correctAnswer = 'False';
       } else {
-        _correctAnswer = 'True'; // Default fallback
+        _correctAnswer = 'True';
       }
     } else {
-      _correctAnswer = 'True'; // Default to 'True' if empty
+      _correctAnswer = 'True';
     }
 
-    // FIXED: Set initial options for True/False
     widget.question.options = ['True', 'False'];
     _updateModel();
   }
@@ -47,21 +45,18 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
   void _setCorrectAnswer(String value) {
     setState(() {
       _correctAnswer = value;
-      _updateModel(); // FIXED: Update model when answer changes
+      _updateModel();
     });
   }
 
-  // FIXED: Added method to update the model
   void _updateModel() {
     widget.question.question = _questionController.text.trim();
-    widget.question.options = ['True', 'False']; // Always set these options
-    // Store index string instead of text for correct answer
+    widget.question.options = ['True', 'False'];
     if (_correctAnswer.toLowerCase() == 'true') {
       widget.question.correctAnswer = ['0'];
     } else {
       widget.question.correctAnswer = ['1'];
     }
-    // widget.question.correctAnswer = [_correctAnswer]; // Store as List
   }
 
   @override
@@ -78,11 +73,12 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
         Text("True or False Question",
             style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: 8),
+
         // Question Field
-        TextField( // FIXED: Changed from TextFormField to TextField for consistency
+        TextField(
           controller: _questionController,
           onChanged: (val) {
-            _updateModel(); // FIXED: Update model on change
+            _updateModel();
           },
           decoration: const InputDecoration(
             labelText: 'True/False Question',
@@ -91,11 +87,11 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
           maxLines: null,
         ),
         const SizedBox(height: 16),
+
         // True/False Selection
         Text("Select the correct answer:",
-            style: Theme.of(context).textTheme.titleMedium), // FIXED: Use theme style
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        // FIXED: Better layout for radio buttons
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
@@ -110,7 +106,6 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
                 onChanged: (val) {
                   if (val != null) _setCorrectAnswer(val);
                 },
-                // FIXED: Add visual indicator for selected answer
                 activeColor: Colors.green,
               ),
               const Divider(height: 1),
@@ -127,6 +122,7 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
           ),
         ),
         const SizedBox(height: 16),
+
         // Delete Button
         Align(
           alignment: Alignment.centerRight,

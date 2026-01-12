@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/user_provider.dart';
 import '../services/socket_service.dart';
+import '../widgets/loading_widget.dart';
 
 class QuizDetailScreen extends StatefulWidget {
   final String quizId;
@@ -155,7 +156,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Quiz Details')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: LoadingWidget(),
       );
     }
 

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../services/user_service.dart';
+import '../widgets/loading_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class ProfileScreenState extends State<ProfileScreen> {
   UserModel? user;
   bool _isUpdating = false;
-  bool _loading = true;
+  bool _loading = false;
   bool isEditing = false;
   String? _error;
 
@@ -28,9 +29,7 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    if(Provider.of<UserProvider>(context, listen: false).currentUser == null) {
       _loadUserData();
-    }
   }
 
   Future _loadUserData() async {
@@ -82,7 +81,7 @@ class ProfileScreenState extends State<ProfileScreen> {
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Profile')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: LoadingWidget(),
       );
     }
 

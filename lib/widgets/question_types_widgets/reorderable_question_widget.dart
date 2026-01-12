@@ -19,7 +19,7 @@ class ReorderableQuestionWidget extends StatefulWidget {
 class _ReorderableQuestionWidgetState
     extends State<ReorderableQuestionWidget> {
   late TextEditingController _questionController;
-  List<TextEditingController> _optionControllers = []; // FIXED: Added proper typing
+  List<TextEditingController> _optionControllers = [];
 
   @override
   void initState() {
@@ -27,12 +27,10 @@ class _ReorderableQuestionWidgetState
     _questionController =
         TextEditingController(text: widget.question.question);
 
-    // FIXED: Create controllers from existing options
     _optionControllers = widget.question.options
         .map((option) => TextEditingController(text: option))
         .toList();
 
-    // FIXED: Ensure minimum 3 options for reorderable questions
     if (_optionControllers.length < 3) {
       while (_optionControllers.length < 3) {
         _optionControllers.add(TextEditingController());
@@ -49,7 +47,6 @@ class _ReorderableQuestionWidgetState
   }
 
   void _removeOption(int index) {
-    // FIXED: Prevent removing options if less than 3 remain
     if (_optionControllers.length <= 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Reorderable questions need at least 3 options')),
@@ -58,9 +55,9 @@ class _ReorderableQuestionWidgetState
     }
 
     setState(() {
-      _optionControllers[index].dispose(); // FIXED: Dispose controller before removing
+      _optionControllers[index].dispose();
       _optionControllers.removeAt(index);
-      _updateModel(); // FIXED: Update model after removing option
+      _updateModel();
     });
   }
 
@@ -76,13 +73,11 @@ class _ReorderableQuestionWidgetState
 
     // Save the current order as indices (as strings)
     widget.question.correctAnswer = List.generate(currentOptions.length, (index) => index.toString());
-    // widget.question.correctAnswer = List.from(currentOptions);
   }
 
   @override
   void dispose() {
     _questionController.dispose();
-    // FIXED: Dispose all option controllers
     for (var controller in _optionControllers) {
       controller.dispose();
     }
@@ -104,7 +99,7 @@ class _ReorderableQuestionWidgetState
             border: OutlineInputBorder(),
           ),
           onChanged: (value) {
-            _updateModel(); // FIXED: Update model on change
+            _updateModel();
           },
         ),
         const SizedBox(height: 10),
@@ -113,7 +108,6 @@ class _ReorderableQuestionWidgetState
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 10),
-        // FIXED: Better visual indication for reorderable items
         Text(
           'Drag and drop to reorder the options',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -131,7 +125,7 @@ class _ReorderableQuestionWidgetState
               if (newIndex > oldIndex) newIndex -= 1;
               final controller = _optionControllers.removeAt(oldIndex);
               _optionControllers.insert(newIndex, controller);
-              _updateModel(); // FIXED: Update model after reordering
+              _updateModel();
             });
           },
           itemBuilder: (context, index) {
@@ -144,7 +138,7 @@ class _ReorderableQuestionWidgetState
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              key: ValueKey('option_$index'), // FIXED: Better key generation
+              key: ValueKey('option_$index'),
               child: ListTile(
                 leading: const Icon(Icons.drag_handle, color: Colors.grey),
                 title: TextField(
@@ -154,7 +148,7 @@ class _ReorderableQuestionWidgetState
                     border: InputBorder.none,
                   ),
                   onChanged: (value) {
-                    _updateModel(); // FIXED: Update model when text changes
+                    _updateModel();
                   },
                 ),
                 trailing: IconButton(
@@ -167,7 +161,7 @@ class _ReorderableQuestionWidgetState
         ),
         const SizedBox(height: 10),
         OutlinedButton.icon(
-          onPressed: _optionControllers.length >= 8 ? null : _addOption, // FIXED: Set reasonable limit
+          onPressed: _optionControllers.length >= 8 ? null : _addOption,
           icon: const Icon(Icons.add),
           label: const Text("Add Option"),
         ),

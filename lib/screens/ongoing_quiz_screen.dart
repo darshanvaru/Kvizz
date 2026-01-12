@@ -259,7 +259,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 6,
                                   offset: const Offset(0, 3),
                                 ),
@@ -278,7 +278,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF4F8DF9).withOpacity(0.7),
+                                  color: const Color(0xFF4F8DF9).withValues(alpha: 0.7),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -330,7 +330,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.blueAccent.withOpacity(0.12),
+                            color: Colors.blueAccent.withValues(alpha: 0.12),
                             blurRadius: 26,
                             offset: const Offset(0, 13),
                           ),
@@ -414,7 +414,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                   optionTextColor = Colors.teal;
                                 } else if (isIncorrect) {
                                   tileColor =
-                                      Theme.of(context).primaryColor.withOpacity(0.1);
+                                      Theme.of(context).primaryColor.withValues(alpha: 0.1);
                                   borderColor = Colors.redAccent;
                                   leadingIcon =
                                   const Icon(Icons.cancel, color: Colors.redAccent);
@@ -693,7 +693,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                       optionTextColor = Colors.teal;
                                     } else if (isIncorrect) {
                                       tileColor =
-                                          Theme.of(context).primaryColor.withOpacity(0.1);
+                                          Theme.of(context).primaryColor.withValues(alpha: 0.1);
                                       borderColor = Colors.redAccent;
                                       leadingIcon =
                                       const Icon(Icons.cancel, color: Colors.redAccent);

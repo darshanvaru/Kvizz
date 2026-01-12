@@ -8,7 +8,7 @@ class UserProvider with ChangeNotifier {
   UserModel? get currentUser => _currentUser;
 
   void setCurrentUser(UserModel user) {
-    print("user set to ${user.toString()}");
+    print("currentUser set to\n${user.toString()}");
     _currentUser = user;
     notifyListeners();
   }

@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/user_provider.dart';
 import '../services/user_service.dart';
+import '../widgets/account_delete_loading_widget.dart';
+import '../widgets/loading_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,6 +23,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final SharedPreferences prefs;
   bool isLoading = false;
+  bool isDeletingAccount = false;
 
   @override
   void initState() {
@@ -52,7 +55,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void initializePreferences() async {
     prefs = await SharedPreferences.getInstance();
-    debugPrint("----------Preference initialized in SettingsScreen, isLogin: ${prefs.getBool("isLoggedIn") ?? false}");
   }
 
   void _showConfirmationDialog(
@@ -83,220 +85,252 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> deleteAccount() async {
+    setState(() => isDeletingAccount = true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.deleteAccount();
+
+    if (!mounted) return;
+
+    setState(() => isDeletingAccount = false);
+
+    if (!success) {
+      setState(() => isDeletingAccount = false);
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Error"),
+          content: const Text("Something went wrong. Please try again."),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                deleteAccount();
+              },
+              child: const Text("Retry"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentUser = Provider.of<UserProvider>(context, listen: true).currentUser;
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: isLoading
-        ? Center(child: CircularProgressIndicator())
-        : Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: isLoading
+            ? Scaffold(
+              body: LoadingWidget(),
+            )
+            : Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: ListView(
+                    children: [
 
-                  // Profile Tab (Need Photo, Name, Username)
-                  Card(
-                    margin: const EdgeInsets.all(12),
-                    child: ListTile(
-                      leading: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black26,
-                          shape: BoxShape.circle,
+                      // Profile Tab (Photo, Name, Username)
+                      Card(
+                        margin: const EdgeInsets.all(12),
+                        child: ListTile(
+                          leading: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black26,
+                              shape: BoxShape.circle,
+                            ),
+                            child: ClipOval(
+                              child: SvgPicture.network(
+                                currentUser!.photo!,
+                                placeholderBuilder: (context) =>
+                                const CircularProgressIndicator(),
+                                height: 80.0,
+                                width: 50.0,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          title: Text(currentUser.name),
+                          subtitle: Text(currentUser.email),
+                          trailing: const Icon(Icons.arrow_forward_ios),
+                          onTap: () {
+                            // Navigate to Profile Details/Edit screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => ProfileScreen()),
+                            );
+                          },
                         ),
-                        child: ClipOval(
-                          child: SvgPicture.network(
-                            currentUser!.photo!,
-                            placeholderBuilder: (context) =>
-                            const CircularProgressIndicator(),
-                            height: 80.0,
-                            width: 50.0,
-                            fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 20),
+
+                      //General Settings
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: const Text(
+                          'General Settings',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Theme Switch
+                      Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        child: ListTile(
+                          leading: const Icon(Icons.brightness_6, color: Colors.blueAccent),
+                          title: const Text("Select Theme"),
+                          trailing: Padding(
+                            padding: const EdgeInsets.only(right: 10.0),
+                            child: DropdownButton<ThemeMode>(
+                              value: themeProvider.themeMode,
+                              isExpanded: false,
+                              borderRadius: BorderRadius.circular(12),
+                              dropdownColor: Theme.of(context).cardColor,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: ThemeMode.system,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    child: Text("System"),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: ThemeMode.light,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    child: Text("Light"),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: ThemeMode.dark,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    child: Text("Dark"),
+                                  ),
+                                ),
+                              ],
+                              underline: const SizedBox(),
+                              onChanged: (ThemeMode? mode) {
+                                themeProvider.toggleTheme(mode ?? ThemeMode.light);
+                              },
+                            ),
                           ),
                         ),
                       ),
-                      title: Text(currentUser.name),
-                      subtitle: Text(currentUser.email),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        // Navigate to Profile Details/Edit screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => ProfileScreen()),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 20),
 
-                  //General Settings
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                    child: const Text(
-                      'General Settings',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Theme Switch
-                  Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: ListTile(
-                      leading: const Icon(Icons.brightness_6, color: Colors.blueAccent),
-                      title: const Text("Select Theme"),
-                      trailing: Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: DropdownButton<ThemeMode>(
-                          value: themeProvider.themeMode,
-                          isExpanded: false,
-                          borderRadius: BorderRadius.circular(12),
-                          dropdownColor: Theme.of(context).cardColor,
-                          items: const [
-                            DropdownMenuItem(
-                              value: ThemeMode.system,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                child: Text("System"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: ThemeMode.light,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                child: Text("Light"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: ThemeMode.dark,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                child: Text("Dark"),
-                              ),
-                            ),
-                          ],
-                          underline: const SizedBox(),
-                          onChanged: (ThemeMode? mode) {
-                            themeProvider.toggleTheme(mode ?? ThemeMode.light);
+                      // Update Password Button
+                      Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        child: ListTile(
+                          leading: const Icon(Icons.update, color: Colors.blueAccent),
+                          title: const Text("Update Password"),
+                          trailing: const Icon(Icons.arrow_forward_ios),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => UpdatePasswordScreen())
+                            );
                           },
                         ),
                       ),
-                    ),
+
+                      // Forgot Password Button
+                      // Card(
+                      //   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      //   child: ListTile(
+                      //     leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
+                      //     title: const Text("Forget Password"),
+                      //     trailing: const Icon(Icons.arrow_forward_ios),
+                      //     onTap: () {
+                      //       // TODO: Add forgot password logic or navigation in next update
+                      //       // Navigator.push(
+                      //       //   context,
+                      //       //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                      //       // );
+                      //       debugPrint('Forget Password logic not implemented.');
+                      //     },
+                      //   ),
+                      // ),
+
+                      const SizedBox(height: 10),
+                    ],
                   ),
+                ),
 
-                  // Update Password Button
-                  Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: ListTile(
-                      leading: const Icon(Icons.update, color: Colors.blueAccent),
-                      title: const Text("Update Password"),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => UpdatePasswordScreen())
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Forgot Password Button
-                  Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: ListTile(
-                      leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
-                      title: const Text("Forget Password"),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        // TODO: Add forgot password logic or navigation
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                        // );
-                        debugPrint('Forget Password logic not implemented.');
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-
-            // Bottom Buttons
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showConfirmationDialog(
-                          context,
-                          "Logout",
-                          "Are you sure you want to logout?",
-                              () {
-                            SocketService().manualDisconnect();
-                            prefs.setBool('isLoggedIn', false);
-                            prefs.setString('jwt', "");
-                            Provider.of<AuthProvider>(context, listen: false).logout();
-                            // Navigator.pushAndRemoveUntil(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) => const AuthScreen()),
-                            //       (route) => false,
-                            // );
+                // Bottom Buttons
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Logout Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _showConfirmationDialog(
+                              context,
+                              "Logout",
+                              "Are you sure you want to logout?",
+                                  () {
+                                SocketService().manualDisconnect();
+                                prefs.setBool('isLoggedIn', false);
+                                prefs.setString('jwt', "");
+                                Provider.of<AuthProvider>(context, listen: false).logout();
+                              },
+                            );
                           },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        Theme.of(context).colorScheme.secondary,
-                        foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                      ),
-                      child: const Text("Logout"),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Delete Account Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showConfirmationDialog(
-                          context,
-                          "Delete Account",
-                          "This action is permanent. Are you sure?",
-                              () {
-                            // TODO: Add delete account logic
-                            debugPrint('Delete account logic not implemented.');
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        Theme.of(context).colorScheme.surface,
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.error,
-                          width: 2,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                          ),
+                          child: const Text("Logout"),
                         ),
                       ),
-                      child: const Text("Delete Account"),
-                    ),
+                      const SizedBox(height: 10),
+
+                      // Delete Account Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _showConfirmationDialog(
+                              context,
+                              "Delete Account",
+                              "This action is permanent. Are you sure?",
+                                deleteAccount,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            Theme.of(context).colorScheme.surface,
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.error,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Text("Delete Account"),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if(isDeletingAccount)
+            AccountDeleteLoadingWidget()
+        ],
       ),
     );
 

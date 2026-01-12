@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/quiz_model.dart';
 import 'package:kvizz/services/quiz_service.dart';
 import '../providers/user_provider.dart';
+import '../widgets/loading_widget.dart';
 import 'create_or_edit_quiz_screen.dart';
 import 'quiz_detail_screen.dart';
 import '../widgets/quiz_card.dart';
@@ -30,11 +31,9 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.currentUser;
 
-    if (user != null) {
-      setState(() {
-        _loadQuizzesFuture = fetchUserQuizzes(user.id);
-      });
-    }
+    setState(() {
+      _loadQuizzesFuture = fetchUserQuizzes(user!.id);
+    });
   }
 
   @override
@@ -85,7 +84,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
                 future: _loadQuizzesFuture,
                 builder: (ctx, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Scaffold(body: LoadingWidget(),);
                   }
 
                   if (snapshot.hasError) {

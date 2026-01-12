@@ -257,10 +257,10 @@ Future<List<QuizModel>?> fetchUserQuizzes(String userId) async {
       return quizzes;
     } else {
       debugPrint("[From QuizService.fetchUserQuizzes] Failed to fetch quizzes: HTTP ${response.statusCode}");
-      return null; // Return null to indicate failure
+      return null;
     }
   } catch (e) {
     debugPrint("[From QuizService.fetchUserQuizzes] Error fetching user quizzes: $e");
-    return null; // Return null to indicate error
+    return null;
   }
 }

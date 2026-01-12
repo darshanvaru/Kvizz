@@ -29,7 +29,6 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
         .map((opt) => TextEditingController(text: opt))
         .toList();
 
-    // FIXED: Ensure minimum 2 options for single choice
     if (_optionControllers.length < 2) {
       while (_optionControllers.length < 2) {
         _optionControllers.add(TextEditingController());
@@ -39,7 +38,6 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
     if (widget.question.correctAnswer.isNotEmpty) {
       final correctText = widget.question.correctAnswer.first;
       _correctAnswerIndex = widget.question.options.indexOf(correctText);
-      // FIXED: Handle case where correct answer is not found in options
       if (_correctAnswerIndex == -1) {
         _correctAnswerIndex = null;
       }
@@ -62,7 +60,6 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
   }
 
   void _removeOption(int index) {
-    // FIXED: Prevent removing options if less than 2 remain
     if (_optionControllers.length <= 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Single choice questions need at least 2 options')),
@@ -71,14 +68,14 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
     }
 
     setState(() {
-      _optionControllers[index].dispose(); // FIXED: Dispose controller before removing
+      _optionControllers[index].dispose();
       _optionControllers.removeAt(index);
       if (_correctAnswerIndex == index) {
         _correctAnswerIndex = null;
       } else if (_correctAnswerIndex != null && _correctAnswerIndex! > index) {
         _correctAnswerIndex = _correctAnswerIndex! - 1;
       }
-      _updateModel(); // FIXED: Update model after removing option
+      _updateModel();
     });
   }
 
@@ -87,21 +84,17 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
     widget.question.options =
         _optionControllers.map((c) => c.text.trim()).toList();
 
-    // FIXED: Better validation for correct answer
     if (_correctAnswerIndex != null &&
         _correctAnswerIndex! < widget.question.options.length &&
         widget.question.options[_correctAnswerIndex!].isNotEmpty) {
-      // widget.question.correctAnswer = [correctText];
       widget.question.correctAnswer = [_correctAnswerIndex!.toString()];
     } else {
       widget.question.correctAnswer = [];
     }
   }
 
-  // FIXED: Added method to handle option text changes
   void _onOptionTextChanged(int index) {
     _updateModel();
-    // If this was the selected correct answer and now it's empty, clear selection
     if (_correctAnswerIndex == index && _optionControllers[index].text.trim().isEmpty) {
       setState(() {
         _correctAnswerIndex = null;
@@ -159,9 +152,10 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
                   });
                 },
               ),
+
               title: TextField(
                 controller: _optionControllers[index],
-                onChanged: (_) => _onOptionTextChanged(index), // FIXED: Use dedicated method
+                onChanged: (_) => _onOptionTextChanged(index),
                 decoration: InputDecoration(
                   fillColor: Colors.grey.shade100,
                   hintText: 'Option ${index + 1}',
@@ -177,7 +171,7 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
         }),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: _optionControllers.length >= 6 ? null : _addOption, // FIXED: Increased limit to 6
+          onPressed: _optionControllers.length >= 6 ? null : _addOption,
           icon: const Icon(Icons.add),
           label: const Text('Add Option'),
         ),

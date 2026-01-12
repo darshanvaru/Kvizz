@@ -106,10 +106,14 @@ class _QuizCardState extends State<QuizCard> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                                : Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
+                                  : Colors.white,
                               width: 0.5,
                             ),
                           ),
@@ -117,7 +121,9 @@ class _QuizCardState extends State<QuizCard> {
                             tag,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Theme.of(context).primaryColor,
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -158,7 +164,9 @@ class _QuizCardState extends State<QuizCard> {
               alignment: Alignment.bottomRight,
               child: Icon(
                 Icons.chevron_right,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).brightness == Brightness.light
+                    ? Theme.of(context).primaryColor
+                    : Colors.white,
               ),
             ),
           ],

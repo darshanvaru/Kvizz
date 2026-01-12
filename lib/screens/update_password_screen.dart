@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kvizz/services/user_service.dart';
 
+import '../widgets/loading_widget.dart';
+
 class UpdatePasswordScreen extends StatefulWidget {
   const UpdatePasswordScreen({super.key});
 
@@ -157,11 +159,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : handleSubmit,
                     child: _isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                        ? const Scaffold(body: LoadingWidget(),)
                         : const Text('Update Password'),
                   ),
                 ),
