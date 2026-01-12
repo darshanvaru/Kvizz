@@ -37,4 +37,7 @@ class ApiEndpoints {
 
   /// Delete a quiz by ID
   static String deleteQuiz(String quizId) => '$baseUrl/quizzes/do/delete/$quizId';
+
+  ///Delete account
+  static String get deleteMe => '$baseUrl/users/delete-me';
 }
