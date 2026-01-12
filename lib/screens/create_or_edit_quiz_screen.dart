@@ -10,6 +10,7 @@ import '../providers/user_provider.dart';
 
 import '../services/quiz_service.dart';
 
+import '../widgets/loading_widget.dart';
 import '../widgets/question_types_widgets/multiple_choice_question_widget.dart';
 import '../widgets/question_types_widgets/open_ended_question_widget.dart';
 import '../widgets/question_types_widgets/reorderable_question_widget.dart';
@@ -373,11 +374,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
           ElevatedButton(
             onPressed: _isLoading ? null : _saveQuiz,
             child: _isLoading
-                ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+                ? const Scaffold(body: LoadingWidget(),)
                 : const Row(
               mainAxisSize: MainAxisSize.min,
               children: [Text("Save"), SizedBox(width: 5), Icon(Icons.save)],
