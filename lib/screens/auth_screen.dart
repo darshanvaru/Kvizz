@@ -6,6 +6,7 @@ import '../api_endpoints.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tab_index_provider.dart';
 import '../utils/status_message_widgets.dart';
+import '../widgets/auth_loading_widget.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -468,37 +469,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           ),
           // Screen-wide loading overlay
           if (isLoading)
-            Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: Center(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                          isLogin
-                              ? 'Signing you in...'
-                              : 'Creating your account...',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Please wait',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            AuthLoadingWidget(isLogin: isLogin,),
         ],
       ),
     );

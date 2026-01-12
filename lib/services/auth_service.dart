@@ -121,4 +121,33 @@ class AuthService {
     }
   }
 
+  Future<bool> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt');
+    print("[deleteAccount] Token: $token");
+    print("[deleteAccount] URL: ${ApiEndpoints.deleteMe}");
+
+    try {
+      final response = await http.delete(
+        Uri.parse(ApiEndpoints.deleteMe),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      print("1");
+      debugPrint('[deleteAccount] HTTP Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 204) {
+        return true;
+      }
+
+      debugPrint('[deleteAccount] Unexpected response: ${response.body}');
+      return false;
+    } catch (e) {
+      debugPrint('[deleteAccount] Exception: $e');
+      return false;
+    }
+  }
+
 }

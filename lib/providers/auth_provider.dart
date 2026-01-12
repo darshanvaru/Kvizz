@@ -96,4 +96,15 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userData');
   }
+
+  Future<bool> deleteAccount() async {
+    final success = await _authService.deleteAccount();
+
+    if (!success) return false;
+    _state = AuthStatus.unauthenticated;
+
+    notifyListeners();
+    return true;
+  }
+
 }
