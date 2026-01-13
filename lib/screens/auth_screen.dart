@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/screens/forget_password_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
@@ -214,6 +215,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           },
         ),
         const SizedBox(height: 16),
+
         TextFormField(
           controller: _passwordController,
           enabled: !isLoading,
@@ -230,6 +232,20 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           //   return null;
           // },
         ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: isLoading
+                ? null
+                : () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => ForgetPasswordScreen())
+                ),
+            child: Text( "Forget Password?", style: TextStyle(
+                color: isLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        )
       ],
     );
   }
@@ -389,7 +405,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                                 ? _buildLoginInFields()
                                 : _buildSignUpFields(),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 10),
                           // Submit button
                           SizedBox(
                             width: double.infinity,

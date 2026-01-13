@@ -7,6 +7,8 @@ class ApiEndpoints {
   static String get getMe => '$baseUrl/users/me';
   static String get updateMe => '$baseUrl/users/update-info';
   static String get updateMyPassword => '$baseUrl/users/update-password';
+  static String get forgetPassword=> '$baseUrl/users/forgot-password';
+  static String get resetPassword=> '$baseUrl/users/reset-password';
 
   // ------------------------ AUTH ------------------------
   static String get login => '$baseUrl/users/login';

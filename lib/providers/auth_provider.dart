@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:kvizz/services/auth_service.dart';
+import 'package:kvizz/services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../enums/enums.dart';
@@ -14,7 +15,6 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _state = AuthStatus.checking;
   AuthStatus get state => _state;
 
-  // Called at app startup
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
@@ -98,7 +98,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteAccount() async {
-    final success = await _authService.deleteAccount();
+    final success = await UserService().deleteAccount();
 
     if (!success) return false;
     _state = AuthStatus.unauthenticated;
