@@ -10,7 +10,6 @@ import '../providers/user_provider.dart';
 
 import '../services/quiz_service.dart';
 
-import '../widgets/loading_widget.dart';
 import '../widgets/question_types_widgets/multiple_choice_question_widget.dart';
 import '../widgets/question_types_widgets/open_ended_question_widget.dart';
 import '../widgets/question_types_widgets/reorderable_question_widget.dart';
@@ -18,7 +17,7 @@ import '../widgets/question_types_widgets/single_choice_question_widget.dart';
 import '../widgets/question_types_widgets/true_false_question_widget.dart';
 
 class CreateOrEditQuizScreen extends StatefulWidget {
-  final String? quizId; // null for create, has value for edit
+  final String? quizId;
 
   const CreateOrEditQuizScreen({super.key, this.quizId});
 
@@ -46,6 +45,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
   // UI state
   bool _isLoading = false;
   bool _isEditMode = false;
+
   QuizModel? _existingQuiz;
 
   @override
@@ -341,7 +341,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
         mainAxisSize: MainAxisSize.min,
         children: QuestionType.values.map((type) {
           return ListTile(
-            title: Text(type.toString().split('.').last),
+            title: Text(type.toString().split('.').last[0].toUpperCase()+type.toString().split('.').last.substring(1)),
             onTap: () {
               Navigator.pop(context);
               _addQuestion(type);
@@ -365,17 +365,15 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.quizId != null ? 'Edit Quiz' : 'Create Quiz'),
         actions: [
+
+          //Save button
           ElevatedButton(
             onPressed: _isLoading ? null : _saveQuiz,
-            child: _isLoading
-                ? const Scaffold(body: LoadingWidget(),)
-                : const Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [Text("Save"), SizedBox(width: 5), Icon(Icons.save)],
             ),
@@ -390,6 +388,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               // Quiz basic information form
               Card(
                 child: Padding(
@@ -403,7 +402,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Title TextField with focus management
+                      // Title TextField
                       TextField(
                         controller: _titleController,
                         focusNode: _titleFocusNode,
@@ -420,7 +419,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Description TextField with focus management
+                      // Description TextField
                       TextField(
                         controller: _descriptionController,
                         focusNode: _descriptionFocusNode,
@@ -461,7 +460,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Tags TextField with focus management
+                      // Tags TextField
                       TextField(
                         controller: _tagsController,
                         focusNode: _tagsFocusNode,
@@ -491,7 +490,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                   title: const Text('Add Question'),
                   subtitle: Text('${_questions.length} question(s) added'),
                   onTap: () {
-                    _dismissKeyboard(); // Dismiss keyboard before showing modal
+                    _dismissKeyboard();
                     _showQuestionTypePicker();
                   },
                 ),
@@ -500,6 +499,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
 
               // Questions List
               if (_questions.isEmpty)
+                // No Question Yet widget
                 const Card(
                   child: Padding(
                     padding: EdgeInsets.all(32),
@@ -523,10 +523,10 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                   ),
                 )
               else
-              // Questions with reorderable functionality
+                // Reorderable Questions
                 ReorderableListView.builder(
-                  shrinkWrap: true, // Important: allows it to work inside SingleChildScrollView
-                  physics: const NeverScrollableScrollPhysics(), // Prevent nested scrolling
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _questions.length,
                   onReorder: (oldIndex, newIndex) {
                     setState(() {
@@ -544,6 +544,8 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
+
+                              // Drag icon, Question number, question type indicator
                               Row(
                                 children: [
                                   ReorderableDragStartListener(
@@ -561,12 +563,17 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
                                     ),
                                   ),
                                   Chip(
-                                    label: Text(_questions[index].type.toString().split('.').last),
-                                    backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+                                    label: Text(
+                                        _questions[index].type.toString().split('.').last[0].toUpperCase() +
+                                        _questions[index].type.toString().split('.').last.substring(1)
+                                    ),
+                                    backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
+
+                              // actual question widget
                               _buildQuestionWidget(_questions[index], index),
                             ],
                           ),
