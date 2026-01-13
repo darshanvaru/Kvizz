@@ -140,6 +140,7 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
+        debugPrint("🎉 Quiz JSON from file: $jsonData");
       } else {
         if(mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Server error: ${response.statusCode}")));
