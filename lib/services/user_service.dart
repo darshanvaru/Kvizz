@@ -8,7 +8,6 @@ import '../models/user_model.dart';
 
 class UserService with ChangeNotifier{
 
-  // Fetch user profile info
   Future<UserModel> fetchUserProfile() async {
     print("[user_service.fetchUserProfile] Fetching user profile data");
 
@@ -36,7 +35,6 @@ class UserService with ChangeNotifier{
     }
   }
 
-  // Update user profile with any subset of fields
   Future<UserModel> updateUserProfile(Map<String, dynamic> updateData) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt') ?? '';
@@ -62,7 +60,6 @@ class UserService with ChangeNotifier{
     }
   }
 
-  // Update user password
   Future<String?> updateMyPassword(String currentPassword, String newPassword, String confirmPassword) async {
     late final SharedPreferences prefs;
     prefs = await SharedPreferences.getInstance();
@@ -72,7 +69,7 @@ class UserService with ChangeNotifier{
       'newPassword': newPassword,
       'newPasswordConfirm': confirmPassword,
     });
-    print(jsonEncode(body));
+    print(body);
 
     try {
       final response = await http.patch(
@@ -100,6 +97,90 @@ class UserService with ChangeNotifier{
       }
     } catch (e) {
       return 'Failed to update password: $e';
+    }
+  }
+
+  Future<bool> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt');
+    print("[deleteAccount] Token: $token");
+    print("[deleteAccount] URL: ${ApiEndpoints.deleteMe}");
+
+    try {
+      final response = await http.delete(
+        Uri.parse(ApiEndpoints.deleteMe),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      print("1");
+      debugPrint('[deleteAccount] HTTP Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 204) {
+        return true;
+      }
+
+      debugPrint('[deleteAccount] Unexpected response: ${response.body}');
+      return false;
+    } catch (e) {
+      debugPrint('[deleteAccount] Exception: $e');
+      return false;
+    }
+  }
+
+  Future<bool> forgetPassword(String email) async {
+    try {
+      final response = await http.post(
+        // Uri.parse(ApiEndpoints.forgetPassword),
+        Uri.parse("http://10.0.0.101:8000/api/v1/users/forgot-password"),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({"email": email}),
+      );
+
+      debugPrint("Email: |$email|");
+      debugPrint("Response Body: ${response.body}");
+      debugPrint('Status: ${response.statusCode}');
+
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> resetPassword(String resetCode, String newPassword, String confirmPassword) async {
+    try{
+      final response = await http.patch(
+        Uri.parse(ApiEndpoints.resetPassword),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          "token": resetCode,
+          "password": newPassword,
+          "passwordConfirm": confirmPassword,
+        })
+      );
+
+      debugPrint("Response Body: ${response.body}");
+      debugPrint('Status: ${response.statusCode}');
+
+      if(response.statusCode == 200){
+        return true;
+      }else {
+        return false;
+      }
+    } catch(e) {
+      rethrow;
     }
   }
 }

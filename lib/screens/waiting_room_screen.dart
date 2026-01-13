@@ -1,8 +1,6 @@
-// screens/waiting_room_screen.dart - Updated to show participant join notifications
 import 'package:flutter/material.dart';
 import 'package:kvizz/providers/user_provider.dart';
 import 'package:provider/provider.dart';
-// import '../models/user_model.dart';
 import '../providers/game_session_provider.dart';
 import '../providers/tab_index_provider.dart';
 import '../services/socket_service.dart';
@@ -19,7 +17,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
 
   int _previousParticipantCount = 0;
   String _lastJoinedParticipant = '';
-  // List _previousParticipants = [];
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +24,31 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
       canPop: false,
       onPopInvokedWithResult: (bool didPop, _) async {
         if (!didPop) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Please hit back button of the app to exit the game")),
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Confirm'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Do you really want to stop and exit the game?'),
+                  SizedBox(height: 16),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _leaveGame(context);
+                  },
+                  child: Text('Yes'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('No'),
+                ),
+              ],
+            ),
           );
         }
       },
@@ -38,7 +58,32 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
-              _leaveGame(context);
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Confirm'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Do you really want to stop the game?'),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _leaveGame(context);
+                      },
+                      child: Text('Yes'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('No'),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
           actions: [
@@ -566,7 +611,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
               ),
               child: Text(
                 gameCode,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4, color: Colors.black),
               ),
             ),
           ],
@@ -712,7 +757,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Need at least 1 participant to start',
-                  style: textTheme.bodySmall?.copyWith(color: colorScheme.errorContainer), // replacing Colors.orange.shade700
+                  style: textTheme.bodySmall?.copyWith(color: Colors.red), // replacing Colors.orange.shade700
                 ),
               ),
           ] else ...[
