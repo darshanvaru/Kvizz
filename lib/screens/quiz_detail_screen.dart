@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/print_helper.dart';
 import 'package:kvizz/models/quiz_model.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/quiz_preview_screen.dart';
-// import 'package:kvizz/screens/ongoing_quiz_screen.dart';
 import 'package:kvizz/screens/waiting_room_screen.dart';
 import 'package:kvizz/services/quiz_service.dart';
 import 'package:provider/provider.dart';
@@ -33,12 +31,8 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
   }
 
   Future<void> _fetchQuizDetails() async {
-    print("[From QuizDetailScreen._fetchQuizDetails] METHOD CALLED");
 
     if (!mounted) {
-      print(
-        "[From QuizDetailScreen._fetchQuizDetails] Widget not mounted, aborting",
-      );
       return;
     }
 
@@ -47,29 +41,16 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
       errorMessage = null;
     });
 
-    print(
-      "[From QuizDetailScreen._fetchQuizDetails] Fetching quiz details for ID: ${widget.quizId}",
-    );
-
     try {
       final fetchedQuiz = await fetchQuizById(widget.quizId);
-
-      print("[From QuizDetailScreen._fetchQuizDetails] API call successful");
-      printFullResponse(
-        "[From QuizDetailScreen._fetchQuizDetails] Fetched Quiz: ${fetchedQuiz?.toJson()}",
-      );
 
       if (mounted) {
         setState(() {
           quiz = fetchedQuiz;
           isLoading = false;
         });
-        print(
-          "[From QuizDetailScreen._fetchQuizDetails] State updated successfully",
-        );
       }
     } catch (error) {
-      print("[From QuizDetailScreen._fetchQuizDetails] Error occurred: $error");
       if (mounted) {
         setState(() {
           errorMessage = error.toString();
@@ -84,7 +65,6 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
   }
 
   void _hostMultiplayerGame(QuizModel quiz) {
-    print("[From QuizDetailScreen._hostMultiplayerGame] METHOD CALLED");
 
     // Connect socket
     final socketService = SocketService();
@@ -118,18 +98,13 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
             onPressed: () async {
               final success = await deleteQuiz(widget.quizId);
               if (success) {
-                print(
-                  "[From QuizDetailScreen._confirmAndDeleteQuiz] Quiz deleted successfully",
-                );
-                Navigator.pop(ctx);
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Quiz deleted successfully!")),
-                );
-              } else {
-                print(
-                  "[From QuizDetailScreen._confirmAndDeleteQuiz] Failed to delete quiz",
-                );
+                if(mounted) {
+                  Navigator.pop(context);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Quiz deleted successfully!")),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -262,9 +237,6 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                           _fetchQuizDetails();
                         })
                         .catchError((error) {
-                          print(
-                            "[From QuizDetailScreen] Navigation error: $error",
-                          );
                         });
                   },
                   icon: const Icon(Icons.edit),
@@ -281,7 +253,6 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () async{
-                    print("OnPressed triggered of play");
                     // await Future.delayed(Duration(seconds: 2));
                     _hostMultiplayerGame(quiz!);
                   },

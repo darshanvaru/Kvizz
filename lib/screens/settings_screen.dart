@@ -36,21 +36,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future _loadUserData() async {
     setState(() => isLoading = true);
-    try {
-      final fetchedUser = await UserService().fetchUserProfile();
+    final fetchedUser = await UserService().fetchUserProfile();
 
-      debugPrint('DEBUG: Loaded user name: ${fetchedUser.name}');
-      debugPrint('DEBUG: Loaded user username: ${fetchedUser.username}');
-      debugPrint('DEBUG: Loaded user photo: ${fetchedUser.photo}');
-
-      if(mounted) {
-        Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
-      }
-      setState(() => isLoading = false);
-
-    } catch (e) {
-      debugPrint('DEBUG: Exception caught in _loadUserData(): $e');
+    if(mounted) {
+      Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
     }
+    setState(() => isLoading = false);
   }
 
   void initializePreferences() async {
@@ -256,7 +247,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       //       //   context,
                       //       //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                       //       // );
-                      //       debugPrint('Forget Password logic not implemented.');
                       //     },
                       //   ),
                       // ),

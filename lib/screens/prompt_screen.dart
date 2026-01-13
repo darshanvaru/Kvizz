@@ -62,7 +62,8 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             behavior: SnackBarBehavior.floating,
             content: const Text("Quiz generated! Check MyQuiz Tab."),
@@ -77,12 +78,17 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to generate quiz")));
-      }
+        if(mounted){
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Failed to generate quiz")));
+        }      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
+      if(mounted){
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e")));
+      }    } finally {
       _promptController.clear();
       setState(() => _isGenerating = false);
     }
@@ -134,12 +140,15 @@ class _PromptScreenState extends State<PromptScreen> with SingleTickerProviderSt
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        print("🎉 Quiz JSON from file: $jsonData");
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Server error: ${response.statusCode}")));
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Server error: ${response.statusCode}")));
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Network error: $e")));
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Network error: $e")));
+      }
     } finally {
       setState(() => _isUploading = false);
     }

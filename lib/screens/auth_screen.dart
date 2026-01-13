@@ -3,7 +3,6 @@ import 'package:kvizz/screens/forget_password_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
-import '../api_endpoints.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tab_index_provider.dart';
 import '../utils/status_message_widgets.dart';
@@ -100,11 +99,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       }
     }
     else {
-      // if (_emailController.text.trim().isEmpty ||
-      //     _passwordController.text.trim().isEmpty) {
-      //   showErrorDialog(message: 'Please fill in all fields!', context: context);
-      //   return;
-      // }
+      if (_emailController.text.trim().isEmpty ||
+          _passwordController.text.trim().isEmpty) {
+        showErrorDialog(message: 'Please fill in all fields!', context: context);
+        return;
+      }
     }
 
     setState(() {
@@ -118,8 +117,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         await _signUp();
       }
     } catch (e) {
-      debugPrint('Exception from AuthScreen: $e');
-      showErrorDialog(message: _getErrorMessage(e), context: context);
+      if(mounted) {
+        showErrorDialog(message: _getErrorMessage(e), context: context);
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -130,16 +130,10 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _login() async {
-    final email = "${_emailController.text.trim()}@example.com";
-    final password = "12345678";
-    // final email = _emailController.text.trim();
-    // final password = _passwordController.text.trim();
-
-    debugPrint("----------------------");
-    debugPrint("Link: ${Uri.parse(ApiEndpoints.login)}");
-    debugPrint("Id: $email");
-    debugPrint("Password: $password");
-    debugPrint("----------------------");
+    // final email = "${_emailController.text.trim()}@example.com";
+    // final password = "12345678";
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
     try {
       final user = await context.read<AuthProvider>().login(
@@ -148,12 +142,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         password: password,
       );
 
-      print("Login Success");
-      showSuccessMessage(message: "Login successful! Welcome back, ${user.name}", context: context);
-      Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      if(mounted) {
+        showSuccessMessage(message: "Login successful! Welcome back, ${user.name}", context: context);
+        Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
+      }
     } catch (e) {
-      print("Login Failure");
-      debugPrint("Login Error: $e");
       throw Exception(e);
     }
   }
@@ -165,15 +158,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     final password = _passwordController.text.trim();
     final passwordConfirm = _confirmPasswordController.text.trim();
 
-    debugPrint("----------------------");
-    debugPrint("Link: ${Uri.parse(ApiEndpoints.signup)}");
-    debugPrint("Name: $name");
-    debugPrint("Username: $username");
-    debugPrint("Email: $email");
-    debugPrint("Password: $password");
-    debugPrint("Password Confirm: $passwordConfirm");
-    debugPrint("----------------------");
-
     try {
       await context.read<AuthProvider>().signup(
           name: name,
@@ -182,13 +166,15 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           password: password,
           passwordConfirm: passwordConfirm
       );
-      showSuccessMessage(message: "Account created successfully! Please login.", context: context);
+
+      if(mounted) {
+        showSuccessMessage(message: "Account created successfully! Please login.", context: context);
+      }
       setState(() {
         isLogin = true;
         _confirmPasswordController.clear();
       });
     } catch (e) {
-      debugPrint("Signup Error: $e");
       throw Exception(e);
     }
   }

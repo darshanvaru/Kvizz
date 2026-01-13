@@ -42,10 +42,13 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     });
 
     if (errorMessage == null) {
-      Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated successfully')),
-      );
+
+      if(mounted) {
+        Navigator.of(context).pop(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password updated successfully')),
+        );
+      }
     } else {
       setState(() {
         _errorText = errorMessage;

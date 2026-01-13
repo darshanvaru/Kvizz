@@ -149,7 +149,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           subtitle: Text("${quiz['gameCode']} - ${quiz['description']}"),
                           trailing: const Icon(Icons.play_circle_outline),
                           onTap: () {
-                            print("Tapped on quiz with code: ${quiz['gameCode']}");
                             _joinGame(quiz['gameCode'].toString());
                           },
                         ),

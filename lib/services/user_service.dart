@@ -9,7 +9,6 @@ import '../models/user_model.dart';
 class UserService with ChangeNotifier{
 
   Future<UserModel> fetchUserProfile() async {
-    print("[user_service.fetchUserProfile] Fetching user profile data");
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt') ?? '';
@@ -21,9 +20,6 @@ class UserService with ChangeNotifier{
         'Content-Type': 'application/json',
       },
     );
-
-    print('API response status: ${response.statusCode}');
-    print('API response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data']['doc'];
@@ -39,7 +35,6 @@ class UserService with ChangeNotifier{
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt') ?? '';
 
-    print("Updating user with the following data\n${json.encode(updateData)}\n and token: $token");
     final response = await http.patch(
       Uri.parse(ApiEndpoints.updateMe),
       headers: {
@@ -48,9 +43,6 @@ class UserService with ChangeNotifier{
       },
       body: json.encode(updateData),
     );
-
-    print('API response status: ${response.statusCode}');
-    print('API response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['updatedUser'];
@@ -69,7 +61,6 @@ class UserService with ChangeNotifier{
       'newPassword': newPassword,
       'newPasswordConfirm': confirmPassword,
     });
-    print(body);
 
     try {
       final response = await http.patch(
@@ -80,8 +71,6 @@ class UserService with ChangeNotifier{
         },
         body: body,
       );
-
-      print('API response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -103,8 +92,6 @@ class UserService with ChangeNotifier{
   Future<bool> deleteAccount() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt');
-    print("[deleteAccount] Token: $token");
-    print("[deleteAccount] URL: ${ApiEndpoints.deleteMe}");
 
     try {
       final response = await http.delete(
@@ -114,17 +101,12 @@ class UserService with ChangeNotifier{
           'Authorization': 'Bearer $token',
         },
       );
-      print("1");
-      debugPrint('[deleteAccount] HTTP Status Code: ${response.statusCode}');
 
       if (response.statusCode == 204) {
         return true;
       }
-
-      debugPrint('[deleteAccount] Unexpected response: ${response.body}');
       return false;
     } catch (e) {
-      debugPrint('[deleteAccount] Exception: $e');
       return false;
     }
   }
@@ -140,10 +122,6 @@ class UserService with ChangeNotifier{
         },
         body: jsonEncode({"email": email}),
       );
-
-      debugPrint("Email: |$email|");
-      debugPrint("Response Body: ${response.body}");
-      debugPrint('Status: ${response.statusCode}');
 
 
       if (response.statusCode == 200) {
@@ -170,9 +148,6 @@ class UserService with ChangeNotifier{
           "passwordConfirm": confirmPassword,
         })
       );
-
-      debugPrint("Response Body: ${response.body}");
-      debugPrint('Status: ${response.statusCode}');
 
       if(response.statusCode == 200){
         return true;

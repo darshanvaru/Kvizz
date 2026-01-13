@@ -48,11 +48,8 @@ class AuthService {
       );
 
       final decodedResponseBody = jsonDecode(response.body);
-      debugPrint("Response: $decodedResponseBody");
 
       if (decodedResponseBody["status"] == "success") {
-        debugPrint("From Auth Provider: user Logged In status: Success");
-        debugPrint("Token: ${decodedResponseBody["token"]}");
 
         // Setting Auth Parameters
         final prefs = await SharedPreferences.getInstance();
@@ -60,12 +57,12 @@ class AuthService {
         prefs.setString("expiryDate", DateTime.now().add(const Duration(days: 90)).toString());
 
         final user = UserModel.fromJson(decodedResponseBody["user"]);
-        Provider.of<UserProvider>(context, listen: false).setCurrentUser(user);
+        if(context.mounted) {
+          Provider.of<UserProvider>(context, listen: false).setCurrentUser(user);
+        }
 
         return user;
       } else {
-        debugPrint("From Auth Provider: user Logged In status: Failed");
-        debugPrint("Error: ${decodedResponseBody["message"]}");
         throw Exception(decodedResponseBody["message"] ?? "Something went wrong. Please try again.");
       }
     } on SocketException {

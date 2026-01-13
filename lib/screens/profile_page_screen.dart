@@ -40,10 +40,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     try {
       final fetchedUser = await UserService().fetchUserProfile();
       
-      debugPrint('DEBUG: Loaded user name: ${fetchedUser.name}');
-      debugPrint('DEBUG: Loaded user username: ${fetchedUser.username}');
-      debugPrint('DEBUG: Loaded user photo: ${fetchedUser.photo}');
-      
       if(mounted) {
         Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
       }
@@ -58,7 +54,6 @@ class ProfileScreenState extends State<ProfileScreen> {
         _error = null;
       });
     } catch (e) {
-      debugPrint('DEBUG: Exception caught in _loadUserData(): $e');
       setState(() {
         _error = e.toString();
         _loading = false;

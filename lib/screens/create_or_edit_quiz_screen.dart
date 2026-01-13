@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:kvizz/print_helper.dart';
 
 import '../models/quiz_model.dart';
 import '../models/question_model.dart';
@@ -136,9 +135,7 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
 
   // Save quiz (create or update)
   Future<void> _saveQuiz() async {
-    print("[From CreateOrEditQuizScreen._saveQuiz] Saving quiz with ID: ${_isEditMode ? widget.quizId : 'new'}");
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...0");
     if (_questions.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,12 +145,10 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
       return;
     }
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...1");
     if (_titleController.text.trim().isEmpty) {
       return _showError("Title can't be empty.");
     }
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...2");
     for (var q in _questions) {
       if (q.question.trim().isEmpty) {
         return _showError('Each question must have text.');
@@ -186,13 +181,9 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
       }
     }
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...3");
-
-
     if (!_isEditMode) {
       for (var q in _questions) {
         if (q.type == QuestionType.reorder) {
-          print("Shuffling options of reorder question: ${q.question}");
           List<String> tempCorrectAnswer = [...q.options];
 
           q.options.shuffle();
@@ -206,8 +197,6 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
       }
     }
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Validating quiz data...4");
-
     // Process tags before saving
     _processTags();
 
@@ -215,12 +204,11 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
       setState(() => _isLoading = true);
     }
 
-    print("[From CreateOrEditQuizScreen._saveQuiz] Saving quiz with ID: ${_isEditMode ? widget.quizId : 'new'}");
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     try {
       final quizData = QuizModel(
-        id: _isEditMode ? widget.quizId! : '', // Server will generate ID for new quiz
+        id: _isEditMode ? widget.quizId! : '',
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         questions: _questions,
@@ -258,56 +246,41 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
 
   // Create new quiz
   Future<bool> _createQuiz(QuizModel quiz) async {
-    print("Reached CreateOrEditQuizScreen._createQuiz");
-    print("[From CreateOrEditQuizScreen._createQuiz] Creating new quiz");
-
-    // Print the API payload for debugging
-    printFullResponse("API Body for Quiz Creation ${quiz.toJson(forApi: true)}");
 
     try {
       // Call the QuizService to create the quiz on the server
       final QuizModel? createdQuiz = await createQuiz(quiz);
 
       if (createdQuiz != null) {
-        print("[From CreateOrEditQuizScreen._createQuiz] Quiz created successfully with ID: ${createdQuiz.id}");
 
         if (mounted) {
           Navigator.of(context).pop(true);
         }
         return true;
       } else {
-        print("[From CreateOrEditQuizScreen._createQuiz] Failed to create quiz - server returned null");
         return false;
       }
     } catch (e) {
-      print("[From CreateOrEditQuizScreen._createQuiz] Error creating quiz: $e");
       return false;
     }
   }
 
   // Update existing quiz
   Future<bool> _updateQuiz(QuizModel quiz) async {
-    print("Reached CreateOrEditQuizScreen._updateQuiz");
-    print("[From CreateOrEditQuizScreen._updateQuiz] Updating quiz with ID: ${quiz.id}");
-    printFullResponse("Quiz Sample: ${quiz.toJson()}");
-
     try {
       // Call the QuizService to create the quiz on the server
       final QuizModel? updatedQuiz = await updateQuiz(quiz);
 
       if (updatedQuiz != null) {
-        print("[From CreateOrEditQuizScreen._updateQuiz] Quiz Updated successfully of ID: ${updatedQuiz.id}");
 
         if (mounted) {
           Navigator.of(context).pop(true);
         }
         return true;
       } else {
-        print("[From CreateOrEditQuizScreen._updateQuiz] Failed to update quiz - server returned null");
         return false;
       }
     } catch (e) {
-      print("[From CreateOrEditQuizScreen._updateQuiz] Error Updating quiz: $e");
       return false;
     }
   }

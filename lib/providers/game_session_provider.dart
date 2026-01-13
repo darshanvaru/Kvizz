@@ -1,6 +1,5 @@
 // game_session_provider.dart
 import 'package:flutter/material.dart';
-import 'package:kvizz/print_helper.dart';
 import '../models/game_session_model.dart';
 
 class GameSessionProvider extends ChangeNotifier {
@@ -30,15 +29,11 @@ class GameSessionProvider extends ChangeNotifier {
 
   // In game_session_provider.dart
   void updateSessionFromJson(Map<String, dynamic> json, String from) {
-    print("In gameSessionProvider.updateSessionFromJson() from $from socket listener ");
     try {
       _gameSession = GameSessionModel.fromJson(json);
       _error = null;
       notifyListeners();
-    } catch (e, stackTrace) {
-      print('❌ Error parsing session data from $from: $e');
-      printFullResponse('📄 data: $json');
-      print('📍 Stack trace: $stackTrace');
+    } catch (e) {
       _error = 'Failed to parse session data: $e';
       notifyListeners();
     }
@@ -49,30 +44,4 @@ class GameSessionProvider extends ChangeNotifier {
     _error = error;
     notifyListeners();
   }
-
-  // Clear session (when leaving/disconnecting)
-  // void clearSession() {
-  //   // _gameSession = null;
-  //   //Empty session dummy data
-  //   _gameSession = GameSessionModel(
-  //     id: '',
-  //     quizData: null,
-  //     hostData: null,
-  //     gameCode: 0,
-  //     connectionId: null,
-  //     status: 'previousFinished',
-  //     isActive: false,
-  //     currentQuestion: null,
-  //     participants: [],
-  //     settings: null,
-  //     results: null,
-  //     startedAt: null,
-  //     finishedAt: null,
-  //     createdAt: DateTime.now(),
-  //     updatedAt: DateTime.now(),
-  //   );
-  //   _error = null;
-  //   _isLoading = false;
-  //   notifyListeners();
-  // }
 }

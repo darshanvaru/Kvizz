@@ -60,7 +60,6 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
   void initState() {
     super.initState();
     questions = widget.questions;
-    debugPrint("[OngoingScreen.initState] is Questions Empty: ${questions.isEmpty}");
     _prepareQuestion();
   }
 
@@ -169,19 +168,6 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
         answerList = [selectedLabel];
         break;
     }
-
-    //submit answer
-    print("-------------------------------");
-    print("Question Type: ${question.type}");
-    print("Question: ${question.question}");
-    print("SocketService().submitAnswer called with: ");
-    print("GameSessionId: ${widget.gameSessionId}");
-    print("Time Taken: $timeTaken");
-    print("Question ID: ${questions[currentQuestionIndex].id}");
-    print("Answer: $answerList");
-    print("Is Correct: $isCorrect");
-    print("User Name: ${Provider.of<UserProvider>(context, listen: false).currentUser!.username}");
-    print("-------------------------------");
 
     if(!widget.isHost) {
       SocketService().submitAnswer(
