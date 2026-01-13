@@ -86,17 +86,6 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
   void _hostMultiplayerGame(QuizModel quiz) {
     print("[From QuizDetailScreen._hostMultiplayerGame] METHOD CALLED");
 
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => OngoingQuizScreen(
-    //     questions: quiz.questions,
-    //     timePerQuestion: 15,
-    //     maxPointsPerQuestion: 1,
-    //     isHost: false,
-    //     gameSessionId: "asdasfadsvadsv",
-    //   ),),
-    // );
-
     // Connect socket
     final socketService = SocketService();
 
@@ -235,22 +224,24 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
           child: Row(
             children: [
               //Preview Button
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            PreviewQuizScreen(questions: quiz?.questions?? []),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text("Preview"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
-                    foregroundColor: Colors.white,
+              FittedBox(
+                child: Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PreviewQuizScreen(questions: quiz?.questions?? []),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("Preview"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -294,14 +285,6 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                     // await Future.delayed(Duration(seconds: 2));
                     _hostMultiplayerGame(quiz!);
                   },
-                  // onPressed: () {
-                  //   Navigator.of(context).pushReplacement(
-                  //     MaterialPageRoute(
-                  //       builder: (context) =>
-                  //           OngoingQuizScreen(questions: quiz!.questions),
-                  //     ),
-                  //   );
-                  // },
                   icon: const Icon(Icons.play_arrow),
                   label: const Text("Play"),
                   style: ElevatedButton.styleFrom(
@@ -509,7 +492,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
               runSpacing: 8,
               children: quiz!.tags.map((tag) {
                 return Chip(
-                  label: Text(tag, style: const TextStyle(fontSize: 12)),
+                  label: Text(tag[0].toUpperCase() + tag.substring(1), style: TextStyle(fontSize: 12, color: Colors.black)),
                   backgroundColor: Colors.blue.shade50,
                   side: BorderSide(color: Colors.blue.shade200),
                 );
