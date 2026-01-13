@@ -25,6 +25,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  bouncy_button:
+    dependency: "direct main"
+    description:
+      name: bouncy_button
+      sha256: "5360f6bc9f6d6ff8123da62fbe0d982a5ef7cb291a1fc9b5b7f5e84ab236340e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   characters:
     dependency: transitive
     description:
