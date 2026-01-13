@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kvizz/screens/prompt_screen.dart';
 import 'package:kvizz/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -13,14 +12,14 @@ class HomeScreen extends StatelessWidget {
   static const List<Widget> _pages = [
     DashboardScreen(),
     MyQuizzesScreen(),
-    PromptScreen(),
+    // PromptScreen(),
     SettingsScreen(),
   ];
 
   static const List<String> _titles = [
     'Dashboard',
     'My Quizzes',
-    'Medusa AI',
+    // 'Medusa AI',
     'Settings',
   ];
 
@@ -45,10 +44,10 @@ class HomeScreen extends StatelessWidget {
                 label: 'Dashboard',
               ),
               BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'MyQuiz'),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.smart_toy),
-                label: 'Medusa AI',
-              ),
+              // BottomNavigationBarItem(
+              //   icon: Icon(Icons.smart_toy),
+              //   label: 'Medusa AI',
+              // ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.settings),
                 label: 'Settings',

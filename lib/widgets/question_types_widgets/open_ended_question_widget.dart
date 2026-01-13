@@ -73,6 +73,7 @@ class _OpenEndedQuestionWidgetState extends State<OpenEndedQuestionWidget> {
             border: OutlineInputBorder(),
             hintText: "Enter comma-separated possible answers (e.g., Paris, paris, PARIS)",
             helperText: "Multiple acceptable answers can be separated by commas",
+            helperMaxLines: 2
           ),
           onChanged: (value) {
             _updateModel();
