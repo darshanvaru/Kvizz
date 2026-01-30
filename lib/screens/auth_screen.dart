@@ -188,14 +188,14 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           controller: _emailController,
           enabled: !isLoading,
           decoration: const InputDecoration(
-            labelText: 'Email',
+            labelText: 'Email or Username',
             prefixIcon: Icon(Icons.email),
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Please enter your email';
+              return 'Please enter your email or username';
             }
             return null;
           },
