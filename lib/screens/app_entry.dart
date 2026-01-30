@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:kvizz/main.dart';
 import 'package:kvizz/screens/auth_screen.dart';
-import 'package:kvizz/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 import '../enums/enums.dart';

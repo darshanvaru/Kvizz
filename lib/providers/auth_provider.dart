@@ -9,25 +9,17 @@ import '../enums/enums.dart';
 import '../models/user_model.dart';
 
 class AuthProvider extends ChangeNotifier {
-  bool _initialized = false;
   final AuthService _authService = AuthService();
 
   AuthStatus _state = AuthStatus.checking;
   AuthStatus get state => _state;
 
-  Future<void> init() async {
-    if (_initialized) return;
-    _initialized = true;
-
-    Future.microtask(_bootstrap);
-    notifyListeners();
-  }
-
-  Future<void> _bootstrap() async {
+  Future<void> startUp(BuildContext context) async {
     _state = AuthStatus.checking;
     notifyListeners();
 
-    final bool success = await _authService.tryAutoLogin();
+
+    final bool success = await _authService.tryAutoLogin(context);
 
     _state = success
         ? AuthStatus.authenticated
