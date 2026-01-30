@@ -1,4 +1,4 @@
-enum QuestionType { multiple, single, open, reorder, trueFalse }
+enum QuestionType { single, multiple, trueFalse, reorder, open }
 
 enum MediaType { image, audio, video }
 

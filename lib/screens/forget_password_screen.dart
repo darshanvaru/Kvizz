@@ -26,6 +26,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   String? _errorText;
 
   void handleEmailSubmit() async {
+    print("0");
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -33,6 +34,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
     try {
       final success = await UserService().forgetPassword(emailController.text);
+
 
       if (success) {
         if(mounted) {
@@ -161,7 +163,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) return 'Enter Reset Code';
-                            if (value.length != 6) return "Enter 6 digit code";
+                            if (value.length != 8) return "Enter 8 digit code";
                             return null;
                           },
                           textInputAction: TextInputAction.next,
