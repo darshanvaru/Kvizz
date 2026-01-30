@@ -22,7 +22,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _socketService.connectSocket(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _socketService.connectSocket(context);
+    });
+
     _loadActiveQuizzes();
   }
 
@@ -39,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       return;
     }
+
     // Validate game code format (6-digit number)
     if (!RegExp(r'^\d+$').hasMatch(gameCode)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       MaterialPageRoute(
         builder: (context) => WaitingRoomScreen(),
       ),
-    ).then((_) => _loadActiveQuizzes);
+    ).then((_) => setState(() => _loadActiveQuizzes()));
   }
 
   @override

@@ -310,20 +310,85 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
   void _showQuestionTypePicker() {
     showModalBottomSheet(
       context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: QuestionType.values.map((type) {
-          return ListTile(
-            title: Text(type.toString().split('.').last[0].toUpperCase()+type.toString().split('.').last.substring(1)),
-            onTap: () {
-              Navigator.pop(context);
-              _addQuestion(type);
-            },
-          );
-        }).toList(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                const Text(
+                  'Select Question Type',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: QuestionType.values.map((type) {
+                      final label = type.name[0].toUpperCase() + type.name.substring(1);
+
+                      return Card(
+                        child: ListTile(
+                          leading: _getQuestionTypeIcon(type),
+                          title: Text(label),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _addQuestion(type);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
+
+  Icon _getQuestionTypeIcon(QuestionType type) {
+    switch (type) {
+      case QuestionType.single:
+        return const Icon(Icons.radio_button_checked, color: Colors.blue);
+      case QuestionType.multiple:
+        return const Icon(Icons.check_box, color: Colors.green);
+      case QuestionType.reorder:
+        return const Icon(Icons.swap_vert, color: Colors.orange);
+      case QuestionType.open:
+        return const Icon(Icons.edit_note, color: Colors.purple);
+      case QuestionType.trueFalse:
+        return const Icon(Icons.toggle_on, color: Colors.teal);
+    }
+  }
+
+
 
   void _addQuestion(QuestionType type) {
     final newQuestion = QuestionModel(
@@ -356,210 +421,222 @@ class CreateOrEditQuizScreenState extends State<CreateOrEditQuizScreen> {
       ),
       body: GestureDetector(
         onTap: () => _dismissKeyboard(), // Dismiss keyboard on background tap
-        child: SingleChildScrollView( // Made the entire body scrollable
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView( // Made the entire body scrollable
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
-              // Quiz basic information form
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Quiz Information',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
+                        // Quiz basic information form
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Quiz Information',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 16),
 
-                      // Title TextField
-                      TextField(
-                        controller: _titleController,
-                        focusNode: _titleFocusNode,
-                        decoration: const InputDecoration(
-                          labelText: "Quiz Title",
-                          border: OutlineInputBorder(),
-                        ),
-                        textInputAction: TextInputAction.next,
-                        onSubmitted: (_) {
-                          _titleFocusNode.unfocus();
-                          FocusScope.of(context).requestFocus(_descriptionFocusNode);
-                        },
-                        onTapOutside: (_) => _dismissKeyboard(),
-                      ),
-                      const SizedBox(height: 16),
+                                // Title TextField
+                                TextField(
+                                  controller: _titleController,
+                                  focusNode: _titleFocusNode,
+                                  decoration: const InputDecoration(
+                                    labelText: "Quiz Title",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  textInputAction: TextInputAction.next,
+                                  onSubmitted: (_) {
+                                    _titleFocusNode.unfocus();
+                                    FocusScope.of(context).requestFocus(_descriptionFocusNode);
+                                  },
+                                  onTapOutside: (_) => _dismissKeyboard(),
+                                ),
+                                const SizedBox(height: 16),
 
-                      // Description TextField
-                      TextField(
-                        controller: _descriptionController,
-                        focusNode: _descriptionFocusNode,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          labelText: "Description",
-                          border: OutlineInputBorder(),
-                        ),
-                        textInputAction: TextInputAction.next,
-                        onSubmitted: (_) {
-                          _descriptionFocusNode.unfocus();
-                          FocusScope.of(context).requestFocus(_tagsFocusNode);
-                        },
-                        onTapOutside: (_) => _dismissKeyboard(),
-                      ),
-                      const SizedBox(height: 16),
+                                // Description TextField
+                                TextField(
+                                  controller: _descriptionController,
+                                  focusNode: _descriptionFocusNode,
+                                  maxLines: 3,
+                                  decoration: const InputDecoration(
+                                    labelText: "Description",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  textInputAction: TextInputAction.next,
+                                  onSubmitted: (_) {
+                                    _descriptionFocusNode.unfocus();
+                                    FocusScope.of(context).requestFocus(_tagsFocusNode);
+                                  },
+                                  onTapOutside: (_) => _dismissKeyboard(),
+                                ),
+                                const SizedBox(height: 16),
 
-                      // Difficulty Selection
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedDifficulty,
-                        decoration: const InputDecoration(
-                          labelText: "Difficulty",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'easy', child: Text('Easy')),
-                          DropdownMenuItem(value: 'medium', child: Text('Medium')),
-                          DropdownMenuItem(value: 'hard', child: Text('Hard')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            _dismissKeyboard(); // Dismiss keyboard when dropdown changes
-                            setState(() {
-                              _selectedDifficulty = value;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                                // Difficulty Selection
+                                DropdownButtonFormField<String>(
+                                  initialValue: _selectedDifficulty,
+                                  decoration: const InputDecoration(
+                                    labelText: "Difficulty",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(value: 'easy', child: Text('Easy')),
+                                    DropdownMenuItem(value: 'medium', child: Text('Medium')),
+                                    DropdownMenuItem(value: 'hard', child: Text('Hard')),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      _dismissKeyboard(); // Dismiss keyboard when dropdown changes
+                                      setState(() {
+                                        _selectedDifficulty = value;
+                                      });
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
 
-                      // Tags TextField
-                      TextField(
-                        controller: _tagsController,
-                        focusNode: _tagsFocusNode,
-                        decoration: const InputDecoration(
-                          labelText: "Tags (comma separated)",
-                          hintText: "e.g., science, physics, chemistry",
-                          border: OutlineInputBorder(),
-                          helperText: "Separate multiple tags with commas",
-                        ),
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) {
-                          _tagsFocusNode.unfocus();
-                          _dismissKeyboard();
-                        },
-                        onTapOutside: (_) => _dismissKeyboard(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Add Question Card
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.add, color: Colors.green),
-                  title: const Text('Add Question'),
-                  subtitle: Text('${_questions.length} question(s) added'),
-                  onTap: () {
-                    _dismissKeyboard();
-                    _showQuestionTypePicker();
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Questions List
-              if (_questions.isEmpty)
-                // No Question Yet widget
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.quiz_outlined, size: 48, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'No questions yet',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                                // Tags TextField
+                                TextField(
+                                  controller: _tagsController,
+                                  focusNode: _tagsFocusNode,
+                                  decoration: const InputDecoration(
+                                    labelText: "Tags (comma separated)",
+                                    hintText: "e.g., science, physics, chemistry",
+                                    border: OutlineInputBorder(),
+                                    helperText: "Separate multiple tags with commas",
+                                  ),
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) {
+                                    _tagsFocusNode.unfocus();
+                                    _dismissKeyboard();
+                                  },
+                                  onTapOutside: (_) => _dismissKeyboard(),
+                                ),
+                              ],
+                            ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tap "Add Question" to get started',
-                            style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Questions List
+                        if (_questions.isEmpty)
+                          // No Question Yet widget
+                          const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.quiz_outlined, size: 48, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No questions yet',
+                                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Tap "Add Question" to get started',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          // Reorderable Questions
+                          ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _questions.length,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex--;
+                                final item = _questions.removeAt(oldIndex);
+                                _questions.insert(newIndex, item);
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              return Container(
+                                key: Key('${_questions[index].id}_$index'),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Card(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      children: [
+
+                                        // Drag icon, Question number, question type indicator
+                                        Row(
+                                          children: [
+                                            ReorderableDragStartListener(
+                                              index: index,
+                                              child: const Icon(Icons.drag_handle, color: Colors.grey),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Question ${index + 1}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            Chip(
+                                              label: Text(
+                                                  _questions[index].type.toString().split('.').last[0].toUpperCase() +
+                                                  _questions[index].type.toString().split('.').last.substring(1)
+                                              ),
+                                              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+
+                                        // actual question widget
+                                        _buildQuestionWidget(_questions[index], index),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ],
-                      ),
+                        // Add some bottom padding
+                        const SizedBox(height: 100),
+                      ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Add Question Card
+            SafeArea(
+                child:
+                Card(
+                  color: Color.fromRGBO(102, 78, 165, 1),
+                  child: ListTile(
+                    leading: const Icon(Icons.add, color: Colors.green, size: 40,),
+                    title: const Text('Add Question', style: TextStyle(color: Colors.white),),
+                    subtitle: Text('${_questions.length} question(s) added', style: TextStyle(fontSize: 12, color: Colors.white)),
+                    onTap: () {
+                      _dismissKeyboard();
+                      _showQuestionTypePicker();
+                    },
                   ),
                 )
-              else
-                // Reorderable Questions
-                ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _questions.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex--;
-                      final item = _questions.removeAt(oldIndex);
-                      _questions.insert(newIndex, item);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    return Container(
-                      key: Key('${_questions[index].id}_$index'),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Card(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-
-                              // Drag icon, Question number, question type indicator
-                              Row(
-                                children: [
-                                  ReorderableDragStartListener(
-                                    index: index,
-                                    child: const Icon(Icons.drag_handle, color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Question ${index + 1}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  Chip(
-                                    label: Text(
-                                        _questions[index].type.toString().split('.').last[0].toUpperCase() +
-                                        _questions[index].type.toString().split('.').last.substring(1)
-                                    ),
-                                    backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // actual question widget
-                              _buildQuestionWidget(_questions[index], index),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-              // Add some bottom padding
-              const SizedBox(height: 100),
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );
