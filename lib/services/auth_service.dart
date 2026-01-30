@@ -14,11 +14,14 @@ import '../providers/user_provider.dart';
 
 class AuthService {
 
-  Future<bool> tryAutoLogin() async {
+  Future<bool> tryAutoLogin(BuildContext context) async {
     try {
-      await UserService().fetchUserProfile();
+      print("Trying Autologin");
+      await UserService().fetchUserProfile(context);
+      print("Autologin Successful");
       return true;
     } catch (e) {
+      print("Autologin Failed. No data found");
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('jwt');
       return false;
