@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:kvizz/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api_endpoints.dart';
 import '../models/user_model.dart';
 
 class UserService with ChangeNotifier{
 
-  Future<UserModel> fetchUserProfile() async {
+  Future<UserModel> fetchUserProfile(BuildContext context) async {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt') ?? '';
@@ -24,7 +25,11 @@ class UserService with ChangeNotifier{
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data']['doc'];
       UserModel user = UserModel.fromJson(data);
-      UserProvider().setCurrentUser(user);
+      print("Calling setCurrentUser from fetchUserProfile.");
+      if(context.mounted) {
+        Provider.of<UserProvider>(context, listen: false).setCurrentUser(user);
+      }
+
       return user;
     } else {
       throw Exception('Failed to load user profile');
@@ -114,8 +119,7 @@ class UserService with ChangeNotifier{
   Future<bool> forgetPassword(String email) async {
     try {
       final response = await http.post(
-        // Uri.parse(ApiEndpoints.forgetPassword),
-        Uri.parse("http://10.0.0.101:8000/api/v1/users/forgot-password"),
+        Uri.parse(ApiEndpoints.forgetPassword),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

@@ -120,65 +120,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
             // Show main waiting room UI with participant-change handling
             return Consumer<GameSessionProvider>(
               builder: (context, sessionProvider, child) {
-                // final currentUser = Provider.of<UserProvider>(context, listen: false).currentUser;
-                // final participants = sessionProvider.participants;
-                // final previousParticipants = _previousParticipants;
-                //
-                // // --- PARTICIPANT REMOVAL DETECTION AND FEEDBACK ---
-                // // If user was removed (not present in participant list anymore)
-                // if (currentUser != null &&
-                //     sessionProvider.hasSession &&
-                //     previousParticipants.isNotEmpty &&
-                //     !participants.any((p) => p.userId == currentUser.id)
-                // ) {
-                //   WidgetsBinding.instance.addPostFrameCallback((_) {
-                //     Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(0);
-                //     Navigator.of(context).popUntil((route) => route.isFirst);
-                //     showDialog(
-                //       context: context,
-                //       barrierDismissible: false,
-                //       builder: (context) => AlertDialog(
-                //         title: Text('Removed'),
-                //         content: Text('You were removed by host'),
-                //         actions: [
-                //           ElevatedButton(
-                //             onPressed: () {},
-                //             // onPressed: () => Navigator.of(context).pop(),
-                //             child: Text('OK'),
-                //           ),
-                //         ],
-                //       ),
-                //     );
-                //   });
-                // }
-                //
-                // // For other participants, show a notification if someone is removed
-                // if (sessionProvider.hasSession &&
-                //     previousParticipants.isNotEmpty &&
-                //     participants.length < previousParticipants.length
-                // ) {
-                //   // Find removed users
-                //   final removed = previousParticipants.where((old) =>
-                //   !participants.any((p) => p.userId == old.userId)).toList();
-                //   if (removed.isNotEmpty) {
-                //     WidgetsBinding.instance.addPostFrameCallback((_) {
-                //       ScaffoldMessenger.of(context).showSnackBar(
-                //         SnackBar(
-                //           content: Row(
-                //             children: [
-                //               Icon(Icons.person_remove, color: Colors.white, size: 20),
-                //               SizedBox(width: 8),
-                //               Text('${removed.first.username} was removed by host!'),
-                //             ],
-                //           ),
-                //           backgroundColor: Colors.red,
-                //           duration: Duration(seconds: 2),
-                //           behavior: SnackBarBehavior.floating,
-                //         ),
-                //       );
-                //     });
-                //   }
-                // }
 
                 // Participant join notification
                 if (sessionProvider.hasSession &&
@@ -198,7 +139,6 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
 
                 // Update previous states AFTER all checks
                 _previousParticipantCount = sessionProvider.participantCount;
-                // _previousParticipants = List.from(sessionProvider.participants);
 
                 if (sessionProvider.error != null) {
                   return _buildErrorState(sessionProvider);
@@ -226,6 +166,10 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _leaveGame(context);
                     Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
+                    // Navigator.popUntil(
+                    //   context,
+                    //       (route) => route.settings.name == 'HomePage',
+                    // );
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   });
                   return _buildGameStartingState();
@@ -695,6 +639,10 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
       Navigator.of(context).pop();
     } else {
       Provider.of<TabIndexProvider>(context, listen: false).resetIndex;
+      // Navigator.popUntil(
+      //   context,
+      //       (route) => route.settings.name == 'HomePage',
+      // );
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
@@ -726,7 +674,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: (sessionProvider.participantCount > 0) ? _startGame : null,
+                    onPressed: (sessionProvider.participantCount > 1) ? _startGame : null,
                     icon: Icon(Icons.play_arrow, color: colorScheme.onPrimary),
                     label: Text('Start Quiz', style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary)),
                     style: ElevatedButton.styleFrom(
@@ -752,7 +700,7 @@ class WaitingRoomScreenState extends State<WaitingRoomScreen> with SingleTickerP
                 ),
               ],
             ),
-            if (sessionProvider.participantCount == 0)
+            if (sessionProvider.participantCount < 2)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
