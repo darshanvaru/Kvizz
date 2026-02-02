@@ -199,24 +199,22 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
           child: Row(
             children: [
               //Preview Button
-              FittedBox(
-                child: Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PreviewQuizScreen(questions: quiz?.questions?? []),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.visibility),
-                    label: const Text("Preview"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                    ),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PreviewQuizScreen(questions: quiz?.questions?? []),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.visibility),
+                  label: const Text("Preview"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade600,
+                    foregroundColor: Colors.white,
                   ),
                 ),
               ),
@@ -398,7 +396,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
         leading: const Icon(Icons.quiz, color: Colors.blue),
         children: [
           Container(
-            constraints: const BoxConstraints(maxHeight: 300),
+            constraints: const BoxConstraints(maxHeight: 400),
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: quiz!.questions.length,

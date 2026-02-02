@@ -58,7 +58,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
       case QuestionType.single:
         isCorrect =
             selectedRadio != null &&
-            selectedRadio.toString() == question.correctAnswer.first;
+                selectedRadio.toString() == question.correctAnswer.first;
         break;
 
       case QuestionType.multiple:
@@ -68,16 +68,16 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
         Set<String> correctIndicesSet = question.correctAnswer.toSet();
         isCorrect =
             selectedIndicesStr.length == correctIndicesSet.length &&
-            selectedIndicesStr.containsAll(correctIndicesSet);
+                selectedIndicesStr.containsAll(correctIndicesSet);
         break;
 
       case QuestionType.open:
         final answer = answerController.text.trim();
         isCorrect =
             answer.isNotEmpty &&
-            question.correctAnswer
-                .map((e) => e.toLowerCase())
-                .contains(answer.toLowerCase());
+                question.correctAnswer
+                    .map((e) => e.toLowerCase())
+                    .contains(answer.toLowerCase());
         break;
 
       case QuestionType.reorder:
@@ -130,638 +130,878 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     final question = questions[currentQuestionIndex];
 
+    // Theme-aware colors
+    final backgroundColor = colorScheme.surface;
+    final cardColor = colorScheme.surfaceContainerHighest;
+    final textColor = colorScheme.onSurface;
+    final subtleTextColor = colorScheme.onSurfaceVariant;
+    final primaryColor = colorScheme.primary;
+    final progressBarBackground = isDark
+        ? colorScheme.surfaceContainerHigh
+        : colorScheme.primaryContainer.withOpacity(0.3);
+    final correctColor = isDark ? Colors.green.shade400 : Colors.teal;
+    final incorrectColor = isDark ? Colors.red.shade400 : Colors.redAccent;
+    final optionBorderColor = isDark
+        ? colorScheme.outline.withOpacity(0.5)
+        : colorScheme.outlineVariant;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FBFF),
+      backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(), // Smooth scroll effect
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 24.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Progress Bar with subtle shadow and height
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE0E7FF),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                        width:
-                            MediaQuery.of(context).size.width *
-                                ((currentQuestionIndex + 1) /
-                                    questions.length) -
-                            32,
-                        // subtract horizontal padding
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4F8DF9),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF4F8DF9,
-                              ).withValues(alpha: 0.6),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Top Row with Exit Button aligned left and question numbering right
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.exit_to_app, color: Colors.white),
-                      label: const Text("Exit"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      "${currentQuestionIndex + 1} of ${questions.length}",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Question Card with deeper shadow and more padding
-                Container(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 40,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.12),
-                        blurRadius: 28,
-                        offset: const Offset(0, 14),
-                      ),
-                    ],
+                    horizontal: 16.0,
+                    vertical: 24.0,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Question Type Label with subtle background
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Text(
-                          question.type == QuestionType.single
-                              ? "Single Choice Question"
-                              : question.type == QuestionType.open
-                              ? "Open Ended Question"
-                              : question.type == QuestionType.reorder
-                              ? "Reorder Question"
-                              : "Multiple Choice Question",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Question Text
-                      Text(
-                        question.question,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-
-                      SizedBox(
-                        height: question.type != QuestionType.open ? 32 : 16,
-                      ),
-
-                      // --- Question Types Builders ---
-
-                      // Single choice
-                      if (question.type == QuestionType.single)
-                        ...List.generate(question.options.length, (index) {
-                          final isCorrect =
-                              question.options[index] ==
-                              question.options[int.parse(
-                                question.correctAnswer.first,
-                              )];
-                          final isIncorrect = answered && !isCorrect;
-
-                          Color tileColor = Colors.white;
-                          Color borderColor = Colors.grey.shade300;
-                          Icon leadingIcon = const Icon(
-                            Icons.circle_outlined,
-                            color: Colors.grey,
-                          );
-                          Color optionTextColor = Colors.black54;
-
-                          if (answered) {
-                            if (isCorrect) {
-                              tileColor = const Color(0xFFD6F4E7);
-                              borderColor = Colors.teal;
-                              leadingIcon = const Icon(
-                                Icons.check_circle,
-                                color: Colors.teal,
-                              );
-                              optionTextColor = Colors.teal;
-                            } else if (isIncorrect) {
-                              tileColor = Theme.of(
-                                context,
-                              ).primaryColor.withValues(alpha: 0.1);
-                              borderColor = Colors.redAccent;
-                              leadingIcon = const Icon(
-                                Icons.cancel,
-                                color: Colors.redAccent,
-                              );
-                              optionTextColor = Colors.redAccent;
-                            }
-                          }
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: tileColor,
-                              border: Border.all(
-                                color: borderColor,
-                                width: isCorrect || isIncorrect ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              leading: leadingIcon,
-                              title: Text(
-                                question.options[index],
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: optionTextColor,
-                                ),
-                              ),
-                              onTap: answered
-                                  ? null
-                                  : () => setState(() {
-                                      selectedRadio = index;
-                                      answered = true;
-                                      submitAnswer();
-                                    }),
-                            ),
-                          );
-                        }),
-
-                      // Multiple choice
-                      if (question.type == QuestionType.multiple)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                      // Progress Bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Stack(
                           children: [
-                            ...List.generate(question.options.length, (index) {
-                              final isCorrect =
-                                  answered &&
-                                  question.correctAnswer.contains(
-                                    index.toString(),
-                                  );
-                              final isIncorrect =
-                                  answered &&
-                                  !question.correctAnswer.contains(
-                                    index.toString(),
-                                  );
-
-                              Color tileColor = Colors.white;
-                              Color borderColor = Colors.grey.shade300;
-                              Color optionTextColor = Colors.black87;
-
-                              if (answered) {
-                                if (isCorrect) {
-                                  tileColor = const Color(0xFFD6F4E7);
-                                  borderColor = Colors.teal;
-                                  optionTextColor = Colors.teal;
-                                } else if (isIncorrect) {
-                                  tileColor = const Color(0xFFFBE4DF);
-                                  borderColor = Colors.redAccent;
-                                  optionTextColor = Colors.redAccent;
-                                }
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: tileColor,
-                                  border: Border.all(
-                                    color: borderColor,
-                                    width: isCorrect || isIncorrect ? 2 : 1,
+                            Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: progressBarBackground,
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
+                                ],
+                              ),
+                            ),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                              width:
+                              MediaQuery.of(context).size.width *
+                                  ((currentQuestionIndex + 1) /
+                                      questions.length) -
+                                  32,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Top Row with Exit Button and Question Numbering
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                              label: const Text("Exit"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                foregroundColor: Colors.white,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: ListTile(
-                                  leading: Checkbox(
-                                    value: selectedIndexes.contains(index),
-                                    onChanged: answered
-                                        ? null
-                                        : (val) {
-                                            setState(() {
-                                              if (val == true) {
-                                                selectedIndexes.add(index);
-                                              } else {
-                                                selectedIndexes.remove(index);
-                                              }
-                                            });
-                                          },
-                                  ),
-                                  title: Text(
-                                    question.options[index],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: optionTextColor,
-                                    ),
-                                  ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
                                 ),
-                              );
-                            }),
-                            const SizedBox(height: 10),
-                            if (!answered)
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: currentQuestionIndex > 0
-                                      ? Colors.blue
-                                      : Colors.grey.shade300,
-                                  foregroundColor: currentQuestionIndex > 0
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                  elevation: currentQuestionIndex > 0 ? 4 : 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: selectedIndexes.isEmpty
-                                    ? null
-                                    : () {
-                                        submitAnswer();
-                                      },
-                                child: const Text("Submit"),
                               ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              "${currentQuestionIndex + 1}/${questions.length}",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // Question & Answer Section
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
                           ],
                         ),
-
-                      // Open ended
-                      if (question.type == QuestionType.open)
-                        Column(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            TextField(
-                              controller: answerController,
-                              enabled: !answered,
-                              maxLines: 3,
-                              decoration: InputDecoration(
-                                hintText: "Type your answer...",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
+
+                            //Question type tag
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: primaryColor.withOpacity(0.3),
+                                  width: 1,
                                 ),
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
+                              ),
+                              child: Text(
+                                _getQuestionTypeLabel(question.type),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 10),
 
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: currentQuestionIndex > 0
-                                      ? Colors.blue
-                                      : Colors.grey.shade300,
-                                  foregroundColor: currentQuestionIndex > 0
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                  elevation: currentQuestionIndex > 0 ? 4 : 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: answered ? null : () => submitAnswer(),
-                                child: const Text("Submit"),
+                            const SizedBox(height: 20),
+
+                            // Question Text
+                            Text(
+                              question.question,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                                height: 1.4,
                               ),
                             ),
-                          ],
-                        ),
 
-                      // Reorder
-                      if (question.type == QuestionType.reorder)
-                        Column(
-                          children: [
-                            ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: reorderedOptions.length,
-                              buildDefaultDragHandles: false,
-                              onReorder: answered
-                                  ? (_, __) {}
-                                  : (oldIndex, newIndex) {
-                                      setState(() {
-                                        if (newIndex > oldIndex) newIndex -= 1;
-                                        final item = reorderedOptions.removeAt(
-                                          oldIndex,
+                            const SizedBox(height: 15),
+
+                            // Media Display
+                            if (question.media != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    question.media!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.errorContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.error_outline,
+                                                color: colorScheme.error,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                "Failed to load media",
+                                                style: TextStyle(
+                                                  color: colorScheme.error,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                              ),
+
+                            // Single Choice Questions
+                            if (question.type == QuestionType.single)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ...question.options.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final option = entry.value;
+                                    final isCorrect = answered &&
+                                        index.toString() ==
+                                            question.correctAnswer.first;
+                                    final isSelected = selectedRadio == index;
+                                    final isIncorrect = answered &&
+                                        isSelected &&
+                                        !isCorrect;
+
+                                    Color tileColor;
+                                    Color borderColor;
+                                    Icon leadingIcon;
+                                    Color optionTextColor;
+
+                                    if (answered) {
+                                      if (isCorrect) {
+                                        tileColor = correctColor.withOpacity(0.15);
+                                        borderColor = correctColor;
+                                        leadingIcon = Icon(Icons.check_circle, color: correctColor);
+                                        optionTextColor = correctColor;
+                                      } else if (isIncorrect) {
+                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        borderColor = incorrectColor;
+                                        leadingIcon = Icon(Icons.cancel, color: incorrectColor);
+                                        optionTextColor = incorrectColor;
+                                      } else {
+                                        tileColor = cardColor;
+                                        borderColor = optionBorderColor;
+                                        leadingIcon = Icon(Icons.circle_outlined, color: subtleTextColor);
+                                        optionTextColor = subtleTextColor;
+                                      }
+                                    } else {
+                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      borderColor = isSelected ? primaryColor : optionBorderColor;
+                                      leadingIcon = Icon(
+                                        isSelected ? Icons.radio_button_checked : Icons.circle_outlined,
+                                        color: isSelected ? primaryColor : subtleTextColor
+                                      );
+                                      optionTextColor = isSelected ? primaryColor : textColor;
+                                    }
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: tileColor,
+                                        border: Border.all(
+                                          color: borderColor,
+                                          width: (isCorrect || isIncorrect || isSelected) ? 2 : 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ListTile(
+                                        leading: leadingIcon,
+                                        title: Text(
+                                          option,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: optionTextColor,
+                                          ),
+                                        ),
+                                        onTap: answered
+                                            ? null
+                                            : () => setState(() {
+                                          selectedRadio = index;
+                                        }),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+
+                            // Multiple Choice Questions
+                            if (question.type == QuestionType.multiple)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ...question.options.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final option = entry.value;
+                                    final isCorrect = answered &&
+                                        question.correctAnswer.contains(index.toString());
+                                    final isSelected = selectedIndexes.contains(index);
+                                    final isIncorrect = answered && isSelected && !isCorrect;
+
+                                    Color tileColor;
+                                    Color borderColor;
+                                    Icon leadingIcon;
+                                    Color optionTextColor;
+
+                                    if (answered) {
+                                      if (isCorrect) {
+                                        tileColor = correctColor.withOpacity(0.15);
+                                        borderColor = correctColor;
+                                        leadingIcon = Icon(
+                                          Icons.check_circle,
+                                          color: correctColor,
                                         );
+                                        optionTextColor = correctColor;
+                                      } else if (isIncorrect) {
+                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        borderColor = incorrectColor;
+                                        leadingIcon = Icon(
+                                          Icons.cancel,
+                                          color: incorrectColor,
+                                        );
+                                        optionTextColor = incorrectColor;
+                                      } else {
+                                        tileColor = cardColor;
+                                        borderColor = optionBorderColor;
+                                        leadingIcon = Icon(
+                                          Icons.check_box_outline_blank,
+                                          color: subtleTextColor,
+                                        );
+                                        optionTextColor = subtleTextColor;
+                                      }
+                                    } else {
+                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      borderColor = isSelected ? primaryColor : optionBorderColor;
+                                      leadingIcon = Icon(
+                                        isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                                        color: isSelected ? primaryColor : subtleTextColor,
+                                      );
+                                      optionTextColor = isSelected ? primaryColor : textColor;
+                                    }
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: tileColor,
+                                        border: Border.all(
+                                          color: borderColor,
+                                          width: (isCorrect || isIncorrect || isSelected) ? 2 : 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ListTile(
+                                        leading: leadingIcon,
+                                        title: Text(
+                                          option,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: optionTextColor,
+                                          ),
+                                        ),
+                                        onTap: answered
+                                            ? null
+                                            : () {
+                                          setState(() {
+                                            if (selectedIndexes.contains(index)) {
+                                              selectedIndexes.remove(index);
+                                            } else {
+                                              selectedIndexes.add(index);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+
+                            // Open-ended Questions
+                            if (question.type == QuestionType.open)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  TextField(
+                                    controller: answerController,
+                                    enabled: !answered,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: textColor,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "Type your answer here...",
+                                      hintStyle: TextStyle(
+                                        color: subtleTextColor,
+                                      ),
+                                      filled: true,
+                                      fillColor: isDark ? colorScheme.surfaceContainer : colorScheme.surface,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: optionBorderColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: optionBorderColor,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      disabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: optionBorderColor.withOpacity(0.5),
+                                        ),
+                                      ),
+                                    ),
+                                    maxLines: 3,
+                                  ),
+                                  if (answered)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: correctColor.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: correctColor,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.lightbulb_outline,
+                                              color: correctColor,
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                "Correct answer(s): ${question.correctAnswer.join(', ')}",
+                                                style: TextStyle(
+                                                  color: correctColor,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                            // Reorder Questions
+                            if (question.type == QuestionType.reorder)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ReorderableListView(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    onReorder: answered
+                                        ? (_, __) {}
+                                        : (oldIndex, newIndex) {
+                                      setState(() {
+                                        if (newIndex > oldIndex) {
+                                          newIndex -= 1;
+                                        }
+                                        final item =
+                                        reorderedOptions.removeAt(oldIndex);
                                         reorderedOptions.insert(newIndex, item);
                                       });
                                     },
-                              itemBuilder: (context, index) {
-                                final entry = reorderedOptions[index];
-                                return ReorderableDragStartListener(
-                                  key: ValueKey(entry.key),
-                                  index: index,
-                                  child: ListTile(
-                                    tileColor: Colors.grey.shade100,
-                                    title: Text(entry.value),
-                                    trailing: const Icon(Icons.drag_handle),
+                                    children: reorderedOptions.map((entry) {
+                                      final index = reorderedOptions.indexOf(entry);
+                                      final originalIndex = entry.key;
+                                      final isCorrect = answered &&
+                                          index.toString() ==
+                                              question.correctAnswer[originalIndex];
+
+                                      Color tileColor;
+                                      Color borderColor;
+                                      Color optionTextColor;
+
+                                      if (answered) {
+                                        if (isCorrect) {
+                                          tileColor = correctColor.withOpacity(0.15);
+                                          borderColor = correctColor;
+                                          optionTextColor = correctColor;
+                                        } else {
+                                          tileColor = incorrectColor.withOpacity(0.15);
+                                          borderColor = incorrectColor;
+                                          optionTextColor = incorrectColor;
+                                        }
+                                      } else {
+                                        tileColor = cardColor;
+                                        borderColor = optionBorderColor;
+                                        optionTextColor = textColor;
+                                      }
+
+                                      return Container(
+                                        key: ValueKey(entry.key),
+                                        margin: const EdgeInsets.only(bottom: 12),
+                                        decoration: BoxDecoration(
+                                          color: tileColor,
+                                          border: Border.all(
+                                            color: borderColor,
+                                            width: isCorrect || (!isCorrect && answered) ? 2 : 1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: ListTile(
+                                          leading: answered
+                                              ? Icon(
+                                            isCorrect ? Icons.check_circle : Icons.cancel,
+                                            color: isCorrect ? correctColor : incorrectColor,
+                                          )
+                                              : Icon(
+                                            Icons.drag_handle,
+                                            color: subtleTextColor,
+                                          ),
+                                          title: Text(
+                                            entry.value,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: optionTextColor,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
                                   ),
-                                );
-                              },
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: currentQuestionIndex > 0
-                                      ? Colors.blue
-                                      : Colors.grey.shade300,
-                                  foregroundColor: currentQuestionIndex > 0
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                  elevation: currentQuestionIndex > 0 ? 4 : 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: answered
-                                    ? null
-                                    : () => submitAnswer(),
-                                child: const Text("Submit"),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
 
-                      // True/False
-                      if (question.type == QuestionType.trueFalse)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ...List.generate(2, (index) {
-                              final isCorrect =
-                                  answered &&
-                                  index ==
-                                      int.parse(question.correctAnswer.first);
-                              final isIncorrect = answered && !isCorrect;
-                              final label = index == 0 ? "False" : "True";
+                            // True/False Questions
+                            if (question.type == QuestionType.trueFalse)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ...List.generate(2, (index) {
+                                    final isCorrect =
+                                        answered &&
+                                            index ==
+                                                int.parse(question.correctAnswer.first);
+                                    final isSelected = selectedRadio == index;
+                                    final isIncorrect = answered && isSelected && !isCorrect;
+                                    final label = index == 0 ? "False" : "True";
 
-                              Color tileColor = Colors.white;
-                              Color borderColor = Colors.grey.shade300;
-                              Icon leadingIcon = const Icon(
-                                Icons.circle_outlined,
-                                color: Colors.grey,
-                              );
-                              Color optionTextColor = Colors.black54;
+                                    Color tileColor;
+                                    Color borderColor;
+                                    Icon leadingIcon;
+                                    Color optionTextColor;
 
-                              if (answered) {
-                                if (isCorrect) {
-                                  tileColor = const Color(0xFFD6F4E7);
-                                  borderColor = Colors.teal;
-                                  leadingIcon = const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.teal,
-                                  );
-                                  optionTextColor = Colors.teal;
-                                } else if (isIncorrect) {
-                                  tileColor = Theme.of(
-                                    context,
-                                  ).primaryColor.withValues(alpha: 0.1);
-                                  borderColor = Colors.redAccent;
-                                  leadingIcon = const Icon(
-                                    Icons.cancel,
-                                    color: Colors.redAccent,
-                                  );
-                                  optionTextColor = Colors.redAccent;
-                                }
-                              }
+                                    if (answered) {
+                                      if (isCorrect) {
+                                        tileColor = correctColor.withOpacity(0.15);
+                                        borderColor = correctColor;
+                                        leadingIcon = Icon(
+                                          Icons.check_circle,
+                                          color: correctColor,
+                                        );
+                                        optionTextColor = correctColor;
+                                      } else if (isIncorrect) {
+                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        borderColor = incorrectColor;
+                                        leadingIcon = Icon(
+                                          Icons.cancel,
+                                          color: incorrectColor,
+                                        );
+                                        optionTextColor = incorrectColor;
+                                      } else {
+                                        tileColor = cardColor;
+                                        borderColor = optionBorderColor;
+                                        leadingIcon = Icon(
+                                          Icons.circle_outlined,
+                                          color: subtleTextColor,
+                                        );
+                                        optionTextColor = subtleTextColor;
+                                      }
+                                    } else {
+                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      borderColor = isSelected ? primaryColor : optionBorderColor;
+                                      leadingIcon = Icon(
+                                        isSelected ? Icons.radio_button_checked : Icons.circle_outlined,
+                                        color: isSelected ? primaryColor : subtleTextColor,
+                                      );
+                                      optionTextColor = isSelected ? primaryColor : textColor;
+                                    }
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: tileColor,
-                                  border: Border.all(
-                                    color: borderColor,
-                                    width: isCorrect || isIncorrect ? 2 : 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  leading: leadingIcon,
-                                  title: Text(
-                                    label,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: optionTextColor,
-                                    ),
-                                  ),
-                                  onTap: answered
-                                      ? null
-                                      : () => setState(() {
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: tileColor,
+                                        border: Border.all(
+                                          color: borderColor,
+                                          width: (isCorrect || isIncorrect || isSelected) ? 2 : 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: ListTile(
+                                        leading: leadingIcon,
+                                        title: Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: optionTextColor,
+                                          ),
+                                        ),
+                                        onTap: answered
+                                            ? null
+                                            : () => setState(() {
                                           selectedRadio = index;
                                           answered = true;
                                           submitAnswer();
                                         }),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+
+                            // Submit Button for non-auto-submit questions
+                            if (!answered &&
+                                question.type != QuestionType.trueFalse)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if ((question.type == QuestionType.single &&
+                                        selectedRadio != null) ||
+                                        (question.type == QuestionType.multiple &&
+                                            selectedIndexes.isNotEmpty) ||
+                                        (question.type == QuestionType.open &&
+                                            answerController.text.trim().isNotEmpty) ||
+                                        (question.type == QuestionType.reorder &&
+                                            reorderedOptions.isNotEmpty)) {
+                                      submitAnswer();
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: colorScheme.onPrimary,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 4,
+                                  ),
+                                  child: const Text(
+                                    "Submit Answer",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            }),
+                              ),
+
+                            // Feedback Section
+                            if (answered && lastAnswerCorrect != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 14),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: (lastAnswerCorrect == true ? correctColor : incorrectColor).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: lastAnswerCorrect == true ? correctColor : incorrectColor,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        lastAnswerCorrect == true ? Icons.check_circle : Icons.cancel,
+                                        size: 30,
+                                        color: lastAnswerCorrect == true ? correctColor : incorrectColor,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              lastAnswerCorrect == true ? "Correct!" : "Incorrect!",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: lastAnswerCorrect == true ? correctColor : incorrectColor,
+                                              ),
+                                            ),
+                                            if (question.funFact != null &&
+                                                question.funFact!.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 8),
+                                                child: Text(
+                                                  "💡 ${question.funFact}",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: textColor.withOpacity(0.8),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
+                      ),
 
-                      // Bottom textual feedback for all question types
-                      if (answered && lastAnswerCorrect != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Row(
-                            children: [
-                              Icon(
-                                lastAnswerCorrect == true
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-                                size: 30,
-                                color: lastAnswerCorrect == true
-                                    ? Colors.teal
-                                    : Colors.redAccent,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                lastAnswerCorrect == true
-                                    ? "Correct!"
-                                    : "Incorrect!",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: lastAnswerCorrect == true
-                                      ? Colors.teal
-                                      : Colors.redAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Navigation Buttons Row with elevated and consistent padding
-                // Replace your existing navigation buttons Row with this:
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth:
-                                constraints.maxWidth *
-                                0.45, // max half width for button
-                          ),
-                          child: ElevatedButton.icon(
-                            onPressed: currentQuestionIndex > 0
-                                ? _previousQuestion
-                                : null,
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 20,
-                            ),
-                            label: const FittedBox(child: Text("Previous")),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: currentQuestionIndex > 0
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              foregroundColor: currentQuestionIndex > 0
-                                  ? Colors.white
-                                  : Colors.grey.shade600,
-                              elevation: currentQuestionIndex > 0 ? 4 : 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth * 0.45,
-                          ),
-                          child: ElevatedButton.icon(
-                            onPressed:
-                                currentQuestionIndex < questions.length - 1
-                                ? _nextQuestion
-                                : null,
-                            icon: const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 20,
-                            ),
-                            label: const FittedBox(child: Text("Next")),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  currentQuestionIndex < questions.length - 1
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              foregroundColor:
-                                  currentQuestionIndex < questions.length - 1
-                                  ? Colors.white
-                                  : Colors.grey.shade600,
-                              elevation:
-                                  currentQuestionIndex < questions.length - 1
-                                  ? 4
-                                  : 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
+
+            // Pinned Navigation Buttons at Bottom
+            Container(
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ElevatedButton.icon(
+                          onPressed: currentQuestionIndex > 0
+                              ? _previousQuestion
+                              : null,
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 20,
+                          ),
+                          label: const Text("Previous"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: currentQuestionIndex > 0
+                                ? primaryColor
+                                : (isDark
+                                ? colorScheme.surfaceContainerHighest
+                                : colorScheme.surfaceContainerHigh),
+                            foregroundColor: currentQuestionIndex > 0
+                                ? colorScheme.onPrimary
+                                : subtleTextColor,
+                            elevation: currentQuestionIndex > 0 ? 4 : 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: ElevatedButton.icon(
+                          onPressed: currentQuestionIndex < questions.length - 1
+                              ? _nextQuestion
+                              : null,
+                          icon: const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 20,
+                          ),
+                          label: const Text("Next"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            currentQuestionIndex < questions.length - 1
+                                ? primaryColor
+                                : (isDark
+                                ? colorScheme.surfaceContainerHighest
+                                : colorScheme.surfaceContainerHigh),
+                            foregroundColor:
+                            currentQuestionIndex < questions.length - 1
+                                ? colorScheme.onPrimary
+                                : subtleTextColor,
+                            elevation:
+                            currentQuestionIndex < questions.length - 1
+                                ? 4
+                                : 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _getQuestionTypeLabel(QuestionType type) {
+    switch (type) {
+      case QuestionType.single:
+        return "SINGLE CHOICE";
+      case QuestionType.multiple:
+        return "MULTIPLE CHOICE";
+      case QuestionType.open:
+        return "OPEN ENDED";
+      case QuestionType.reorder:
+        return "REORDER";
+      case QuestionType.trueFalse:
+        return "TRUE/FALSE";
+    }
   }
 }
