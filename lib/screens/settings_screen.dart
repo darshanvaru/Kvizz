@@ -36,7 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future _loadUserData() async {
     setState(() => isLoading = true);
-    final fetchedUser = await UserService().fetchUserProfile();
+    final fetchedUser = await UserService().fetchUserProfile(context);
 
     if(mounted) {
       Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
@@ -233,23 +233,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           },
                         ),
                       ),
-
-                      // Forgot Password Button
-                      // Card(
-                      //   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      //   child: ListTile(
-                      //     leading: const Icon(Icons.lock_reset, color: Colors.blueAccent),
-                      //     title: const Text("Forget Password"),
-                      //     trailing: const Icon(Icons.arrow_forward_ios),
-                      //     onTap: () {
-                      //       // TODO: Add forgot password logic or navigation in next update
-                      //       // Navigator.push(
-                      //       //   context,
-                      //       //   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                      //       // );
-                      //     },
-                      //   ),
-                      // ),
 
                       const SizedBox(height: 10),
                     ],
