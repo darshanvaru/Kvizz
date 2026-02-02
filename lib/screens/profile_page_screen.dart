@@ -38,7 +38,7 @@ class ProfileScreenState extends State<ProfileScreen> {
       _error = null;
     });
     try {
-      final fetchedUser = await UserService().fetchUserProfile();
+      final fetchedUser = await UserService().fetchUserProfile(context);
       
       if(mounted) {
         Provider.of<UserProvider>(context, listen: false).setCurrentUser(fetchedUser);
