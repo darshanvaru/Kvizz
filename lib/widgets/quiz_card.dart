@@ -67,25 +67,25 @@ class _QuizCardState extends State<QuizCard> {
               ],
             ),
 
-            const SizedBox(height: 6),
-
-            // Type row
-            Row(
-              children: [
-                Icon(
-                  widget.quiz.type == 'manual' ? Icons.handyman : Icons.memory,
-                  size: 16,
-                  color: Colors.orange,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  widget.quiz.type == 'manual'
-                      ? 'Manually Generated'
-                      : 'AI Generated',
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ],
-            ),
+            // const SizedBox(height: 6),
+            //
+            // // Type row
+            // Row(
+            //   children: [
+            //     Icon(
+            //       widget.quiz.type == 'manual' ? Icons.handyman : Icons.memory,
+            //       size: 16,
+            //       color: Colors.orange,
+            //     ),
+            //     const SizedBox(width: 6),
+            //     Text(
+            //       widget.quiz.type == 'manual'
+            //           ? 'Manually Generated'
+            //           : 'AI Generated',
+            //       style: const TextStyle(fontSize: 13),
+            //     ),
+            //   ],
+            // ),
 
             const SizedBox(height: 6),
 
