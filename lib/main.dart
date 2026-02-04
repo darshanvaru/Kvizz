@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
           themeMode: themeProvider.themeMode,
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
-          home: SplashScreen()
+          home: AppEntry()
         );
       },
     );
@@ -96,12 +96,17 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          await context.read<AuthProvider>().startUp(context);
+
+          //AuthProvider startup method for updating state variable
           if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AppEntry(),
-                settings: const RouteSettings(name: 'AppEntry'),),
-          );
+          await context.read<AuthProvider>().startUp(context);
+
+          // Improvised for white screen
+          // if (!mounted) return;
+          // Navigator.of(context).pushReplacement(
+          //   MaterialPageRoute(builder: (_) => const AppEntry(),
+          //       settings: const RouteSettings(name: 'AppEntry'),),
+          // );
         });
       }
     });
