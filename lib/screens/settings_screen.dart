@@ -212,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ],
                               underline: const SizedBox(),
                               onChanged: (ThemeMode? mode) {
-                                themeProvider.toggleTheme(mode ?? ThemeMode.light);
+                                themeProvider.setTheme(mode ?? ThemeMode.system);
                               },
                             ),
                           ),
