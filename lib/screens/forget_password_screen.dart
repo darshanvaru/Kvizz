@@ -26,7 +26,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   String? _errorText;
 
   void handleEmailSubmit() async {
-    print("0");
     if (!_formKey.currentState!.validate()) {
       return;
     }

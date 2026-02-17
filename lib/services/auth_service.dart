@@ -18,7 +18,7 @@ class AuthService {
     try {
       print("Trying Autologin");
       await UserService().fetchUserProfile(context);
-      print("Autologin Successful");
+      print("Autologin check Successful");
       return true;
     } catch (e) {
       print("Autologin Failed. No data found");
