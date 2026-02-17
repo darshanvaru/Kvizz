@@ -28,9 +28,7 @@ class _MyQuizzesScreenState extends State<MyQuizzesScreen> {
   }
 
   void _loadUserQuizzes() {
-    print("Calling current user from MyQuizzesScreen");
     final user = Provider.of<UserProvider>(context, listen: false).currentUser;
-    print("Got Current User id as ${user?.username}");
 
     setState(() {
       _loadQuizzesFuture = fetchUserQuizzes(user!.id);

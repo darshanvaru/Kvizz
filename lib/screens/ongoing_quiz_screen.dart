@@ -87,6 +87,7 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
           .entries
           .map((e) => MapEntry(e.key, e.value))
           .toList();
+      reorderedOptions.shuffle();
     }
   }
 
@@ -210,6 +211,19 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Theme-aware colors
+    final cardColor = colorScheme.surfaceContainerHighest;
+    final textColor = colorScheme.onSurface;
+    final correctColor = isDark ? Colors.green.shade400 : Colors.teal;
+    final incorrectColor = isDark ? Colors.red.shade400 : Colors.redAccent;
+    final optionBorderColor = isDark
+        ? colorScheme.outline.withValues(alpha: 0.5)
+        : colorScheme.outlineVariant;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBFF),
       body: Consumer<GameSessionProvider>(
@@ -589,10 +603,9 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                           if (question.type == QuestionType.reorder)
                             Column(
                               children: [
-                                ReorderableListView.builder(
+                                ReorderableListView(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: question.options.length,
                                   buildDefaultDragHandles: false,
                                   onReorder: (answered || timeUp || widget.isHost)
                                       ? (_, __) {}
@@ -603,28 +616,67 @@ class _OngoingQuizScreenState extends State<OngoingQuizScreen> with TickerProvid
                                       reorderedOptions.insert(newIndex, item);
                                     });
                                   },
-                                  itemBuilder: (context, index) {
-                                    final entry = reorderedOptions[index];
-                                    if (widget.isHost) {
-                                      return ListTile(
-                                        key: ValueKey(entry.key),
-                                        tileColor: Colors.grey.shade100,
-                                        title: Text(entry.value),
-                                        trailing:
-                                        Icon(Icons.drag_handle, color: Colors.grey.shade300),
-                                      );
+                                  children: reorderedOptions.map((entry) {
+                                    final index = reorderedOptions.indexOf(entry);
+                                    final originalIndex = entry.key;
+                                    final isCorrect = answered && index.toString() == question.correctAnswer[originalIndex];
+
+                                    Color tileColor;
+                                    Color borderColor;
+                                    Color optionTextColor;
+
+                                    if (answered) {
+                                      if (isCorrect) {
+                                        tileColor = correctColor.withValues(alpha: 0.15);
+                                        borderColor = correctColor;
+                                        optionTextColor = correctColor;
+                                      } else {
+                                        tileColor = incorrectColor.withValues(alpha: 0.15);
+                                        borderColor = incorrectColor;
+                                        optionTextColor = incorrectColor;
+                                      }
+                                    } else {
+                                      tileColor = cardColor;
+                                      borderColor = optionBorderColor;
+                                      optionTextColor = textColor;
                                     }
+
                                     return ReorderableDragStartListener(
                                       key: ValueKey(entry.key),
                                       index: index,
-                                      child: ListTile(
-                                        tileColor: Colors.grey.shade100,
-                                        title: Text(entry.value),
-                                        trailing: const Icon(Icons.drag_handle),
+                                      enabled: !answered,
+                                      child: Container(
+                                        key: ValueKey(entry.key),
+                                        margin: const EdgeInsets.only(bottom: 12),
+                                        decoration: BoxDecoration(
+                                          color: tileColor,
+                                          border: Border.all(
+                                            color: borderColor,
+                                            width: isCorrect || (!isCorrect && answered) ? 2 : 1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: ListTile(
+                                          leading: answered
+                                              ? Icon(
+                                              isCorrect ? Icons.check_circle : Icons.cancel,
+                                              color: isCorrect ? correctColor : incorrectColor
+                                          )
+                                              : null,
+                                          title: Text(
+                                            entry.value,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: optionTextColor,
+                                            ),
+                                          ),
+                                          trailing: Icon(Icons.drag_handle, size: 35,),
+                                        ),
                                       ),
                                     );
-                                  },
+                                  }).toList(),
                                 ),
+
                                 if (!widget.isHost)
                                   SizedBox(
                                     width: double.infinity,
