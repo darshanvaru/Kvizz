@@ -70,8 +70,10 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("True or False Question",
-            style: Theme.of(context).textTheme.bodyLarge),
+        Text(
+          "True or False Question",
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
         const SizedBox(height: 8),
 
         // Question Field
@@ -89,36 +91,38 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
         const SizedBox(height: 16),
 
         // True/False Selection
-        Text("Select the correct answer:",
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          "Select the correct answer:",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Column(
-            children: [
-              RadioListTile<String>(
-                title: const Text('True'),
-                value: 'True',
-                groupValue: _correctAnswer,
-                onChanged: (val) {
-                  if (val != null) _setCorrectAnswer(val);
-                },
-                activeColor: Colors.green,
-              ),
-              const Divider(height: 1),
-              RadioListTile<String>(
-                title: const Text('False'),
-                value: 'False',
-                groupValue: _correctAnswer,
-                onChanged: (val) {
-                  if (val != null) _setCorrectAnswer(val);
-                },
-                activeColor: Colors.red,
-              ),
-            ],
+          child: RadioGroup<String>(
+            groupValue: _correctAnswer,
+            onChanged: (value) {
+              if (value != null) {
+                _setCorrectAnswer(value);
+              }
+            },
+            child: Column(
+              children: const [
+                RadioListTile<String>(
+                  title: Text('True'),
+                  value: 'True',
+                  activeColor: Colors.green,
+                ),
+                Divider(height: 1),
+                RadioListTile<String>(
+                  title: Text('False'),
+                  value: 'False',
+                  activeColor: Colors.red,
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -129,7 +133,10 @@ class _TrueFalseQuestionWidgetState extends State<TrueFalseQuestionWidget> {
           child: TextButton.icon(
             onPressed: widget.onDelete,
             icon: const Icon(Icons.delete_forever, color: Colors.red),
-            label: const Text('Delete Question', style: TextStyle(color: Colors.red)),
+            label: const Text(
+              'Delete Question',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ),
       ],
