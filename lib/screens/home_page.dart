@@ -12,7 +12,7 @@ class HomeScreen extends StatelessWidget {
   static const List<Widget> _pages = [
     DashboardScreen(),
     MyQuizzesScreen(),
-    // PromptScreen(),
+    // PromptScreen(),,
     SettingsScreen(),
   ];
 
@@ -35,15 +35,16 @@ class HomeScreen extends StatelessWidget {
           body: _pages[tabProvider.selectedIndex],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: tabProvider.selectedIndex,
-            onTap: (index) {
-              Provider.of<TabIndexProvider>(context, listen: false).updateSelectedIndex(index);
-            },
+            onTap: (index) => context.read<TabIndexProvider>().updateSelectedIndex(index),
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard),
                 label: 'Dashboard',
               ),
-              BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'MyQuiz'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.quiz),
+                label: 'MyQuiz',
+              ),
               // BottomNavigationBarItem(
               //   icon: Icon(Icons.smart_toy),
               //   label: 'Medusa AI',
@@ -53,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                 label: 'Settings',
               ),
             ],
-            selectedItemColor: const Color(0xFF4B39EF),
+            selectedItemColor: Color(0xFF4B39EF),
             unselectedItemColor: Colors.grey,
             type: BottomNavigationBarType.fixed,
           ),

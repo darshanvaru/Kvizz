@@ -97,16 +97,9 @@ class _SplashScreenState extends State<SplashScreen>
       if (status == AnimationStatus.completed) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
 
-          //AuthProvider startup method for updating state variable
+          //AuthProvider startup method for updating App entry state variable
           if (!mounted) return;
           await context.read<AuthProvider>().startUp(context);
-
-          // Improvised for white screen
-          // if (!mounted) return;
-          // Navigator.of(context).pushReplacement(
-          //   MaterialPageRoute(builder: (_) => const AppEntry(),
-          //       settings: const RouteSettings(name: 'AppEntry'),),
-          // );
         });
       }
     });
