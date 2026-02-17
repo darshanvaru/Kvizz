@@ -136,23 +136,33 @@ class _SingleChoiceQuestionWidgetState extends State<SingleChoiceQuestionWidget>
               borderRadius: BorderRadius.circular(12),
             ),
             child: ListTile(
-              leading: Radio<int>(
-                value: index,
+              leading: RadioGroup<int>(
                 groupValue: _correctAnswerIndex,
                 onChanged: (val) {
-                  if (_optionControllers[index].text.trim().isEmpty) {
+                  if (val == null) return;
+
+                  if (_optionControllers[val].text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter option text first')),
+                      const SnackBar(
+                        content: Text('Please enter option text first'),
+                      ),
                     );
                     return;
                   }
+
                   setState(() {
                     _correctAnswerIndex = val;
                     _updateModel();
                   });
                 },
+                child: Column(
+                  children: List.generate(_optionControllers.length, (index) {
+                    return Radio<int>(
+                      value: index,
+                    );
+                  }),
+                ),
               ),
-
               title: TextField(
                 controller: _optionControllers[index],
                 onChanged: (_) => _onOptionTextChanged(index),
