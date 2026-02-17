@@ -144,11 +144,11 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
     final primaryColor = colorScheme.primary;
     final progressBarBackground = isDark
         ? colorScheme.surfaceContainerHigh
-        : colorScheme.primaryContainer.withOpacity(0.3);
+        : colorScheme.primaryContainer.withValues(alpha: 0.3);
     final correctColor = isDark ? Colors.green.shade400 : Colors.teal;
     final incorrectColor = isDark ? Colors.red.shade400 : Colors.redAccent;
     final optionBorderColor = isDark
-        ? colorScheme.outline.withOpacity(0.5)
+        ? colorScheme.outline.withValues(alpha: 0.5)
         : colorScheme.outlineVariant;
 
     return Scaffold(
@@ -179,9 +179,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                      isDark ? 0.3 : 0.05,
-                                    ),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
@@ -202,7 +200,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.4),
+                                    color: primaryColor.withValues(alpha: 0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),
@@ -223,9 +221,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(
-                                    isDark ? 0.3 : 0.08,
-                                  ),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -248,10 +244,10 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.1),
+                              color: primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: primaryColor.withOpacity(0.3),
+                                color: primaryColor.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                             ),
@@ -277,9 +273,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                isDark ? 0.3 : 0.08,
-                              ),
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -295,10 +289,10 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.15),
+                                color: primaryColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: primaryColor.withOpacity(0.3),
+                                  color: primaryColor.withValues(alpha: 0.3),
                                   width: 1,
                                 ),
                               ),
@@ -382,8 +376,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                isDark ? 0.3 : 0.08,
+                              color: Colors.black.withValues(alpha:
+                              isDark ? 0.3 : 0.08,
                               ),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
@@ -418,8 +412,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(
-                                          0.15,
+                                        tileColor = correctColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = correctColor;
                                         leadingIcon = Icon(
@@ -428,8 +422,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         );
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(
-                                          0.15,
+                                        tileColor = incorrectColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(
@@ -448,7 +442,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       }
                                     } else {
                                       tileColor = isSelected
-                                          ? primaryColor.withOpacity(0.1)
+                                          ? primaryColor.withValues(alpha: 0.1)
                                           : cardColor;
                                       borderColor = isSelected
                                           ? primaryColor
@@ -529,8 +523,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(
-                                          0.15,
+                                        tileColor = correctColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = correctColor;
                                         leadingIcon = Icon(
@@ -539,8 +533,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         );
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(
-                                          0.15,
+                                        tileColor = incorrectColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(
@@ -559,7 +553,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       }
                                     } else {
                                       tileColor = isSelected
-                                          ? primaryColor.withOpacity(0.1)
+                                          ? primaryColor.withValues(alpha: 0.1)
                                           : cardColor;
                                       borderColor = isSelected
                                           ? primaryColor
@@ -665,8 +659,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       disabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide(
-                                          color: optionBorderColor.withOpacity(
-                                            0.5,
+                                          color: optionBorderColor.withValues(alpha:
+                                          0.5,
                                           ),
                                         ),
                                       ),
@@ -679,7 +673,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       child: Container(
                                         padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
-                                          color: correctColor.withOpacity(0.15),
+                                          color: correctColor.withValues(alpha: 0.15),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
@@ -753,14 +747,14 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                       if (answered) {
                                         if (isCorrect) {
-                                          tileColor = correctColor.withOpacity(
-                                            0.15,
+                                          tileColor = correctColor.withValues(alpha:
+                                          0.15,
                                           );
                                           borderColor = correctColor;
                                           optionTextColor = correctColor;
                                         } else {
                                           tileColor = incorrectColor
-                                              .withOpacity(0.15);
+                                              .withValues(alpha: 0.15);
                                           borderColor = incorrectColor;
                                           optionTextColor = incorrectColor;
                                         }
@@ -841,8 +835,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(
-                                          0.15,
+                                        tileColor = correctColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = correctColor;
                                         leadingIcon = Icon(
@@ -851,8 +845,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         );
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(
-                                          0.15,
+                                        tileColor = incorrectColor.withValues(alpha:
+                                        0.15,
                                         );
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(
@@ -871,7 +865,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       }
                                     } else {
                                       tileColor = isSelected
-                                          ? primaryColor.withOpacity(0.1)
+                                          ? primaryColor.withValues(alpha: 0.1)
                                           : cardColor;
                                       borderColor = isSelected
                                           ? primaryColor
@@ -980,7 +974,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         (lastAnswerCorrect == true
                                                 ? correctColor
                                                 : incorrectColor)
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: lastAnswerCorrect == true
@@ -1029,7 +1023,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     color: textColor
-                                                        .withOpacity(0.8),
+                                                        .withValues(alpha: 0.8),
                                                   ),
                                                 ),
                                               ),
@@ -1055,7 +1049,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                 color: backgroundColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),

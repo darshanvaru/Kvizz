@@ -46,6 +46,8 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
     final question = questions[currentQuestionIndex];
     if (question.type == QuestionType.reorder) {
       reorderedOptions = question.options.asMap().entries.toList();
+      //For randomizing sequence of option
+      reorderedOptions.shuffle();
     }
   }
 
@@ -56,9 +58,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
     switch (question.type) {
       case QuestionType.single:
-        isCorrect =
-            selectedRadio != null &&
-                selectedRadio.toString() == question.correctAnswer.first;
+        isCorrect = selectedRadio != null && selectedRadio.toString() == question.correctAnswer.first;
         break;
 
       case QuestionType.multiple:
@@ -144,11 +144,11 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
     final primaryColor = colorScheme.primary;
     final progressBarBackground = isDark
         ? colorScheme.surfaceContainerHigh
-        : colorScheme.primaryContainer.withOpacity(0.3);
+        : colorScheme.primaryContainer.withValues(alpha: 0.3);
     final correctColor = isDark ? Colors.green.shade400 : Colors.teal;
     final incorrectColor = isDark ? Colors.red.shade400 : Colors.redAccent;
     final optionBorderColor = isDark
-        ? colorScheme.outline.withOpacity(0.5)
+        ? colorScheme.outline.withValues(alpha: 0.5)
         : colorScheme.outlineVariant;
 
     return Scaffold(
@@ -179,7 +179,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
@@ -200,7 +200,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.4),
+                                    color: primaryColor.withValues(alpha: 0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),
@@ -221,7 +221,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -251,10 +251,10 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.1),
+                              color: primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: primaryColor.withOpacity(0.3),
+                                color: primaryColor.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                             ),
@@ -280,7 +280,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -297,10 +297,10 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.15),
+                                color: primaryColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: primaryColor.withOpacity(0.3),
+                                  color: primaryColor.withValues(alpha: 0.3),
                                   width: 1,
                                 ),
                               ),
@@ -390,12 +390,12 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(0.15);
+                                        tileColor = correctColor.withValues(alpha: 0.15);
                                         borderColor = correctColor;
                                         leadingIcon = Icon(Icons.check_circle, color: correctColor);
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        tileColor = incorrectColor.withValues(alpha: 0.15);
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(Icons.cancel, color: incorrectColor);
                                         optionTextColor = incorrectColor;
@@ -406,7 +406,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         optionTextColor = subtleTextColor;
                                       }
                                     } else {
-                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      tileColor = isSelected ? primaryColor.withValues(alpha: 0.1) : cardColor;
                                       borderColor = isSelected ? primaryColor : optionBorderColor;
                                       leadingIcon = Icon(
                                         isSelected ? Icons.radio_button_checked : Icons.circle_outlined,
@@ -465,7 +465,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(0.15);
+                                        tileColor = correctColor.withValues(alpha: 0.15);
                                         borderColor = correctColor;
                                         leadingIcon = Icon(
                                           Icons.check_circle,
@@ -473,7 +473,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         );
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        tileColor = incorrectColor.withValues(alpha: 0.15);
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(
                                           Icons.cancel,
@@ -490,7 +490,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         optionTextColor = subtleTextColor;
                                       }
                                     } else {
-                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      tileColor = isSelected ? primaryColor.withValues(alpha: 0.1) : cardColor;
                                       borderColor = isSelected ? primaryColor : optionBorderColor;
                                       leadingIcon = Icon(
                                         isSelected ? Icons.check_box : Icons.check_box_outline_blank,
@@ -576,7 +576,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       disabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide(
-                                          color: optionBorderColor.withOpacity(0.5),
+                                          color: optionBorderColor.withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ),
@@ -588,7 +588,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                       child: Container(
                                         padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
-                                          color: correctColor.withOpacity(0.15),
+                                          color: correctColor.withValues(alpha: 0.15),
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
                                             color: correctColor,
@@ -627,24 +627,20 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                   ReorderableListView(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
+                                    buildDefaultDragHandles: false,
                                     onReorder: answered
                                         ? (_, __) {}
                                         : (oldIndex, newIndex) {
                                       setState(() {
-                                        if (newIndex > oldIndex) {
-                                          newIndex -= 1;
-                                        }
-                                        final item =
-                                        reorderedOptions.removeAt(oldIndex);
+                                        if (newIndex > oldIndex) newIndex -= 1;
+                                        final item = reorderedOptions.removeAt(oldIndex);
                                         reorderedOptions.insert(newIndex, item);
                                       });
                                     },
                                     children: reorderedOptions.map((entry) {
                                       final index = reorderedOptions.indexOf(entry);
                                       final originalIndex = entry.key;
-                                      final isCorrect = answered &&
-                                          index.toString() ==
-                                              question.correctAnswer[originalIndex];
+                                      final isCorrect = answered && index.toString() == question.correctAnswer[originalIndex];
 
                                       Color tileColor;
                                       Color borderColor;
@@ -652,11 +648,11 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                       if (answered) {
                                         if (isCorrect) {
-                                          tileColor = correctColor.withOpacity(0.15);
+                                          tileColor = correctColor.withValues(alpha: 0.15);
                                           borderColor = correctColor;
                                           optionTextColor = correctColor;
                                         } else {
-                                          tileColor = incorrectColor.withOpacity(0.15);
+                                          tileColor = incorrectColor.withValues(alpha: 0.15);
                                           borderColor = incorrectColor;
                                           optionTextColor = incorrectColor;
                                         }
@@ -666,33 +662,36 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         optionTextColor = textColor;
                                       }
 
-                                      return Container(
+                                      return ReorderableDragStartListener(
                                         key: ValueKey(entry.key),
-                                        margin: const EdgeInsets.only(bottom: 12),
-                                        decoration: BoxDecoration(
-                                          color: tileColor,
-                                          border: Border.all(
-                                            color: borderColor,
-                                            width: isCorrect || (!isCorrect && answered) ? 2 : 1,
-                                          ),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: ListTile(
-                                          leading: answered
-                                              ? Icon(
-                                            isCorrect ? Icons.check_circle : Icons.cancel,
-                                            color: isCorrect ? correctColor : incorrectColor,
-                                          )
-                                              : Icon(
-                                            Icons.drag_handle,
-                                            color: subtleTextColor,
-                                          ),
-                                          title: Text(
-                                            entry.value,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              color: optionTextColor,
+                                        index: index,
+                                        enabled: !answered,
+                                        child: Container(
+                                          key: ValueKey(entry.key),
+                                          margin: const EdgeInsets.only(bottom: 12),
+                                          decoration: BoxDecoration(
+                                            color: tileColor,
+                                            border: Border.all(
+                                              color: borderColor,
+                                              width: isCorrect || (!isCorrect && answered) ? 2 : 1,
                                             ),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: ListTile(
+                                            leading: answered
+                                                ? Icon(
+                                                  isCorrect ? Icons.check_circle : Icons.cancel,
+                                                  color: isCorrect ? correctColor : incorrectColor
+                                                )
+                                                : null,
+                                            title: Text(
+                                              entry.value,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color: optionTextColor,
+                                              ),
+                                            ),
+                                            trailing: Icon(Icons.drag_handle, size: 35,),
                                           ),
                                         ),
                                       );
@@ -707,13 +706,10 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   ...List.generate(2, (index) {
-                                    final isCorrect =
-                                        answered &&
-                                            index ==
-                                                int.parse(question.correctAnswer.first);
+                                    final isCorrect = answered && index == int.parse(question.correctAnswer.first);
                                     final isSelected = selectedRadio == index;
                                     final isIncorrect = answered && isSelected && !isCorrect;
-                                    final label = index == 0 ? "False" : "True";
+                                    final label = index == 0 ? "True" : "False";
 
                                     Color tileColor;
                                     Color borderColor;
@@ -722,7 +718,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
 
                                     if (answered) {
                                       if (isCorrect) {
-                                        tileColor = correctColor.withOpacity(0.15);
+                                        tileColor = correctColor.withValues(alpha: 0.15);
                                         borderColor = correctColor;
                                         leadingIcon = Icon(
                                           Icons.check_circle,
@@ -730,7 +726,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         );
                                         optionTextColor = correctColor;
                                       } else if (isIncorrect) {
-                                        tileColor = incorrectColor.withOpacity(0.15);
+                                        tileColor = incorrectColor.withValues(alpha: 0.15);
                                         borderColor = incorrectColor;
                                         leadingIcon = Icon(
                                           Icons.cancel,
@@ -747,7 +743,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                         optionTextColor = subtleTextColor;
                                       }
                                     } else {
-                                      tileColor = isSelected ? primaryColor.withOpacity(0.1) : cardColor;
+                                      tileColor = isSelected ? primaryColor.withValues(alpha: 0.1) : cardColor;
                                       borderColor = isSelected ? primaryColor : optionBorderColor;
                                       leadingIcon = Icon(
                                         isSelected ? Icons.radio_button_checked : Icons.circle_outlined,
@@ -832,7 +828,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: (lastAnswerCorrect == true ? correctColor : incorrectColor).withOpacity(0.1),
+                                    color: (lastAnswerCorrect == true ? correctColor : incorrectColor).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: lastAnswerCorrect == true ? correctColor : incorrectColor,
@@ -867,7 +863,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                                                   "💡 ${question.funFact}",
                                                   style: TextStyle(
                                                     fontSize: 14,
-                                                    color: textColor.withOpacity(0.8),
+                                                    color: textColor.withValues(alpha: 0.8),
                                                   ),
                                                 ),
                                               ),
@@ -895,7 +891,7 @@ class PreviewQuizScreenState extends State<PreviewQuizScreen>
                 color: backgroundColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
