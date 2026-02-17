@@ -25,7 +25,6 @@ class UserService with ChangeNotifier{
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data']['doc'];
       UserModel user = UserModel.fromJson(data);
-      print("Calling setCurrentUser from fetchUserProfile.");
       if(context.mounted) {
         Provider.of<UserProvider>(context, listen: false).setCurrentUser(user);
       }
