@@ -28,6 +28,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   bool isLogin = true;
   bool isLoading = false;
 
+  bool shouldObscurePassword = true;
+
   @override
   void initState() {
     super.initState();
@@ -205,12 +207,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         TextFormField(
           controller: _passwordController,
           enabled: !isLoading,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Password',
-            prefixIcon: Icon(Icons.lock),
-            border: OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.lock),
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: Icon(shouldObscurePassword ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => shouldObscurePassword = !shouldObscurePassword)),
           ),
-          obscureText: true,
+
+          obscureText: shouldObscurePassword,
           // validator: (value) {
           //   if (value == null || value.isEmpty) {
           //     return 'Please enter your password';
