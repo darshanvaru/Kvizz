@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kvizz/enums/enums.dart';
 import 'package:kvizz/models/quiz_model.dart';
 import 'package:kvizz/screens/create_or_edit_quiz_screen.dart';
 import 'package:kvizz/screens/quiz_preview_screen.dart';
@@ -282,14 +283,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    quiz!.title
-                        .split(' ')
-                        .map(
-                          (word) => word.isEmpty
-                              ? ''
-                              : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-                        )
-                        .join(' '),
+                    quiz!.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.blue.shade800,
@@ -318,7 +312,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              "${quiz!.description[0].toUpperCase()}${quiz!.description.substring(1)}",
+              quiz!.description,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Colors.grey.shade700,
                 height: 1.4,
@@ -423,7 +417,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                     style: const TextStyle(fontSize: 14),
                   ),
                   subtitle: Text(
-                    'Type: ${question.type.toString().split('.').last}',
+                    'Type: ${_getQuestionTypeFromEnum(question.type)}',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 );
@@ -509,5 +503,20 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
       default:
         return Colors.blue;
     }
+  }
+
+  String _getQuestionTypeFromEnum(QuestionType type) {
+    switch (type) {
+      case QuestionType.single:
+        return 'Single Choice';
+      case QuestionType.multiple:
+        return 'Multiple Choice';
+      case QuestionType.trueFalse:
+        return 'True/False';
+      case QuestionType.reorder:
+        return 'Reorder';
+      case QuestionType.open:
+        return 'Open Ended';
+      }
   }
 }
