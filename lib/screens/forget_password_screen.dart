@@ -146,10 +146,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           },
                         ),
                         SizedBox(height: 15),
-                        Text(
-                          "A Reset code will be sent to this Email ID and will need to reset the password",
-                          style: TextStyle(color: Colors.black54),
-                        ),
+                        Text("A Reset code will be sent to this Email ID and will need to reset the password"),
                       },
 
                       if (isCodeSent) ...{
