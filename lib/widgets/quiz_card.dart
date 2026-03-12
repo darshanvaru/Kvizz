@@ -24,14 +24,7 @@ class _QuizCardState extends State<QuizCard> {
             // Title
             FittedBox(
               child: Text(
-                widget.quiz.title
-                    .split(' ')
-                    .map(
-                      (word) => word.isEmpty
-                      ? ''
-                      : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-                )
-                    .join(' '),
+                widget.quiz.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -45,7 +38,7 @@ class _QuizCardState extends State<QuizCard> {
 
             // Description
             Text(
-              "${widget.quiz.description[0].toUpperCase()}${widget.quiz.description.substring(1)}",
+              widget.quiz.description,
               style: TextStyle(color: Colors.grey[700]),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -67,6 +60,7 @@ class _QuizCardState extends State<QuizCard> {
               ],
             ),
 
+            //Uncomment this block, if Medusa AI is implemented
             // const SizedBox(height: 6),
             //
             // // Type row
