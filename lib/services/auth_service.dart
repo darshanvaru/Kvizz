@@ -16,7 +16,7 @@ class AuthService {
 
   Future<bool> tryAutoLogin(BuildContext context) async {
     try {
-      print("Trying Autologin");
+      print("Trying Autologin from AuthService");
       await UserService().fetchUserProfile(context);
       print("Autologin check Successful");
       return true;
